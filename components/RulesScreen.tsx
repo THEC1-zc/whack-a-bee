@@ -1,5 +1,6 @@
 "use client";
 import { DIFFICULTY_CONFIG, PRIZE_PER_POINT, PRIZE_WALLET } from "./App";
+import { BF_PER_USDC } from "@/lib/pricing";
 
 export default function RulesScreen({ onBack }: { onBack: () => void }) {
   const shortWallet = `${PRIZE_WALLET.slice(0, 6)}...${PRIZE_WALLET.slice(-4)}`;
@@ -26,7 +27,7 @@ export default function RulesScreen({ onBack }: { onBack: () => void }) {
             <BeeRule emoji="🦋" label="Normal butterfly" desc="Visible for 850–1500ms" points="+1 point" color="#fbbf24" />
             <BeeRule emoji="🦋" label="Fast butterfly" desc="Visible for 650–1200ms, moves faster" points="+3 points" color="#3b82f6" fast />
             <BeeRule emoji="🔴" label="Red butterfly" desc="Avoid it! Costs you points" points="-2 points" color="#dc2626" />
-            <BeeRule emoji="💜" label="Super butterfly" desc="Rare bonus butterfly" points="+0.10 USDC" color="#a855f7" />
+            <BeeRule emoji="💜" label="Super butterfly" desc="Rare bonus butterfly" points={`+${Math.round(0.1 * BF_PER_USDC)} BF`} color="#a855f7" />
           </div>
         </Section>
 
@@ -57,13 +58,13 @@ export default function RulesScreen({ onBack }: { onBack: () => void }) {
           <div className="space-y-3">
             <div className="rounded-xl p-3 border border-green-900" style={{ background: "#0a1f0a" }}>
               <div className="text-green-400 font-bold text-sm mb-1">Reward per point</div>
-              <div className="text-green-300 text-2xl font-black">{PRIZE_PER_POINT} USDC</div>
-              <div className="text-green-700 text-xs mt-1">for each point scored</div>
+              <div className="text-green-300 text-2xl font-black">{(PRIZE_PER_POINT * BF_PER_USDC).toFixed(0)} BF</div>
+              <div className="text-green-700 text-xs mt-1">per point (approx, based on BF/USDC rate)</div>
             </div>
 
             <p className="text-amber-700 text-xs leading-relaxed">
-              The prize is automatically calculated at the end of each game by multiplying your score by {PRIZE_PER_POINT} USDC.
-              Payment is sent to your connected Farcaster wallet.
+              The prize is calculated at the end of each game and paid in BF tokens based on the current BF/USDC rate.
+              Payouts are batched and sent hourly to your connected Farcaster wallet.
             </p>
 
             <div className="rounded-xl p-3 border border-amber-900" style={{ background: "#1f1000" }}>
@@ -76,7 +77,7 @@ export default function RulesScreen({ onBack }: { onBack: () => void }) {
                 ].map(ex => (
                   <div key={ex.pts} className="flex justify-between text-sm">
                     <span className="text-amber-700">{ex.pts} pts ({ex.mode})</span>
-                    <span className="text-amber-400 font-bold">{(ex.pts * PRIZE_PER_POINT).toFixed(3)} USDC</span>
+                    <span className="text-amber-400 font-bold">{Math.round(ex.pts * PRIZE_PER_POINT * BF_PER_USDC)} BF</span>
                   </div>
                 ))}
               </div>

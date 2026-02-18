@@ -2,7 +2,9 @@ import { NextRequest, NextResponse } from "next/server";
 import { createWalletClient, createPublicClient, http } from "viem";
 import { base } from "viem/chains";
 import { privateKeyToAccount } from "viem/accounts";
-import { USDC_ADDRESS, USDC_ABI, toUSDCUnits, fromUSDCUnits, PRIZE_WALLET } from "@/lib/contracts";
+import { BF_ADDRESS, ERC20_ABI, fromBFUnits, PRIZE_WALLET } from "@/lib/contracts";
+import { bfToUsdc, usdcToBf } from "@/lib/pricing";
+import { enqueuePending } from "@/lib/payoutQueue";
 
 // Prize pool wallet private key — set in Vercel env vars, NEVER in code
 const PRIZE_PRIVATE_KEY = process.env.PRIZE_WALLET_PRIVATE_KEY as `0x${string}`;
@@ -21,11 +23,6 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: "Invalid request" }, { status: 400 });
     }
 
-    // Max payout sanity check (hard cap at 0.10 USDC per game)
-    if (amount > 0.10) {
-      return NextResponse.json({ error: "Prize exceeds maximum" }, { status: 400 });
-    }
-
     const account = privateKeyToAccount(PRIZE_PRIVATE_KEY);
     if (PRIZE_WALLET_ADDRESS && PRIZE_WALLET_ADDRESS !== account.address) {
       return NextResponse.json(
@@ -40,49 +37,35 @@ export async function POST(req: NextRequest) {
       transport: http("https://mainnet.base.org"),
     });
 
-    // Check pool balance before paying out
+    // Check BF pool balance before queueing
     const poolBalance = await publicClient.readContract({
-      address: USDC_ADDRESS,
-      abi: USDC_ABI,
+      address: BF_ADDRESS,
+      abi: ERC20_ABI,
       functionName: "balanceOf",
       args: [prizeAddress],
     });
 
-    const poolBalanceHuman = fromUSDCUnits(poolBalance as bigint);
+    const poolBalanceBf = fromBFUnits(poolBalance as bigint);
+    const poolBalanceUsdc = bfToUsdc(poolBalanceBf);
 
-    if (poolBalanceHuman < MIN_POOL_BALANCE) {
+    if (poolBalanceUsdc < MIN_POOL_BALANCE) {
       return NextResponse.json(
-        { error: "Prize pool is empty", poolBalance: poolBalanceHuman },
+        { error: "Prize pool is empty", poolBalance: poolBalanceUsdc },
         { status: 503 }
       );
     }
 
-    if (poolBalanceHuman < amount) {
+    const bfAmount = usdcToBf(amount);
+    if (poolBalanceBf < bfAmount) {
       return NextResponse.json(
-        { error: "Insufficient pool balance", poolBalance: poolBalanceHuman },
+        { error: "Insufficient pool balance", poolBalance: poolBalanceUsdc },
         { status: 503 }
       );
     }
 
-    // Send USDC to winner
-    const walletClient = createWalletClient({
-      account,
-      chain: base,
-      transport: http("https://mainnet.base.org"),
-    });
+    await enqueuePending(recipient as `0x${string}`, bfAmount);
 
-    const txHash = await walletClient.writeContract({
-      address: USDC_ADDRESS,
-      abi: USDC_ABI,
-      functionName: "transfer",
-      args: [recipient as `0x${string}`, toUSDCUnits(amount)],
-    });
-
-    await publicClient.waitForTransactionReceipt({ hash: txHash });
-
-    console.log(`Payout: ${amount} USDC → ${recipient} | tx: ${txHash}`);
-
-    return NextResponse.json({ ok: true, txHash, amount });
+    return NextResponse.json({ ok: true, queued: true, bfAmount });
   } catch (e: any) {
     console.error("Payout error:", e);
     return NextResponse.json({ error: e?.message || "Payout failed" }, { status: 500 });
@@ -99,14 +82,18 @@ export async function GET() {
     });
 
     const balance = await publicClient.readContract({
-      address: USDC_ADDRESS,
-      abi: USDC_ABI,
+      address: BF_ADDRESS,
+      abi: ERC20_ABI,
       functionName: "balanceOf",
       args: [prizeAddress],
     });
 
+    const balanceBf = fromBFUnits(balance as bigint);
+    const balanceUsdc = bfToUsdc(balanceBf);
+
     return NextResponse.json({
-      balance: fromUSDCUnits(balance as bigint),
+      balance: balanceUsdc,
+      balanceBf,
       configured: true,
       address: prizeAddress,
     });

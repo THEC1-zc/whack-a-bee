@@ -2,6 +2,7 @@
 import { useState, useEffect, useRef, useCallback } from "react";
 import { FarcasterUser } from "@/hooks/useFarcaster";
 import { DIFFICULTY_CONFIG, PRIZE_PER_POINT, type Difficulty } from "./App";
+import { BF_PER_USDC } from "@/lib/pricing";
 import { payGameFee, claimPrize, getAddress } from "@/lib/payments";
 
 interface Bee {
@@ -46,6 +47,7 @@ export default function GameScreen({ user, difficulty, onGameEnd }: Props) {
   const [hitEffects, setHitEffects] = useState<{ id: number; slot: number; text: string }[]>([]);
   const [paymentStatus, setPaymentStatus] = useState<"pending" | "paid" | "failed">("pending");
   const [paymentError, setPaymentError] = useState<string | null>(null);
+  const [paymentQueued, setPaymentQueued] = useState(false);
   const [feeStatus, setFeeStatus] = useState<"waiting" | "paying" | "paid" | "failed">("waiting");
   const [feeError, setFeeError] = useState<string | null>(null);
   const [gameStarted, setGameStarted] = useState(false);
@@ -229,17 +231,21 @@ export default function GameScreen({ user, difficulty, onGameEnd }: Props) {
         if (result.success) {
           setPaymentStatus("paid");
           setPaymentError(null);
+          setPaymentQueued(Boolean(result.queued));
         } else {
           setPaymentStatus("failed");
           setPaymentError(result.error || "Payment error");
+          setPaymentQueued(false);
         }
       } else {
         setPaymentStatus("failed");
         setPaymentError("No wallet connected");
+        setPaymentQueued(false);
       }
     } else {
       setPaymentStatus("paid");
       setPaymentError(null);
+      setPaymentQueued(false);
     }
 
     setTimeout(() => onGameEnd(adjustedScore, prize), 3000);
@@ -248,6 +254,7 @@ export default function GameScreen({ user, difficulty, onGameEnd }: Props) {
   const timerPercent = (timeLeft / cfg.time) * 100;
   const timerColor = timeLeft > 8 ? "#fbbf24" : "#ef4444";
   const prize = parseFloat(((score * PRIZE_PER_POINT) + bonusRef.current).toFixed(4));
+  const prizeBf = Math.round(prize * BF_PER_USDC);
 
   // Fee payment screen
   if (feeStatus === "waiting" || feeStatus === "paying") {
@@ -300,29 +307,32 @@ export default function GameScreen({ user, difficulty, onGameEnd }: Props) {
 
   if (gameState === "ended") {
     const shownScore = scoreRef.current;
-    const finalPrize = parseFloat(((shownScore * PRIZE_PER_POINT) + bonusRef.current).toFixed(4));
+    const finalPrizeUsdc = (shownScore * PRIZE_PER_POINT) + bonusRef.current;
+    const finalPrizeBf = Math.round(finalPrizeUsdc * BF_PER_USDC);
     return (
       <div className="min-h-dvh flex flex-col items-center justify-center p-6 text-center gap-4" style={{ background: "#1a0a00" }}>
-        <div className="text-5xl">{finalPrize > 0 ? "🎉" : "😔"}</div>
+        <div className="text-5xl">{finalPrizeBf > 0 ? "🎉" : "😔"}</div>
         <h2 className="text-3xl font-black text-white">Game Over</h2>
         <div className="text-6xl font-black text-amber-400">{shownScore}</div>
         <div className="text-amber-600 text-sm">points out of {cfg.maxPts} max</div>
 
         <div className="w-full max-w-xs rounded-2xl p-4 border border-amber-800" style={{ background: "#2a1500" }}>
           <div className="text-xs text-amber-600 uppercase tracking-widest mb-2">Prize</div>
-          <div className="text-3xl font-black text-amber-400">{finalPrize.toFixed(3)} USDC</div>
-          <div className="text-xs text-amber-700 mt-1">{shownScore} pt × 0.001 USDC</div>
+          <div className="text-3xl font-black text-amber-400">{finalPrizeBf.toLocaleString()} BF</div>
+          <div className="text-xs text-amber-700 mt-1">{shownScore} pt × 0.001 USDC (approx)</div>
           {bonusRef.current > 0 && (
-            <div className="text-xs text-purple-300 mt-1">Super bonus +{bonusRef.current.toFixed(3)} USDC</div>
+            <div className="text-xs text-purple-300 mt-1">Super bonus +{Math.round(bonusRef.current * BF_PER_USDC)} BF</div>
           )}
 
-          {finalPrize > 0 && (
+          {finalPrizeBf > 0 && (
             <div className={`mt-3 text-xs font-bold rounded-lg p-2 ${
               paymentStatus === "paid" ? "bg-green-900 text-green-300" :
               paymentStatus === "failed" ? "bg-red-900 text-red-300" :
               "bg-amber-900 text-amber-300"
             }`}>
-              {paymentStatus === "paid" ? "✅ Payment processing..." :
+              {paymentStatus === "paid"
+                ? (paymentQueued ? "✅ Queued for hourly payout" : "✅ Payment processing...")
+                :
                paymentStatus === "failed" ? "❌ Payment error" :
                "⏳ Processing..."}
             </div>
@@ -358,8 +368,8 @@ export default function GameScreen({ user, difficulty, onGameEnd }: Props) {
 
         <div className="text-center min-w-[60px]">
           <div className="text-xs text-amber-600 uppercase">Prize</div>
-          <div className="text-lg font-black text-green-400">{prize.toFixed(3)}</div>
-          <div className="text-xs text-green-700">USDC</div>
+          <div className="text-lg font-black text-green-400">{prizeBf.toLocaleString()}</div>
+          <div className="text-xs text-green-700">BF</div>
         </div>
       </div>
 

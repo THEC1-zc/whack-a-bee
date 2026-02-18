@@ -5,6 +5,7 @@ import GameScreen from "./GameScreen";
 import LeaderboardScreen from "./LeaderboardScreen";
 import RulesScreen from "./RulesScreen";
 import { useEffect } from "react";
+import { BF_PER_USDC } from "@/lib/pricing";
 
 type Screen = "home" | "game" | "leaderboard" | "rules";
 
@@ -62,6 +63,7 @@ export default function App() {
   const poolEmpty = !poolLoading && poolConfigured && poolBalance < MIN_POOL_BALANCE;
   const poolUnavailable = !poolLoading && !poolConfigured;
   const poolDisabled = poolEmpty || poolUnavailable;
+  const bfPerPoint = PRIZE_PER_POINT * BF_PER_USDC;
 
   return (
     <div className="min-h-dvh flex flex-col items-center p-5 gap-4"
@@ -98,7 +100,7 @@ export default function App() {
       <div className="w-full max-w-sm rounded-2xl p-4 border"
         style={{ background: "#2a1500", borderColor: poolEmpty ? "#dc2626" : "#92400e" }}>
         <div className="text-xs text-amber-500 uppercase tracking-widest mb-1 text-center">
-          {poolUnavailable ? "⚠️ Prize Pool Unavailable" : poolEmpty ? "⚠️ Prize Pool Empty" : "💰 Prize Pool"}
+          {poolUnavailable ? "⚠️ Prize Pool Unavailable" : poolEmpty ? "⚠️ Prize Pool Empty" : "💰 Prize Pool (approx)"}
         </div>
         <div className={`text-3xl font-black text-center ${poolEmpty || poolUnavailable ? "text-red-400" : "text-amber-400"}`}>
           {poolLoading ? "..." : poolUnavailable ? "—" : `${poolBalance.toFixed(3)} USDC`}
@@ -109,7 +111,7 @@ export default function App() {
         {poolUnavailable && (
           <div className="text-red-400 text-xs text-center mt-1">Pool not configured</div>
         )}
-        <div className="text-xs text-amber-700 text-center mt-1">Reward: 0.001 USDC per point</div>
+        <div className="text-xs text-amber-700 text-center mt-1">Reward: {bfPerPoint.toFixed(0)} BF per point (approx)</div>
       </div>
 
       {/* Last result */}
@@ -118,7 +120,7 @@ export default function App() {
           lastResult.prize > 0 ? "border-green-600 bg-green-950" : "border-amber-800 bg-amber-950"
         }`}>
           {lastResult.prize > 0
-            ? <span className="text-green-300 font-bold">🎉 You won {lastResult.prize.toFixed(3)} USDC with {lastResult.score} points!</span>
+            ? <span className="text-green-300 font-bold">🎉 You won {Math.round(lastResult.prize * BF_PER_USDC).toLocaleString()} BF with {lastResult.score} points!</span>
             : <span className="text-amber-600 font-bold">No points scored — try again! ({lastResult.score} pts)</span>
           }
         </div>
