@@ -1,6 +1,7 @@
 "use client";
 import { useState, useEffect, useRef, useCallback } from "react";
 import { FarcasterUser } from "@/hooks/useFarcaster";
+import { DIFFICULTY_CONFIG, PRIZE_PER_POINT, PRIZE_WALLET, type Difficulty } from "./App";
 
 interface Bee {
   id: number;
@@ -12,83 +13,79 @@ interface Bee {
 
 interface Props {
   user: FarcasterUser;
-  winScore: number;
-  onGameEnd: (score: number) => void;
+  difficulty: Difficulty;
+  onGameEnd: (score: number, prize: number) => void;
 }
 
 const SLOTS = 9;
-const GAME_DURATION = 30;
 
-export default function GameScreen({ user, winScore, onGameEnd }: Props) {
+export default function GameScreen({ user, difficulty, onGameEnd }: Props) {
+  const cfg = DIFFICULTY_CONFIG[difficulty];
   const [bees, setBees] = useState<Bee[]>([]);
   const [score, setScore] = useState(0);
-  const [timeLeft, setTimeLeft] = useState(GAME_DURATION);
+  const [timeLeft, setTimeLeft] = useState(cfg.time);
   const [gameState, setGameState] = useState<"countdown" | "playing" | "ended">("countdown");
   const [countdown, setCountdown] = useState(3);
-  const [hitEffects, setHitEffects] = useState<{ id: number; slot: number; type: string }[]>([]);
+  const [hitEffects, setHitEffects] = useState<{ id: number; slot: number; text: string }[]>([]);
+  const [paymentStatus, setPaymentStatus] = useState<"pending" | "paid" | "failed">("pending");
 
   const beeIdRef = useRef(0);
   const scoreRef = useRef(0);
   const effectIdRef = useRef(0);
 
-  const addHitEffect = useCallback((slot: number, type: string) => {
+  const addHitEffect = useCallback((slot: number, text: string) => {
     const id = effectIdRef.current++;
-    setHitEffects(prev => [...prev, { id, slot, type }]);
-    setTimeout(() => setHitEffects(prev => prev.filter(e => e.id !== id)), 400);
+    setHitEffects(prev => [...prev, { id, slot, text }]);
+    setTimeout(() => setHitEffects(prev => prev.filter(e => e.id !== id)), 500);
   }, []);
 
   const spawnBee = useCallback(() => {
-    const usedSlots = new Set<number>();
     setBees(prev => {
-      prev.filter(b => b.visible && !b.hit).forEach(b => usedSlots.add(b.slot));
-      return prev;
+      const usedSlots = new Set(prev.filter(b => b.visible && !b.hit).map(b => b.slot));
+      const available = Array.from({ length: SLOTS }, (_, i) => i).filter(s => !usedSlots.has(s));
+      if (available.length === 0) return prev;
+
+      const slot = available[Math.floor(Math.random() * available.length)];
+      const rand = Math.random();
+
+      // More bombs/fast bees on harder difficulties
+      const bombChance = difficulty === "easy" ? 0.10 : difficulty === "medium" ? 0.15 : 0.20;
+      const fastChance = difficulty === "easy" ? 0.15 : difficulty === "medium" ? 0.25 : 0.35;
+
+      const type: Bee["type"] = rand < bombChance ? "bomb" : rand < bombChance + fastChance ? "fast" : "normal";
+      const id = beeIdRef.current++;
+
+      const duration = difficulty === "easy"
+        ? (type === "fast" ? 1200 : 1500)
+        : difficulty === "medium"
+        ? (type === "fast" ? 900 : 1100)
+        : (type === "fast" ? 650 : 850);
+
+      setTimeout(() => setBees(p => p.filter(b => b.id !== id)), duration);
+      return [...prev.filter(b => b.visible), { id, slot, type, visible: true, hit: false }];
     });
-
-    const availableSlots = Array.from({ length: SLOTS }, (_, i) => i).filter(s => !usedSlots.has(s));
-    if (availableSlots.length === 0) return;
-
-    const slot = availableSlots[Math.floor(Math.random() * availableSlots.length)];
-    const rand = Math.random();
-    const type: Bee["type"] = rand < 0.15 ? "bomb" : rand < 0.35 ? "fast" : "normal";
-    const id = beeIdRef.current++;
-
-    const duration = type === "fast" ? 800 : type === "bomb" ? 1200 : 1000;
-
-    setBees(prev => [...prev.filter(b => b.visible), { id, slot, type, visible: true, hit: false }]);
-
-    setTimeout(() => {
-      setBees(prev => prev.filter(b => b.id !== id));
-    }, duration);
-  }, []);
+  }, [difficulty]);
 
   const whackBee = useCallback((bee: Bee) => {
     if (bee.hit || !bee.visible) return;
-
     setBees(prev => prev.map(b => b.id === bee.id ? { ...b, hit: true } : b));
-
-    setTimeout(() => {
-      setBees(prev => prev.filter(b => b.id !== bee.id));
-    }, 200);
+    setTimeout(() => setBees(prev => prev.filter(b => b.id !== bee.id)), 150);
 
     let points = 0;
-    if (bee.type === "normal") points = 1;
-    else if (bee.type === "fast") points = 3;
-    else if (bee.type === "bomb") points = -2;
+    let text = "";
+    if (bee.type === "normal") { points = 1; text = "+1"; }
+    else if (bee.type === "fast") { points = 3; text = "⚡ +3"; }
+    else if (bee.type === "bomb") { points = -2; text = "💥 -2"; }
 
-    const label = bee.type === "bomb" ? "💥 -2" : bee.type === "fast" ? "⚡ +3" : "+1";
-    addHitEffect(bee.slot, label);
-
-    scoreRef.current = Math.max(0, scoreRef.current + points);
+    addHitEffect(bee.slot, text);
+    scoreRef.current = Math.max(0, Math.min(scoreRef.current + points, cfg.maxPts));
     setScore(scoreRef.current);
-  }, [addHitEffect]);
+  }, [addHitEffect, cfg.maxPts]);
 
   // Countdown
   useEffect(() => {
     if (gameState !== "countdown") return;
-    if (countdown <= 0) {
-      setGameState("playing");
-      return;
-    }
+    if (countdown <= 0) { setGameState("playing"); return; }
     const t = setTimeout(() => setCountdown(c => c - 1), 1000);
     return () => clearTimeout(t);
   }, [countdown, gameState]);
@@ -98,23 +95,27 @@ export default function GameScreen({ user, winScore, onGameEnd }: Props) {
     if (gameState !== "playing") return;
     if (timeLeft <= 0) {
       setGameState("ended");
-      submitScore();
+      handleGameEnd();
       return;
     }
     const t = setTimeout(() => setTimeLeft(s => s - 1), 1000);
     return () => clearTimeout(t);
   }, [timeLeft, gameState]);
 
-  // Spawn bees
+  // Spawn interval — speeds up over time
   useEffect(() => {
     if (gameState !== "playing") return;
-    const interval = Math.max(400, 800 - (GAME_DURATION - timeLeft) * 15);
+    const elapsed = cfg.time - timeLeft;
+    const interval = Math.max(300, 900 - elapsed * 20);
     const t = setTimeout(spawnBee, interval);
     return () => clearTimeout(t);
-  }, [timeLeft, gameState, spawnBee]);
+  }, [timeLeft, gameState, spawnBee, cfg.time]);
 
-  async function submitScore() {
+  async function handleGameEnd() {
     const finalScore = scoreRef.current;
+    const prize = parseFloat((finalScore * PRIZE_PER_POINT).toFixed(4));
+
+    // Submit score
     try {
       await fetch("/api/leaderboard", {
         method: "POST",
@@ -125,89 +126,91 @@ export default function GameScreen({ user, winScore, onGameEnd }: Props) {
           displayName: user.displayName,
           pfpUrl: user.pfpUrl,
           score: finalScore,
+          difficulty,
         }),
       });
     } catch (e) {
       console.error("Submit score error:", e);
     }
+
+    setPaymentStatus("paid"); // placeholder — pagamento reale da implementare
+    setTimeout(() => onGameEnd(finalScore, prize), 3000);
   }
 
-  const timerPercent = (timeLeft / GAME_DURATION) * 100;
-  const timerColor = timeLeft > 10 ? "#fbbf24" : "#ef4444";
+  const timerPercent = (timeLeft / cfg.time) * 100;
+  const timerColor = timeLeft > 8 ? "#fbbf24" : "#ef4444";
+  const prize = parseFloat((score * PRIZE_PER_POINT).toFixed(4));
 
-  // Countdown screen
   if (gameState === "countdown") {
     return (
-      <div className="min-h-dvh flex flex-col items-center justify-center" style={{ background: "#1a0a00" }}>
-        <div className="text-amber-400 text-lg font-bold mb-4">Preparati!</div>
-        <div className="text-9xl font-black text-amber-400 animate-pulse">
-          {countdown === 0 ? "GO!" : countdown}
-        </div>
+      <div className="min-h-dvh flex flex-col items-center justify-center gap-4" style={{ background: "#1a0a00" }}>
+        <div className="text-amber-500 text-sm font-bold uppercase tracking-widest">{cfg.emoji} {cfg.label} Mode</div>
+        <div className="text-amber-400 text-lg">Fee: {cfg.fee} USDC</div>
+        <div className="text-9xl font-black text-amber-400 animate-pulse">{countdown || "GO!"}</div>
       </div>
     );
   }
 
-  // End screen
   if (gameState === "ended") {
-    const won = scoreRef.current >= winScore;
+    const finalPrize = parseFloat((scoreRef.current * PRIZE_PER_POINT).toFixed(4));
     return (
-      <div className="min-h-dvh flex flex-col items-center justify-center p-6 text-center"
-        style={{ background: "#1a0a00" }}>
-        <div className="text-6xl mb-4">{won ? "🎉" : "😔"}</div>
-        <h2 className="text-3xl font-black text-white mb-2">
-          {won ? "HAI VINTO!" : "Game Over"}
-        </h2>
-        <div className="text-6xl font-black text-amber-400 my-4">{scoreRef.current}</div>
-        <div className="text-amber-600 text-sm mb-2">punti</div>
+      <div className="min-h-dvh flex flex-col items-center justify-center p-6 text-center gap-4" style={{ background: "#1a0a00" }}>
+        <div className="text-5xl">{finalPrize > 0 ? "🎉" : "😔"}</div>
+        <h2 className="text-3xl font-black text-white">Game Over</h2>
+        <div className="text-6xl font-black text-amber-400">{scoreRef.current}</div>
+        <div className="text-amber-600 text-sm">punti su {cfg.maxPts} max</div>
 
-        {won ? (
-          <div className="bg-green-900 border border-green-600 rounded-2xl p-4 mb-6 w-full max-w-xs">
-            <div className="text-green-300 font-bold">🏆 Complimenti!</div>
-            <div className="text-green-400 text-sm mt-1">Il prize pool è tuo! (funzione pagamento in arrivo)</div>
-          </div>
-        ) : (
-          <div className="text-amber-700 text-sm mb-6">
-            Ti servivano {winScore} punti. Riprova!
-          </div>
-        )}
+        <div className="w-full max-w-xs rounded-2xl p-4 border border-amber-800" style={{ background: "#2a1500" }}>
+          <div className="text-xs text-amber-600 uppercase tracking-widest mb-2">Premio</div>
+          <div className="text-3xl font-black text-amber-400">{finalPrize.toFixed(3)} USDC</div>
+          <div className="text-xs text-amber-700 mt-1">{scoreRef.current} pt × 0.001 USDC</div>
 
-        <button
-          onClick={() => onGameEnd(scoreRef.current)}
-          className="w-full max-w-xs py-4 rounded-2xl text-lg font-black text-black"
-          style={{ background: "linear-gradient(135deg, #fbbf24, #f59e0b)" }}
-        >
-          Torna Home
-        </button>
+          {finalPrize > 0 && (
+            <div className={`mt-3 text-xs font-bold rounded-lg p-2 ${
+              paymentStatus === "paid" ? "bg-green-900 text-green-300" :
+              paymentStatus === "failed" ? "bg-red-900 text-red-300" :
+              "bg-amber-900 text-amber-300"
+            }`}>
+              {paymentStatus === "paid" ? "✅ Pagamento in elaborazione..." :
+               paymentStatus === "failed" ? "❌ Errore pagamento" :
+               "⏳ Elaborazione..."}
+            </div>
+          )}
+        </div>
+
+        <div className="text-xs text-amber-800">Tornando alla home...</div>
       </div>
     );
   }
 
-  // Game grid
   return (
     <div className="min-h-dvh flex flex-col" style={{ background: "#1a0a00" }}>
 
       {/* HUD */}
-      <div className="flex items-center justify-between px-4 pt-4 pb-2">
-        <div className="text-center">
-          <div className="text-xs text-amber-600 uppercase tracking-widest">Punti</div>
-          <div className="text-3xl font-black text-amber-400">{score}</div>
+      <div className="flex items-center gap-3 px-4 pt-4 pb-2">
+        <div className="text-center min-w-[60px]">
+          <div className="text-xs text-amber-600 uppercase">Punti</div>
+          <div className="text-2xl font-black text-amber-400">{score}</div>
         </div>
 
-        {/* Timer bar */}
-        <div className="flex-1 mx-4">
-          <div className="h-4 bg-amber-950 rounded-full overflow-hidden border border-amber-800">
-            <div
-              className="h-full rounded-full transition-all duration-1000"
-              style={{ width: `${timerPercent}%`, background: timerColor }}
-            />
+        <div className="flex-1">
+          <div className="h-4 bg-amber-950 rounded-full overflow-hidden border border-amber-900">
+            <div className="h-full rounded-full transition-all duration-1000"
+              style={{ width: `${timerPercent}%`, background: timerColor }} />
           </div>
-          <div className="text-center text-xs mt-1" style={{ color: timerColor }}>{timeLeft}s</div>
+          <div className="text-center text-xs mt-0.5" style={{ color: timerColor }}>{timeLeft}s</div>
         </div>
 
-        <div className="text-center">
-          <div className="text-xs text-amber-600 uppercase tracking-widest">Target</div>
-          <div className="text-3xl font-black text-amber-700">{winScore}</div>
+        <div className="text-center min-w-[60px]">
+          <div className="text-xs text-amber-600 uppercase">Premio</div>
+          <div className="text-lg font-black text-green-400">{prize.toFixed(3)}</div>
+          <div className="text-xs text-green-700">USDC</div>
         </div>
+      </div>
+
+      {/* Difficulty badge */}
+      <div className="text-center text-xs mb-2" style={{ color: cfg.color }}>
+        {cfg.emoji} {cfg.label} · max {cfg.maxPts} pt
       </div>
 
       {/* Grid */}
@@ -216,51 +219,34 @@ export default function GameScreen({ user, winScore, onGameEnd }: Props) {
           {Array.from({ length: SLOTS }, (_, slot) => {
             const bee = bees.find(b => b.slot === slot && b.visible);
             const effect = hitEffects.find(e => e.slot === slot);
-
             return (
               <div
                 key={slot}
                 onClick={() => bee && whackBee(bee)}
-                className="relative aspect-square rounded-2xl flex items-center justify-center cursor-pointer active:scale-90 transition-transform select-none"
+                className="relative aspect-square rounded-2xl flex items-center justify-center cursor-pointer active:scale-90 transition-transform"
                 style={{
-                  background: bee ? (
-                    bee.type === "bomb" ? "#7f1d1d" :
-                    bee.type === "fast" ? "#1e3a5f" :
-                    "#2a1500"
-                  ) : "#1a0a00",
-                  border: `2px solid ${bee ? (
-                    bee.type === "bomb" ? "#dc2626" :
-                    bee.type === "fast" ? "#3b82f6" :
-                    "#92400e"
-                  ) : "#2a1000"}`,
-                  boxShadow: bee ? "0 0 15px rgba(251,191,36,0.3)" : "none",
-                  transform: bee && !bee.hit ? "scale(1)" : undefined,
+                  background: bee ? (bee.type === "bomb" ? "#7f1d1d" : bee.type === "fast" ? "#1e3a5f" : "#2a1500") : "#1a0a00",
+                  border: `2px solid ${bee ? (bee.type === "bomb" ? "#dc2626" : bee.type === "fast" ? "#3b82f6" : "#92400e") : "#2a1000"}`,
+                  boxShadow: bee ? "0 0 12px rgba(251,191,36,0.25)" : "none",
                 }}
               >
                 {bee && (
-                  <span
-                    className="text-4xl select-none"
+                  <span className="text-4xl select-none"
                     style={{
-                      animation: bee.hit ? "none" : "popIn 0.15s ease-out",
                       opacity: bee.hit ? 0 : 1,
                       transition: "opacity 0.15s",
                       filter: bee.type === "fast" ? "hue-rotate(180deg)" : undefined,
-                    }}
-                  >
+                    }}>
                     {bee.type === "bomb" ? "💣" : "🐝"}
                   </span>
                 )}
-
-                {/* Hit effect */}
                 {effect && (
-                  <div
-                    className="absolute inset-0 flex items-center justify-center text-lg font-black pointer-events-none"
+                  <div className="absolute inset-0 flex items-center justify-center text-sm font-black pointer-events-none"
                     style={{
-                      color: effect.type.includes("-") ? "#ef4444" : "#4ade80",
-                      animation: "floatUp 0.4s ease-out forwards",
-                    }}
-                  >
-                    {effect.type}
+                      color: effect.text.includes("-") ? "#ef4444" : "#4ade80",
+                      animation: "floatUp 0.5s ease-out forwards",
+                    }}>
+                    {effect.text}
                   </div>
                 )}
               </div>
@@ -270,13 +256,9 @@ export default function GameScreen({ user, winScore, onGameEnd }: Props) {
       </div>
 
       <style jsx>{`
-        @keyframes popIn {
-          from { transform: scale(0.3); opacity: 0; }
-          to { transform: scale(1); opacity: 1; }
-        }
         @keyframes floatUp {
           from { transform: translateY(0); opacity: 1; }
-          to { transform: translateY(-30px); opacity: 0; }
+          to { transform: translateY(-35px); opacity: 0; }
         }
       `}</style>
     </div>

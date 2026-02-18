@@ -6,18 +6,28 @@ import LeaderboardScreen from "./LeaderboardScreen";
 
 type Screen = "home" | "game" | "leaderboard";
 
-export default function App() {
-  const { user, isLoading, isConnected, connectWallet } = useFarcaster();
-  const [screen, setScreen] = useState<Screen>("home");
-  const [lastScore, setLastScore] = useState<number | null>(null);
+export type Difficulty = "easy" | "medium" | "hard";
 
-  // Prize pool placeholder
-  const PRIZE_POOL = "0.05 ETH";
-  const WIN_SCORE = 50;
+export const DIFFICULTY_CONFIG = {
+  easy:   { label: "Easy",   emoji: "🟢", time: 30, maxPts: 48, fee: 0.04, color: "#16a34a" },
+  medium: { label: "Medium", emoji: "🟡", time: 25, maxPts: 64, fee: 0.05, color: "#ca8a04" },
+  hard:   { label: "Hard",   emoji: "🔴", time: 20, maxPts: 80, fee: 0.06, color: "#dc2626" },
+};
+
+export const PRIZE_PER_POINT = 0.001; // USDC
+export const PRIZE_WALLET = "0xFd144C774582a450a3F578ae742502ff11Ff92Df";
+export const MIN_POOL_BALANCE = 0.10; // sotto questo il gioco è bloccato
+
+export default function App() {
+  const { user, isLoading, isConnected } = useFarcaster();
+  const [screen, setScreen] = useState<Screen>("home");
+  const [difficulty, setDifficulty] = useState<Difficulty>("medium");
+  const [lastResult, setLastResult] = useState<{ score: number; prize: number } | null>(null);
+  const [poolBalance] = useState<number>(1.00); // placeholder — sostituire con lettura on-chain
 
   if (isLoading) {
     return (
-      <div className="flex items-center justify-center min-h-dvh bg-amber-950">
+      <div className="flex items-center justify-center min-h-dvh" style={{ background: "#1a0a00" }}>
         <div className="text-5xl animate-bounce">🐝</div>
       </div>
     );
@@ -31,9 +41,9 @@ export default function App() {
     return (
       <GameScreen
         user={user}
-        winScore={WIN_SCORE}
-        onGameEnd={(score) => {
-          setLastScore(score);
+        difficulty={difficulty}
+        onGameEnd={(score, prize) => {
+          setLastResult({ score, prize });
           setScreen("home");
         }}
       />
@@ -44,9 +54,11 @@ export default function App() {
     return <LeaderboardScreen onBack={() => setScreen("home")} />;
   }
 
-  // Home screen
+  const cfg = DIFFICULTY_CONFIG[difficulty];
+  const poolEmpty = poolBalance < MIN_POOL_BALANCE;
+
   return (
-    <div className="min-h-dvh flex flex-col items-center justify-between p-5"
+    <div className="min-h-dvh flex flex-col items-center p-5 gap-4"
       style={{ background: "linear-gradient(180deg, #1a0a00 0%, #2a1200 100%)" }}>
 
       {/* Header */}
@@ -58,54 +70,83 @@ export default function App() {
           <div className="text-white font-bold text-sm">{user.displayName}</div>
           <div className="text-amber-400 text-xs">@{user.username}</div>
         </div>
-        <button
-          onClick={() => setScreen("leaderboard")}
-          className="ml-auto text-2xl hover:scale-110 transition-transform"
-          title="Leaderboard"
-        >🏆</button>
+        <button onClick={() => setScreen("leaderboard")} className="ml-auto text-2xl">🏆</button>
       </div>
 
       {/* Title */}
       <div className="text-center">
-        <div className="text-7xl mb-2 drop-shadow-lg" style={{ filter: "drop-shadow(0 0 20px #fbbf24)" }}>🐝</div>
-        <h1 className="text-4xl font-black text-white tracking-tight">Whack-a-Bee</h1>
-        <p className="text-amber-300 text-sm mt-1">Schiaccia le api, vinci premi!</p>
+        <div className="text-6xl mb-1" style={{ filter: "drop-shadow(0 0 20px #fbbf24)" }}>🐝</div>
+        <h1 className="text-3xl font-black text-white">Whack-a-Bee</h1>
       </div>
 
-      {/* Prize Pool Card */}
-      <div className="w-full max-w-sm rounded-2xl p-4 border border-amber-700"
-        style={{ background: "#2a1500" }}>
-        <div className="text-xs text-amber-500 uppercase tracking-widest mb-1 text-center">💰 Prize Pool</div>
-        <div className="text-3xl font-black text-amber-400 text-center">{PRIZE_POOL}</div>
-        <div className="text-xs text-amber-700 text-center mt-1">
-          Fai {WIN_SCORE}+ punti per vincere
+      {/* Prize Pool */}
+      <div className="w-full max-w-sm rounded-2xl p-4 border"
+        style={{ background: "#2a1500", borderColor: poolEmpty ? "#dc2626" : "#92400e" }}>
+        <div className="text-xs text-amber-500 uppercase tracking-widest mb-1 text-center">
+          {poolEmpty ? "⚠️ Prize Pool Esaurito" : "💰 Prize Pool"}
         </div>
-
-        {lastScore !== null && (
-          <div className={`mt-3 p-2 rounded-xl text-center text-sm font-bold ${lastScore >= WIN_SCORE ? "bg-green-900 text-green-300" : "bg-red-950 text-red-400"}`}>
-            {lastScore >= WIN_SCORE
-              ? `🎉 HAI VINTO con ${lastScore} punti!`
-              : `Ultimo score: ${lastScore} pt — riprova!`
-            }
-          </div>
+        <div className={`text-3xl font-black text-center ${poolEmpty ? "text-red-400" : "text-amber-400"}`}>
+          {poolBalance.toFixed(3)} USDC
+        </div>
+        {poolEmpty && (
+          <div className="text-red-400 text-xs text-center mt-1">Il gioco è temporaneamente sospeso</div>
         )}
+        <div className="text-xs text-amber-700 text-center mt-1">
+          Premio: 0.001 USDC per punto
+        </div>
+      </div>
+
+      {/* Last result */}
+      {lastResult && (
+        <div className={`w-full max-w-sm rounded-2xl p-3 text-center border ${
+          lastResult.prize > 0 ? "border-green-600 bg-green-950" : "border-amber-800 bg-amber-950"
+        }`}>
+          {lastResult.prize > 0
+            ? <span className="text-green-300 font-bold">🎉 Hai vinto {lastResult.prize.toFixed(3)} USDC con {lastResult.score} punti!</span>
+            : <span className="text-amber-600 font-bold">Nessun punto — riprova! ({lastResult.score} pt)</span>
+          }
+        </div>
+      )}
+
+      {/* Difficulty selector */}
+      <div className="w-full max-w-sm">
+        <div className="text-xs text-amber-600 uppercase tracking-widest mb-2 text-center">Difficoltà</div>
+        <div className="grid grid-cols-3 gap-2">
+          {(Object.entries(DIFFICULTY_CONFIG) as [Difficulty, typeof DIFFICULTY_CONFIG.easy][]).map(([key, cfg]) => (
+            <button
+              key={key}
+              onClick={() => setDifficulty(key)}
+              className="rounded-xl p-3 text-center border-2 transition-all"
+              style={{
+                background: difficulty === key ? cfg.color + "33" : "#1a0a00",
+                borderColor: difficulty === key ? cfg.color : "#3d1a00",
+              }}
+            >
+              <div className="text-lg">{cfg.emoji}</div>
+              <div className="text-white font-bold text-xs">{cfg.label}</div>
+              <div className="text-amber-500 text-xs mt-1">{cfg.fee} USDC</div>
+              <div className="text-amber-700 text-xs">{cfg.time}s · {cfg.maxPts}pt max</div>
+            </button>
+          ))}
+        </div>
       </div>
 
       {/* Rules */}
-      <div className="w-full max-w-sm text-xs text-amber-800 space-y-1 px-1">
-        <div>🐝 Api normali → +1 punto</div>
-        <div>⚡ Api veloci → +3 punti</div>
-        <div>💣 Api rosse → -2 punti (EVITA!)</div>
-        <div>⏱ 30 secondi per giocare</div>
+      <div className="w-full max-w-sm text-xs text-amber-800 grid grid-cols-2 gap-1">
+        <div>🐝 Ape normale → +1 pt</div>
+        <div>⚡ Ape veloce → +3 pt</div>
+        <div>💣 Ape rossa → -2 pt</div>
+        <div>🏆 Premio: 0.001/pt</div>
       </div>
 
-      {/* Play Button */}
+      {/* Play button */}
       <button
+        disabled={poolEmpty}
         onClick={() => setScreen("game")}
-        className="w-full max-w-sm py-5 rounded-2xl text-xl font-black text-black transition-all active:scale-95"
-        style={{ background: "linear-gradient(135deg, #fbbf24, #f59e0b)", boxShadow: "0 8px 30px rgba(251,191,36,0.4)" }}
+        className="w-full max-w-sm py-5 rounded-2xl text-xl font-black text-black transition-all active:scale-95 disabled:opacity-40"
+        style={{ background: poolEmpty ? "#555" : `linear-gradient(135deg, #fbbf24, #f59e0b)`, boxShadow: poolEmpty ? "none" : "0 8px 30px rgba(251,191,36,0.4)" }}
       >
-        GIOCA ORA 🐝
+        {poolEmpty ? "Pool Esaurito 😔" : `GIOCA — ${cfg.fee} USDC 🐝`}
       </button>
     </div>
   );
@@ -113,14 +154,11 @@ export default function App() {
 
 function NotConnected() {
   return (
-    <div className="min-h-dvh flex flex-col items-center justify-center p-6 text-center"
-      style={{ background: "#1a0a00" }}>
+    <div className="min-h-dvh flex flex-col items-center justify-center p-6 text-center" style={{ background: "#1a0a00" }}>
       <div className="text-6xl mb-4">🐝</div>
       <h1 className="text-2xl font-black text-white mb-2">Whack-a-Bee</h1>
       <p className="text-amber-400 text-sm mb-6">Apri questa app da Warpcast per giocare!</p>
-      <div className="text-xs text-amber-800 max-w-xs">
-        Questa è una Farcaster Mini App. Aprila tramite un cast o cerca "Whack-a-Bee" su Warpcast.
-      </div>
+      <div className="text-xs text-amber-800 max-w-xs">Cerca "Whack-a-Bee" su Warpcast o aprila tramite un cast.</div>
     </div>
   );
 }

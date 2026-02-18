@@ -1,25 +1,24 @@
-// In-memory leaderboard (replace with DB like Upstash/Supabase for production)
 export interface LeaderboardEntry {
   fid: number;
   username: string;
   displayName: string;
   pfpUrl: string;
   score: number;
+  difficulty: string;
   timestamp: number;
 }
 
-// Simple in-memory store (resets on server restart)
-// For production: use Upstash Redis or Supabase
-const store = new Map<number, LeaderboardEntry>();
+const store = new Map<string, LeaderboardEntry>();
 
 export function saveScore(entry: LeaderboardEntry) {
-  const existing = store.get(entry.fid);
+  const key = `${entry.fid}-${entry.difficulty}`;
+  const existing = store.get(key);
   if (!existing || entry.score > existing.score) {
-    store.set(entry.fid, entry);
+    store.set(key, entry);
   }
 }
 
-export function getLeaderboard(limit = 10): LeaderboardEntry[] {
+export function getLeaderboard(limit = 20): LeaderboardEntry[] {
   return Array.from(store.values())
     .sort((a, b) => b.score - a.score)
     .slice(0, limit);
