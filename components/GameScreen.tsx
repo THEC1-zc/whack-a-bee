@@ -112,7 +112,7 @@ export default function GameScreen({ user, difficulty, onGameEnd }: Props) {
     if (countdown <= 0) { setGameState("playing"); return; }
     const t = setTimeout(() => setCountdown(c => c - 1), 1000);
     return () => clearTimeout(t);
-  }, [countdown, gameState]);
+  }, [countdown, gameState, feeStatus]);
 
   // Timer
   useEffect(() => {
