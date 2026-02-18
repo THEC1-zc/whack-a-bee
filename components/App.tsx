@@ -4,6 +4,7 @@ import { useFarcaster } from "@/hooks/useFarcaster";
 import GameScreen from "./GameScreen";
 import LeaderboardScreen from "./LeaderboardScreen";
 import RulesScreen from "./RulesScreen";
+import { useEffect } from "react";
 
 type Screen = "home" | "game" | "leaderboard" | "rules";
 
@@ -24,7 +25,15 @@ export default function App() {
   const [screen, setScreen] = useState<Screen>("home");
   const [difficulty, setDifficulty] = useState<Difficulty>("medium");
   const [lastResult, setLastResult] = useState<{ score: number; prize: number } | null>(null);
-  const [poolBalance] = useState<number>(1.00); // placeholder — sostituire con lettura on-chain
+  const [poolBalance, setPoolBalance] = useState<number>(0);
+  const [poolLoading, setPoolLoading] = useState(true);
+
+  useEffect(() => {
+    fetch("/api/payout")
+      .then(r => r.json())
+      .then(d => { setPoolBalance(d.balance ?? 0); setPoolLoading(false); })
+      .catch(() => setPoolLoading(false));
+  }, [lastResult]); // refresh after each game
 
   if (isLoading) {
     return (
@@ -45,7 +54,7 @@ export default function App() {
   if (screen === "rules") return <RulesScreen onBack={() => setScreen("home")} />;
 
   const cfg = DIFFICULTY_CONFIG[difficulty];
-  const poolEmpty = poolBalance < MIN_POOL_BALANCE;
+  const poolEmpty = !poolLoading && poolBalance < MIN_POOL_BALANCE;
 
   return (
     <div className="min-h-dvh flex flex-col items-center p-5 gap-4"
@@ -79,7 +88,7 @@ export default function App() {
           {poolEmpty ? "⚠️ Prize Pool Empty" : "💰 Prize Pool"}
         </div>
         <div className={`text-3xl font-black text-center ${poolEmpty ? "text-red-400" : "text-amber-400"}`}>
-          {poolBalance.toFixed(3)} USDC
+          {poolLoading ? "..." : `${poolBalance.toFixed(3)} USDC`}
         </div>
         {poolEmpty && (
           <div className="text-red-400 text-xs text-center mt-1">Game temporarily suspended</div>

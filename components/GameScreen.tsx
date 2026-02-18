@@ -1,7 +1,8 @@
 "use client";
 import { useState, useEffect, useRef, useCallback } from "react";
 import { FarcasterUser } from "@/hooks/useFarcaster";
-import { DIFFICULTY_CONFIG, PRIZE_PER_POINT, PRIZE_WALLET, type Difficulty } from "./App";
+import { DIFFICULTY_CONFIG, PRIZE_PER_POINT, type Difficulty } from "./App";
+import { payGameFee, claimPrize, getAddress } from "@/lib/payments";
 
 interface Bee {
   id: number;
@@ -28,6 +29,9 @@ export default function GameScreen({ user, difficulty, onGameEnd }: Props) {
   const [countdown, setCountdown] = useState(3);
   const [hitEffects, setHitEffects] = useState<{ id: number; slot: number; text: string }[]>([]);
   const [paymentStatus, setPaymentStatus] = useState<"pending" | "paid" | "failed">("pending");
+  const [feeStatus, setFeeStatus] = useState<"waiting" | "paying" | "paid" | "failed">("waiting");
+  const [feeError, setFeeError] = useState<string | null>(null);
+  const [gameStarted, setGameStarted] = useState(false);
 
   const beeIdRef = useRef(0);
   const scoreRef = useRef(0);
@@ -82,8 +86,28 @@ export default function GameScreen({ user, difficulty, onGameEnd }: Props) {
     setScore(scoreRef.current);
   }, [addHitEffect, cfg.maxPts]);
 
-  // Countdown
+  // Pay fee before starting countdown
   useEffect(() => {
+    if (gameStarted) return;
+    setGameStarted(true);
+    handlePayFee();
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  async function handlePayFee() {
+    setFeeStatus("paying");
+    const result = await payGameFee(cfg.fee);
+    if (result.success) {
+      setFeeStatus("paid");
+    } else {
+      setFeeStatus("failed");
+      setFeeError(result.error || "Payment failed");
+    }
+  }
+
+  // Countdown — only starts after fee is paid
+  useEffect(() => {
+    if (feeStatus !== "paid") return;
     if (gameState !== "countdown") return;
     if (countdown <= 0) { setGameState("playing"); return; }
     const t = setTimeout(() => setCountdown(c => c - 1), 1000);
@@ -133,7 +157,19 @@ export default function GameScreen({ user, difficulty, onGameEnd }: Props) {
       console.error("Submit score error:", e);
     }
 
-    setPaymentStatus("paid"); // placeholder — real payment to be implemented
+    // Pay prize if player scored
+    if (prize > 0) {
+      const address = await getAddress();
+      if (address) {
+        const result = await claimPrize(address, prize);
+        setPaymentStatus(result.success ? "paid" : "failed");
+      } else {
+        setPaymentStatus("failed");
+      }
+    } else {
+      setPaymentStatus("paid");
+    }
+
     setTimeout(() => onGameEnd(finalScore, prize), 3000);
   }
 
@@ -141,11 +177,50 @@ export default function GameScreen({ user, difficulty, onGameEnd }: Props) {
   const timerColor = timeLeft > 8 ? "#fbbf24" : "#ef4444";
   const prize = parseFloat((score * PRIZE_PER_POINT).toFixed(4));
 
+  // Fee payment screen
+  if (feeStatus === "waiting" || feeStatus === "paying") {
+    return (
+      <div className="min-h-dvh flex flex-col items-center justify-center gap-6 p-6" style={{ background: "#1a0a00" }}>
+        <div className="text-6xl animate-bounce">💳</div>
+        <h2 className="text-2xl font-black text-white">Confirm Payment</h2>
+        <div className="w-full max-w-xs rounded-2xl p-5 border border-amber-800" style={{ background: "#2a1500" }}>
+          <div className="text-center">
+            <div className="text-amber-500 text-xs uppercase tracking-widest mb-1">Game Fee</div>
+            <div className="text-4xl font-black text-amber-400">{cfg.fee} USDC</div>
+            <div className="text-amber-700 text-xs mt-1">{cfg.emoji} {cfg.label} Mode · {cfg.time}s</div>
+          </div>
+        </div>
+        <div className="text-amber-400 text-sm animate-pulse">
+          {feeStatus === "paying" ? "⏳ Waiting for wallet confirmation..." : "⏳ Initializing..."}
+        </div>
+        <button onClick={() => onGameEnd(0, 0)} className="text-amber-700 text-sm underline">Cancel</button>
+      </div>
+    );
+  }
+
+  // Fee failed screen
+  if (feeStatus === "failed") {
+    return (
+      <div className="min-h-dvh flex flex-col items-center justify-center gap-6 p-6 text-center" style={{ background: "#1a0a00" }}>
+        <div className="text-6xl">❌</div>
+        <h2 className="text-2xl font-black text-white">Payment Failed</h2>
+        <p className="text-red-400 text-sm max-w-xs">{feeError || "Transaction was rejected or failed."}</p>
+        <button
+          onClick={() => onGameEnd(0, 0)}
+          className="w-full max-w-xs py-4 rounded-2xl text-lg font-black text-black"
+          style={{ background: "linear-gradient(135deg, #fbbf24, #f59e0b)" }}
+        >
+          Back to Home
+        </button>
+      </div>
+    );
+  }
+
   if (gameState === "countdown") {
     return (
       <div className="min-h-dvh flex flex-col items-center justify-center gap-4" style={{ background: "#1a0a00" }}>
         <div className="text-amber-500 text-sm font-bold uppercase tracking-widest">{cfg.emoji} {cfg.label} Mode</div>
-        <div className="text-amber-400 text-lg">Fee: {cfg.fee} USDC</div>
+        <div className="text-amber-400 text-sm">✅ Fee paid: {cfg.fee} USDC</div>
         <div className="text-9xl font-black text-amber-400 animate-pulse">{countdown || "GO!"}</div>
       </div>
     );
