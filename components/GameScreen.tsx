@@ -337,8 +337,9 @@ export default function GameScreen({ user, difficulty, onGameEnd }: Props) {
     );
   }
 
+  const honeyBg = "linear-gradient(180deg, #1a0a00 0%, #2a1200 100%), url(data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSIxMjAiIGhlaWdodD0iMTA0IiB2aWV3Qm94PSIwIDAgMTIwIDEwNCI+CiAgPGRlZnM+CiAgICA8cGF0dGVybiBpZD0iaG9uZXkiIHdpZHRoPSI2MCIgaGVpZ2h0PSI1MiIgcGF0dGVyblVuaXRzPSJ1c2VyU3BhY2VPblVzZSI+CiAgICAgIDxwYXRoIGQ9Ik0xNSA0IEw0NSA0IEw2MCAyNiBMNDUgNDggTDE1IDQ4IEwwIDI2IFoiIGZpbGw9Im5vbmUiIHN0cm9rZT0icmdiYSgyNTEsMTkxLDM2LDAuMTUpIiBzdHJva2Utd2lkdGg9IjMiLz4KICAgIDwvcGF0dGVybj4KICA8L2RlZnM+CiAgPHJlY3Qgd2lkdGg9IjEyMCIgaGVpZ2h0PSIxMDQiIGZpbGw9InVybCgjaG9uZXkpIi8+Cjwvc3ZnPg==)";
   return (
-    <div className="min-h-dvh flex flex-col" style={{ background: "#1a0a00" }}>
+    <div className="min-h-dvh flex flex-col" style={{ background: honeyBg, backgroundSize: "auto, 160px 140px" }}>
 
       {/* HUD */}
       <div className="flex items-center gap-3 px-4 pt-4 pb-2">
@@ -397,18 +398,20 @@ export default function GameScreen({ user, difficulty, onGameEnd }: Props) {
                 }}
               >
                 {bee && (
-                  <span className="text-4xl select-none"
+                  <img
+                    src="/bee.png"
+                    alt=""
+                    className="w-14 h-14 select-none pointer-events-none"
                     style={{
                       opacity: bee.hit ? 0 : 1,
                       transition: "opacity 0.15s",
                       filter:
                         bee.type === "fast" ? "hue-rotate(180deg)" :
                         bee.type === "bomb" ? "hue-rotate(330deg) saturate(2)" :
-                        bee.type === "super" ? "hue-rotate(250deg) saturate(2)" :
+                        bee.type === "super" ? "hue-rotate(260deg) saturate(2) drop-shadow(0 0 6px rgba(168,85,247,0.8))" :
                         undefined,
-                    }}>
-                    {"🐝"}
-                  </span>
+                    }}
+                  />
                 )}
                 {effect && (
                   <div className="absolute inset-0 flex items-center justify-center text-sm font-black pointer-events-none"
