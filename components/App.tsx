@@ -3,8 +3,9 @@ import { useState } from "react";
 import { useFarcaster } from "@/hooks/useFarcaster";
 import GameScreen from "./GameScreen";
 import LeaderboardScreen from "./LeaderboardScreen";
+import RulesScreen from "./RulesScreen";
 
-type Screen = "home" | "game" | "leaderboard";
+type Screen = "home" | "game" | "leaderboard" | "rules";
 
 export type Difficulty = "easy" | "medium" | "hard";
 
@@ -16,7 +17,7 @@ export const DIFFICULTY_CONFIG = {
 
 export const PRIZE_PER_POINT = 0.001; // USDC
 export const PRIZE_WALLET = "0xFd144C774582a450a3F578ae742502ff11Ff92Df";
-export const MIN_POOL_BALANCE = 0.10; // sotto questo il gioco è bloccato
+export const MIN_POOL_BALANCE = 0.10;
 
 export default function App() {
   const { user, isLoading, isConnected } = useFarcaster();
@@ -33,26 +34,15 @@ export default function App() {
     );
   }
 
-  if (!isConnected || !user) {
-    return <NotConnected />;
-  }
-
-  if (screen === "game") {
-    return (
-      <GameScreen
-        user={user}
-        difficulty={difficulty}
-        onGameEnd={(score, prize) => {
-          setLastResult({ score, prize });
-          setScreen("home");
-        }}
-      />
-    );
-  }
-
-  if (screen === "leaderboard") {
-    return <LeaderboardScreen onBack={() => setScreen("home")} />;
-  }
+  if (!isConnected || !user) return <NotConnected />;
+  if (screen === "game") return (
+    <GameScreen user={user} difficulty={difficulty} onGameEnd={(score, prize) => {
+      setLastResult({ score, prize });
+      setScreen("home");
+    }} />
+  );
+  if (screen === "leaderboard") return <LeaderboardScreen onBack={() => setScreen("home")} />;
+  if (screen === "rules") return <RulesScreen onBack={() => setScreen("home")} />;
 
   const cfg = DIFFICULTY_CONFIG[difficulty];
   const poolEmpty = poolBalance < MIN_POOL_BALANCE;
@@ -70,7 +60,10 @@ export default function App() {
           <div className="text-white font-bold text-sm">{user.displayName}</div>
           <div className="text-amber-400 text-xs">@{user.username}</div>
         </div>
-        <button onClick={() => setScreen("leaderboard")} className="ml-auto text-2xl">🏆</button>
+        <div className="ml-auto flex gap-3">
+          <button onClick={() => setScreen("rules")} className="text-2xl" title="Regole">📖</button>
+          <button onClick={() => setScreen("leaderboard")} className="text-2xl" title="Leaderboard">🏆</button>
+        </div>
       </div>
 
       {/* Title */}
@@ -91,9 +84,7 @@ export default function App() {
         {poolEmpty && (
           <div className="text-red-400 text-xs text-center mt-1">Il gioco è temporaneamente sospeso</div>
         )}
-        <div className="text-xs text-amber-700 text-center mt-1">
-          Premio: 0.001 USDC per punto
-        </div>
+        <div className="text-xs text-amber-700 text-center mt-1">Premio: 0.001 USDC per punto</div>
       </div>
 
       {/* Last result */}
@@ -112,31 +103,28 @@ export default function App() {
       <div className="w-full max-w-sm">
         <div className="text-xs text-amber-600 uppercase tracking-widest mb-2 text-center">Difficoltà</div>
         <div className="grid grid-cols-3 gap-2">
-          {(Object.entries(DIFFICULTY_CONFIG) as [Difficulty, typeof DIFFICULTY_CONFIG.easy][]).map(([key, cfg]) => (
-            <button
-              key={key}
-              onClick={() => setDifficulty(key)}
+          {(Object.entries(DIFFICULTY_CONFIG) as [Difficulty, typeof DIFFICULTY_CONFIG.easy][]).map(([key, c]) => (
+            <button key={key} onClick={() => setDifficulty(key)}
               className="rounded-xl p-3 text-center border-2 transition-all"
               style={{
-                background: difficulty === key ? cfg.color + "33" : "#1a0a00",
-                borderColor: difficulty === key ? cfg.color : "#3d1a00",
-              }}
-            >
-              <div className="text-lg">{cfg.emoji}</div>
-              <div className="text-white font-bold text-xs">{cfg.label}</div>
-              <div className="text-amber-500 text-xs mt-1">{cfg.fee} USDC</div>
-              <div className="text-amber-700 text-xs">{cfg.time}s · {cfg.maxPts}pt max</div>
+                background: difficulty === key ? c.color + "33" : "#1a0a00",
+                borderColor: difficulty === key ? c.color : "#3d1a00",
+              }}>
+              <div className="text-lg">{c.emoji}</div>
+              <div className="text-white font-bold text-xs">{c.label}</div>
+              <div className="text-amber-500 text-xs mt-1">{c.fee} USDC</div>
+              <div className="text-amber-700 text-xs">{c.time}s · {c.maxPts}pt max</div>
             </button>
           ))}
         </div>
       </div>
 
-      {/* Rules */}
+      {/* Quick rules */}
       <div className="w-full max-w-sm text-xs text-amber-800 grid grid-cols-2 gap-1">
         <div>🐝 Ape normale → +1 pt</div>
         <div>⚡ Ape veloce → +3 pt</div>
         <div>💣 Ape rossa → -2 pt</div>
-        <div>🏆 Premio: 0.001/pt</div>
+        <div>📖 <button onClick={() => setScreen("rules")} className="underline text-amber-600">Tutte le regole</button></div>
       </div>
 
       {/* Play button */}
@@ -144,7 +132,10 @@ export default function App() {
         disabled={poolEmpty}
         onClick={() => setScreen("game")}
         className="w-full max-w-sm py-5 rounded-2xl text-xl font-black text-black transition-all active:scale-95 disabled:opacity-40"
-        style={{ background: poolEmpty ? "#555" : `linear-gradient(135deg, #fbbf24, #f59e0b)`, boxShadow: poolEmpty ? "none" : "0 8px 30px rgba(251,191,36,0.4)" }}
+        style={{
+          background: poolEmpty ? "#555" : `linear-gradient(135deg, #fbbf24, #f59e0b)`,
+          boxShadow: poolEmpty ? "none" : "0 8px 30px rgba(251,191,36,0.4)"
+        }}
       >
         {poolEmpty ? "Pool Esaurito 😔" : `GIOCA — ${cfg.fee} USDC 🐝`}
       </button>
