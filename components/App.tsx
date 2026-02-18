@@ -21,17 +21,22 @@ export const PRIZE_WALLET = "0xFd144C774582a450a3F578ae742502ff11Ff92Df";
 export const MIN_POOL_BALANCE = 0.10;
 
 export default function App() {
-  const { user, isLoading, isConnected } = useFarcaster();
+  const { user, isLoading, isConnected, logout } = useFarcaster();
   const [screen, setScreen] = useState<Screen>("home");
   const [difficulty, setDifficulty] = useState<Difficulty>("medium");
   const [lastResult, setLastResult] = useState<{ score: number; prize: number } | null>(null);
   const [poolBalance, setPoolBalance] = useState<number>(0);
   const [poolLoading, setPoolLoading] = useState(true);
+  const [poolConfigured, setPoolConfigured] = useState(true);
 
   useEffect(() => {
     fetch("/api/payout")
       .then(r => r.json())
-      .then(d => { setPoolBalance(d.balance ?? 0); setPoolLoading(false); })
+      .then(d => {
+        setPoolBalance(typeof d.balance === "number" ? d.balance : 0);
+        setPoolConfigured(d.configured !== false);
+        setPoolLoading(false);
+      })
       .catch(() => setPoolLoading(false));
   }, [lastResult]); // refresh after each game
 
@@ -54,7 +59,9 @@ export default function App() {
   if (screen === "rules") return <RulesScreen onBack={() => setScreen("home")} />;
 
   const cfg = DIFFICULTY_CONFIG[difficulty];
-  const poolEmpty = !poolLoading && poolBalance < MIN_POOL_BALANCE;
+  const poolEmpty = !poolLoading && poolConfigured && poolBalance < MIN_POOL_BALANCE;
+  const poolUnavailable = !poolLoading && !poolConfigured;
+  const poolDisabled = poolEmpty || poolUnavailable;
 
   return (
     <div className="min-h-dvh flex flex-col items-center p-5 gap-4"
@@ -68,6 +75,12 @@ export default function App() {
         <div>
           <div className="text-white font-bold text-sm">{user.displayName}</div>
           <div className="text-amber-400 text-xs">@{user.username}</div>
+          <button
+            onClick={logout}
+            className="text-[10px] text-amber-600 hover:text-amber-400 underline mt-1"
+          >
+            Logout
+          </button>
         </div>
         <div className="ml-auto flex gap-3">
           <button onClick={() => setScreen("rules")} className="text-2xl" title="Rules">📖</button>
@@ -85,13 +98,16 @@ export default function App() {
       <div className="w-full max-w-sm rounded-2xl p-4 border"
         style={{ background: "#2a1500", borderColor: poolEmpty ? "#dc2626" : "#92400e" }}>
         <div className="text-xs text-amber-500 uppercase tracking-widest mb-1 text-center">
-          {poolEmpty ? "⚠️ Prize Pool Empty" : "💰 Prize Pool"}
+          {poolUnavailable ? "⚠️ Prize Pool Unavailable" : poolEmpty ? "⚠️ Prize Pool Empty" : "💰 Prize Pool"}
         </div>
-        <div className={`text-3xl font-black text-center ${poolEmpty ? "text-red-400" : "text-amber-400"}`}>
-          {poolLoading ? "..." : `${poolBalance.toFixed(3)} USDC`}
+        <div className={`text-3xl font-black text-center ${poolEmpty || poolUnavailable ? "text-red-400" : "text-amber-400"}`}>
+          {poolLoading ? "..." : poolUnavailable ? "—" : `${poolBalance.toFixed(3)} USDC`}
         </div>
         {poolEmpty && (
           <div className="text-red-400 text-xs text-center mt-1">Game temporarily suspended</div>
+        )}
+        {poolUnavailable && (
+          <div className="text-red-400 text-xs text-center mt-1">Pool not configured</div>
         )}
         <div className="text-xs text-amber-700 text-center mt-1">Reward: 0.001 USDC per point</div>
       </div>
@@ -138,15 +154,15 @@ export default function App() {
 
       {/* Play button */}
       <button
-        disabled={poolEmpty}
+        disabled={poolDisabled}
         onClick={() => setScreen("game")}
         className="w-full max-w-sm py-5 rounded-2xl text-xl font-black text-black transition-all active:scale-95 disabled:opacity-40"
         style={{
-          background: poolEmpty ? "#555" : `linear-gradient(135deg, #fbbf24, #f59e0b)`,
-          boxShadow: poolEmpty ? "none" : "0 8px 30px rgba(251,191,36,0.4)"
+          background: poolDisabled ? "#555" : `linear-gradient(135deg, #fbbf24, #f59e0b)`,
+          boxShadow: poolDisabled ? "none" : "0 8px 30px rgba(251,191,36,0.4)"
         }}
       >
-        {poolEmpty ? "Pool Empty 😔" : `PLAY — ${cfg.fee} USDC 🐝`}
+        {poolUnavailable ? "Pool Unavailable" : poolEmpty ? "Pool Empty 😔" : `PLAY — ${cfg.fee} USDC 🐝`}
       </button>
     </div>
   );

@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { createWalletClient, createPublicClient, http } from "viem";
 import { base } from "viem/chains";
 import { privateKeyToAccount } from "viem/accounts";
-import { USDC_ADDRESS, USDC_ABI, toUSDCUnits, fromUSDCUnits } from "@/lib/contracts";
+import { USDC_ADDRESS, USDC_ABI, toUSDCUnits, fromUSDCUnits, PRIZE_WALLET } from "@/lib/contracts";
 
 // Prize pool wallet private key — set in Vercel env vars, NEVER in code
 const PRIZE_PRIVATE_KEY = process.env.PRIZE_WALLET_PRIVATE_KEY as `0x${string}`;
@@ -84,11 +84,8 @@ export async function POST(req: NextRequest) {
 // GET: check current pool balance (public)
 export async function GET() {
   try {
-    if (!PRIZE_PRIVATE_KEY) {
-      return NextResponse.json({ balance: 0, configured: false });
-    }
-
-    const account = privateKeyToAccount(PRIZE_PRIVATE_KEY);
+    const prizeAddress =
+      (process.env.PRIZE_WALLET_ADDRESS as `0x${string}` | undefined) || PRIZE_WALLET;
     const publicClient = createPublicClient({
       chain: base,
       transport: http("https://mainnet.base.org"),
@@ -98,12 +95,13 @@ export async function GET() {
       address: USDC_ADDRESS,
       abi: USDC_ABI,
       functionName: "balanceOf",
-      args: [account.address],
+      args: [prizeAddress],
     });
 
     return NextResponse.json({
       balance: fromUSDCUnits(balance as bigint),
       configured: true,
+      address: prizeAddress,
     });
   } catch {
     return NextResponse.json({ balance: 0, configured: false });

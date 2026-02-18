@@ -60,5 +60,10 @@ export function useFarcaster() {
     }
   }
 
-  return { user, isLoading, isConnected, connectWallet };
+  function logout() {
+    setUser(null);
+    setIsConnected(false);
+  }
+
+  return { user, isLoading, isConnected, connectWallet, logout };
 }
