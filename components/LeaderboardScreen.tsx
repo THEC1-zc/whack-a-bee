@@ -1,15 +1,19 @@
 "use client";
 import { useEffect, useState } from "react";
-import { DIFFICULTY_CONFIG, type Difficulty } from "./App";
+import { type Difficulty } from "./App";
 
 interface Entry {
   fid: number;
   username: string;
   displayName: string;
   pfpUrl: string;
-  score: number;
-  difficulty: Difficulty;
-  timestamp: number;
+  address?: string;
+  games: number;
+  wins: number;
+  net: number;
+  totalPrize: number;
+  totalFees: number;
+  lastPlayed: number;
 }
 
 export default function LeaderboardScreen({ onBack }: { onBack: () => void }) {
@@ -18,14 +22,21 @@ export default function LeaderboardScreen({ onBack }: { onBack: () => void }) {
   const [filter, setFilter] = useState<Difficulty | "all">("all");
 
   useEffect(() => {
-    fetch("/api/leaderboard")
-      .then(r => r.json())
-      .then(data => { setEntries(data); setLoading(false); })
-      .catch(() => setLoading(false));
-  }, []);
-
-  const filtered = filter === "all" ? entries : entries.filter(e => e.difficulty === filter);
+    let alive = true;
+    const load = () => {
+      const qs = filter === "all" ? "" : `?difficulty=${filter}`;
+      fetch(`/api/leaderboard${qs}`)
+        .then(r => r.json())
+        .then(data => { if (alive) { setEntries(data); setLoading(false); } })
+        .catch(() => { if (alive) setLoading(false); });
+    };
+    load();
+    const t = setInterval(load, 10000);
+    return () => { alive = false; clearInterval(t); };
+  }, [filter]);
   const medals = ["🥇", "🥈", "🥉"];
+  const shortAddr = (addr?: string) =>
+    addr ? `${addr.slice(0, 6)}…${addr.slice(-4)}` : "";
 
   return (
     <div className="min-h-dvh flex flex-col" style={{ background: "#1a0a00" }}>
@@ -60,15 +71,16 @@ export default function LeaderboardScreen({ onBack }: { onBack: () => void }) {
             <div className="text-3xl animate-bounce">🐝</div>
             <div className="text-sm mt-2">Loading...</div>
           </div>
-        ) : filtered.length === 0 ? (
+        ) : entries.length === 0 ? (
           <div className="text-center text-amber-700 py-10">
             <div className="text-3xl">😔</div>
             <div className="text-sm mt-2">No scores yet.</div>
           </div>
         ) : (
-          filtered.map((entry, i) => {
-            const prize = (entry.score * 0.001).toFixed(3);
-            const diffCfg = DIFFICULTY_CONFIG[entry.difficulty] || DIFFICULTY_CONFIG.medium;
+          entries.map((entry, i) => {
+            const net = entry.net;
+            const netText = `${net >= 0 ? "+" : ""}${net.toFixed(3)} USDC`;
+            const winRate = entry.games ? Math.round((entry.wins / entry.games) * 100) : 0;
             return (
               <div key={entry.fid} className="flex items-center gap-3 rounded-xl p-3 border"
                 style={{ background: i === 0 ? "#3d2a00" : "#1f1000", borderColor: i === 0 ? "#f59e0b" : "#3d1a00" }}>
@@ -81,13 +93,17 @@ export default function LeaderboardScreen({ onBack }: { onBack: () => void }) {
                 }
                 <div className="flex-1 min-w-0">
                   <div className="text-white font-bold text-sm truncate">{entry.displayName}</div>
-                  <div className="flex items-center gap-1 mt-0.5">
-                    <span className="text-xs" style={{ color: diffCfg.color }}>{diffCfg.emoji} {diffCfg.label}</span>
+                  <div className="flex items-center gap-2 mt-0.5 text-xs text-amber-500">
+                    <span>@{entry.username}</span>
+                    {entry.address && <span className="text-amber-700">{shortAddr(entry.address)}</span>}
+                  </div>
+                  <div className="mt-1 text-[11px] text-amber-700">
+                    Games {entry.games} · Wins {entry.wins} ({winRate}%)
                   </div>
                 </div>
                 <div className="text-right">
-                  <div className="text-amber-400 font-black">{entry.score} pt</div>
-                  <div className="text-green-500 text-xs">{prize} USDC</div>
+                  <div className={`font-black ${net >= 0 ? "text-green-400" : "text-red-400"}`}>{netText}</div>
+                  <div className="text-xs text-amber-600">{entry.totalPrize.toFixed(3)} in / {entry.totalFees.toFixed(3)} out</div>
                 </div>
               </div>
             );

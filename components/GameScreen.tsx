@@ -19,7 +19,18 @@ interface Props {
 }
 
 const SLOTS = 9;
-const WIN_CHANCE = { easy: 0.60, medium: 0.55, hard: 0.50 } as const;
+
+const BEE_CHANCES = {
+  easy: { bomb: 0.08, fast: 0.20 },
+  medium: { bomb: 0.10, fast: 0.25 },
+  hard: { bomb: 0.18, fast: 0.30 },
+} as const;
+
+const SPAWN_CONFIG = {
+  easy: { base: 950, min: 500, step: 15 },
+  medium: { base: 850, min: 450, step: 18 },
+  hard: { base: 750, min: 400, step: 22 },
+} as const;
 
 export default function GameScreen({ user, difficulty, onGameEnd }: Props) {
   const cfg = DIFFICULTY_CONFIG[difficulty];
@@ -34,10 +45,6 @@ export default function GameScreen({ user, difficulty, onGameEnd }: Props) {
   const [feeStatus, setFeeStatus] = useState<"waiting" | "paying" | "paid" | "failed">("waiting");
   const [feeError, setFeeError] = useState<string | null>(null);
   const [gameStarted, setGameStarted] = useState(false);
-  const [bonusApplied, setBonusApplied] = useState(false);
-  const [endScore, setEndScore] = useState<number | null>(null);
-  const [endPrize, setEndPrize] = useState<number | null>(null);
-  const [winRoll] = useState(() => Math.random() < WIN_CHANCE[difficulty]);
 
   const beeIdRef = useRef(0);
   const scoreRef = useRef(0);
@@ -58,9 +65,9 @@ export default function GameScreen({ user, difficulty, onGameEnd }: Props) {
       const slot = available[Math.floor(Math.random() * available.length)];
       const rand = Math.random();
 
-      // More bombs/fast bees on harder difficulties
-      const bombChance = difficulty === "easy" ? 0.06 : difficulty === "medium" ? 0.10 : 0.14;
-      const fastChance = difficulty === "easy" ? 0.20 : difficulty === "medium" ? 0.26 : 0.30;
+      // More red bees on harder difficulties
+      const bombChance = BEE_CHANCES[difficulty].bomb;
+      const fastChance = BEE_CHANCES[difficulty].fast;
 
       const type: Bee["type"] = rand < bombChance ? "bomb" : rand < bombChance + fastChance ? "fast" : "normal";
       const id = beeIdRef.current++;
@@ -136,18 +143,18 @@ export default function GameScreen({ user, difficulty, onGameEnd }: Props) {
   useEffect(() => {
     if (gameState !== "playing") return;
     const elapsed = cfg.time - timeLeft;
-    const interval = Math.max(300, 900 - elapsed * 20);
+    const { base, min, step } = SPAWN_CONFIG[difficulty];
+    const interval = Math.max(min, base - elapsed * step);
     const t = setTimeout(spawnBee, interval);
     return () => clearTimeout(t);
   }, [timeLeft, gameState, spawnBee, cfg.time]);
 
   async function handleGameEnd() {
     const finalScore = scoreRef.current;
-    const adjustedScore = finalScore === 0 && winRoll ? 1 : finalScore;
-    if (adjustedScore !== finalScore) setBonusApplied(true);
+    const adjustedScore = finalScore;
     const prize = parseFloat((adjustedScore * PRIZE_PER_POINT).toFixed(4));
-    setEndScore(adjustedScore);
-    setEndPrize(prize);
+    const fee = cfg.fee;
+    const address = await getAddress();
 
     // Submit score
     try {
@@ -160,6 +167,9 @@ export default function GameScreen({ user, difficulty, onGameEnd }: Props) {
           displayName: user.displayName,
           pfpUrl: user.pfpUrl,
           score: adjustedScore,
+          prize,
+          fee,
+          address,
           difficulty,
         }),
       });
@@ -169,7 +179,6 @@ export default function GameScreen({ user, difficulty, onGameEnd }: Props) {
 
     // Pay prize if player scored
     if (prize > 0) {
-      const address = await getAddress();
       if (address) {
         const result = await claimPrize(address, prize);
         if (result.success) {
@@ -245,8 +254,8 @@ export default function GameScreen({ user, difficulty, onGameEnd }: Props) {
   }
 
   if (gameState === "ended") {
-    const shownScore = endScore ?? scoreRef.current;
-    const finalPrize = endPrize ?? parseFloat((shownScore * PRIZE_PER_POINT).toFixed(4));
+    const shownScore = scoreRef.current;
+    const finalPrize = parseFloat((shownScore * PRIZE_PER_POINT).toFixed(4));
     return (
       <div className="min-h-dvh flex flex-col items-center justify-center p-6 text-center gap-4" style={{ background: "#1a0a00" }}>
         <div className="text-5xl">{finalPrize > 0 ? "🎉" : "😔"}</div>
@@ -269,9 +278,6 @@ export default function GameScreen({ user, difficulty, onGameEnd }: Props) {
                paymentStatus === "failed" ? "❌ Payment error" :
                "⏳ Processing..."}
             </div>
-          )}
-          {bonusApplied && (
-            <div className="mt-2 text-[11px] text-amber-400">Lucky bonus +1 pt</div>
           )}
           {paymentStatus === "failed" && paymentError && (
             <div className="mt-2 text-[11px] text-red-300 break-words">{paymentError}</div>
@@ -337,7 +343,7 @@ export default function GameScreen({ user, difficulty, onGameEnd }: Props) {
                       transition: "opacity 0.15s",
                       filter: bee.type === "fast" ? "hue-rotate(180deg)" : undefined,
                     }}>
-                    {bee.type === "bomb" ? "💣" : "🐝"}
+                    {bee.type === "bomb" ? "🐝🔴" : "🐝"}
                   </span>
                 )}
                 {effect && (

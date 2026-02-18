@@ -11,9 +11,9 @@ type Screen = "home" | "game" | "leaderboard" | "rules";
 export type Difficulty = "easy" | "medium" | "hard";
 
 export const DIFFICULTY_CONFIG = {
-  easy:   { label: "Easy",   emoji: "🟢", time: 30, maxPts: 48, fee: 0.04, color: "#16a34a" },
-  medium: { label: "Medium", emoji: "🟡", time: 25, maxPts: 64, fee: 0.05, color: "#ca8a04" },
-  hard:   { label: "Hard",   emoji: "🔴", time: 20, maxPts: 80, fee: 0.06, color: "#dc2626" },
+  easy:   { label: "Easy",   emoji: "🟢", time: 30, maxPts: 48, fee: 0.01, color: "#16a34a" },
+  medium: { label: "Medium", emoji: "🟡", time: 25, maxPts: 64, fee: 0.03, color: "#ca8a04" },
+  hard:   { label: "Hard",   emoji: "🔴", time: 20, maxPts: 80, fee: 0.05, color: "#dc2626" },
 };
 
 export const PRIZE_PER_POINT = 0.001; // USDC
@@ -150,6 +150,12 @@ export default function App() {
         <div>⚡ Fast bee → +3 pts</div>
         <div>💣 Red bee → -2 pts</div>
         <div>📖 <button onClick={() => setScreen("rules")} className="underline text-amber-600">All rules</button></div>
+      </div>
+
+      {/* Disclaimer */}
+      <div className="w-full max-w-sm text-[11px] text-amber-700 text-center leading-relaxed">
+        This game is for pure fun only. It is playable as long as there is prize pool available.
+        It could end anytime or be paused. Under construction — it may change without notice.
       </div>
 
       {/* Play button */}

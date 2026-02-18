@@ -1,25 +1,122 @@
-export interface LeaderboardEntry {
+import Redis from "ioredis";
+
+export interface GameResult {
   fid: number;
   username: string;
   displayName: string;
   pfpUrl: string;
+  address?: string;
   score: number;
+  prize: number;
+  fee: number;
   difficulty: string;
   timestamp: number;
 }
 
-const store = new Map<string, LeaderboardEntry>();
+export interface UserStats {
+  fid: number;
+  username: string;
+  displayName: string;
+  pfpUrl: string;
+  address?: string;
+  games: number;
+  wins: number;
+  net: number;
+  totalPrize: number;
+  totalFees: number;
+  lastPlayed: number;
+}
 
-export function saveScore(entry: LeaderboardEntry) {
-  const key = `${entry.fid}-${entry.difficulty}`;
-  const existing = store.get(key);
-  if (!existing || entry.score > existing.score) {
-    store.set(key, entry);
+const MAX_GAMES = 500;
+const KV_KEY = "leaderboard:games";
+const memoryStore: GameResult[] = [];
+let redis: Redis | null = null;
+
+function getRedis() {
+  if (redis) return redis;
+  const url = process.env.REDIS_URL;
+  if (!url) return null;
+  redis = new Redis(url);
+  return redis;
+}
+
+async function loadGames(): Promise<GameResult[]> {
+  const client = getRedis();
+  if (client) {
+    const raw = await client.get(KV_KEY);
+    if (typeof raw === "string") {
+      try {
+        const parsed = JSON.parse(raw);
+        return Array.isArray(parsed) ? parsed : [];
+      } catch {
+        return [];
+      }
+    }
+    return [];
+  }
+  return memoryStore;
+}
+
+async function saveGames(games: GameResult[]) {
+  const client = getRedis();
+  if (client) {
+    await client.set(KV_KEY, JSON.stringify(games));
+  } else {
+    memoryStore.length = 0;
+    memoryStore.push(...games);
   }
 }
 
-export function getLeaderboard(limit = 20): LeaderboardEntry[] {
-  return Array.from(store.values())
-    .sort((a, b) => b.score - a.score)
+export async function saveGameResult(entry: GameResult) {
+  const games = await loadGames();
+  games.push(entry);
+  if (games.length > MAX_GAMES) {
+    games.splice(0, games.length - MAX_GAMES);
+  }
+  await saveGames(games);
+}
+
+export async function getLeaderboardStats(limit = 20, difficulty?: string): Promise<UserStats[]> {
+  const games = await loadGames();
+  const filtered = difficulty && difficulty !== "all"
+    ? games.filter(g => g.difficulty === difficulty)
+    : games;
+
+  const map = new Map<number, UserStats>();
+  for (const g of filtered) {
+    const existing = map.get(g.fid);
+    const win = g.prize > g.fee;
+    if (!existing) {
+      map.set(g.fid, {
+        fid: g.fid,
+        username: g.username,
+        displayName: g.displayName,
+        pfpUrl: g.pfpUrl,
+        address: g.address,
+        games: 1,
+        wins: win ? 1 : 0,
+        net: g.prize - g.fee,
+        totalPrize: g.prize,
+        totalFees: g.fee,
+        lastPlayed: g.timestamp,
+      });
+    } else {
+      existing.games += 1;
+      existing.wins += win ? 1 : 0;
+      existing.net += g.prize - g.fee;
+      existing.totalPrize += g.prize;
+      existing.totalFees += g.fee;
+      existing.lastPlayed = Math.max(existing.lastPlayed, g.timestamp);
+      if (!existing.address && g.address) existing.address = g.address;
+    }
+  }
+
+  return Array.from(map.values())
+    .sort((a, b) =>
+      b.net - a.net ||
+      b.wins - a.wins ||
+      b.games - a.games ||
+      b.lastPlayed - a.lastPlayed
+    )
     .slice(0, limit);
 }
