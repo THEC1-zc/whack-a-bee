@@ -1,6 +1,6 @@
 "use client";
 import { useEffect, useState } from "react";
-import { type Difficulty } from "./App";
+import { DIFFICULTY_CONFIG, type Difficulty } from "./App";
 
 interface Entry {
   fid: number;
