@@ -340,9 +340,9 @@ export default function GameScreen({ user, difficulty, onGameEnd }: Props) {
     );
   }
 
-  const honeyBg = "linear-gradient(180deg, #1a0a00 0%, #2a1200 100%), url(data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSIxMjAiIGhlaWdodD0iMTA0IiB2aWV3Qm94PSIwIDAgMTIwIDEwNCI+CiAgPGRlZnM+CiAgICA8cGF0dGVybiBpZD0iaG9uZXkiIHdpZHRoPSI2MCIgaGVpZ2h0PSI1MiIgcGF0dGVyblVuaXRzPSJ1c2VyU3BhY2VPblVzZSI+CiAgICAgIDxwYXRoIGQ9Ik0xNSA0IEw0NSA0IEw2MCAyNiBMNDUgNDggTDE1IDQ4IEwwIDI2IFoiIGZpbGw9Im5vbmUiIHN0cm9rZT0icmdiYSgyNTEsMTkxLDM2LDAuMTUpIiBzdHJva2Utd2lkdGg9IjMiLz4KICAgIDwvcGF0dGVybj4KICA8L2RlZnM+CiAgPHJlY3Qgd2lkdGg9IjEyMCIgaGVpZ2h0PSIxMDQiIGZpbGw9InVybCgjaG9uZXkpIi8+Cjwvc3ZnPg==)";
+  const honeyBg = "url(/back-portrait.png)";
   return (
-    <div className="min-h-dvh flex flex-col" style={{ background: honeyBg, backgroundSize: "auto, 160px 140px" }}>
+    <div className="min-h-dvh flex flex-col" style={{ background: honeyBg, backgroundSize: "cover", backgroundPosition: "center" }}>
 
       {/* HUD */}
       <div className="flex items-center gap-3 px-4 pt-4 pb-2">
@@ -373,15 +373,22 @@ export default function GameScreen({ user, difficulty, onGameEnd }: Props) {
 
       {/* Grid */}
       <div className="flex-1 flex items-center justify-center px-4">
-        <div className="grid grid-cols-3 gap-3 w-full max-w-xs">
+        <div
+          className="grid grid-cols-3 gap-3 w-full max-w-xs"
+          style={{ touchAction: "none" }}
+        >
           {Array.from({ length: SLOTS }, (_, slot) => {
             const bee = bees.find(b => b.slot === slot && b.visible);
             const effect = hitEffects.find(e => e.slot === slot);
             return (
               <div
                 key={slot}
-                onClick={() => bee && whackBee(bee)}
-                className="relative aspect-square rounded-2xl flex items-center justify-center cursor-pointer active:scale-90 transition-transform"
+                onPointerDown={() => bee && whackBee(bee)}
+                onTouchStart={(e) => {
+                  e.preventDefault();
+                  if (bee) whackBee(bee);
+                }}
+                className="relative aspect-square rounded-2xl flex items-center justify-center cursor-pointer active:scale-90 transition-transform select-none"
                 style={{
                   background: bee
                     ? (bee.type === "bomb" ? "#7f1d1d"
