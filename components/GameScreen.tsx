@@ -133,7 +133,7 @@ export default function GameScreen({ user, difficulty, onGameEnd }: Props) {
       console.error("Submit score error:", e);
     }
 
-    setPaymentStatus("paid"); // placeholder — pagamento reale da implementare
+    setPaymentStatus("paid"); // placeholder — real payment to be implemented
     setTimeout(() => onGameEnd(finalScore, prize), 3000);
   }
 
@@ -158,10 +158,10 @@ export default function GameScreen({ user, difficulty, onGameEnd }: Props) {
         <div className="text-5xl">{finalPrize > 0 ? "🎉" : "😔"}</div>
         <h2 className="text-3xl font-black text-white">Game Over</h2>
         <div className="text-6xl font-black text-amber-400">{scoreRef.current}</div>
-        <div className="text-amber-600 text-sm">punti su {cfg.maxPts} max</div>
+        <div className="text-amber-600 text-sm">points out of {cfg.maxPts} max</div>
 
         <div className="w-full max-w-xs rounded-2xl p-4 border border-amber-800" style={{ background: "#2a1500" }}>
-          <div className="text-xs text-amber-600 uppercase tracking-widest mb-2">Premio</div>
+          <div className="text-xs text-amber-600 uppercase tracking-widest mb-2">Prize</div>
           <div className="text-3xl font-black text-amber-400">{finalPrize.toFixed(3)} USDC</div>
           <div className="text-xs text-amber-700 mt-1">{scoreRef.current} pt × 0.001 USDC</div>
 
@@ -171,14 +171,14 @@ export default function GameScreen({ user, difficulty, onGameEnd }: Props) {
               paymentStatus === "failed" ? "bg-red-900 text-red-300" :
               "bg-amber-900 text-amber-300"
             }`}>
-              {paymentStatus === "paid" ? "✅ Pagamento in elaborazione..." :
-               paymentStatus === "failed" ? "❌ Errore pagamento" :
-               "⏳ Elaborazione..."}
+              {paymentStatus === "paid" ? "✅ Payment processing..." :
+               paymentStatus === "failed" ? "❌ Payment error" :
+               "⏳ Processing..."}
             </div>
           )}
         </div>
 
-        <div className="text-xs text-amber-800">Tornando alla home...</div>
+        <div className="text-xs text-amber-800">Returning to home...</div>
       </div>
     );
   }
@@ -189,7 +189,7 @@ export default function GameScreen({ user, difficulty, onGameEnd }: Props) {
       {/* HUD */}
       <div className="flex items-center gap-3 px-4 pt-4 pb-2">
         <div className="text-center min-w-[60px]">
-          <div className="text-xs text-amber-600 uppercase">Punti</div>
+          <div className="text-xs text-amber-600 uppercase">Score</div>
           <div className="text-2xl font-black text-amber-400">{score}</div>
         </div>
 
@@ -202,7 +202,7 @@ export default function GameScreen({ user, difficulty, onGameEnd }: Props) {
         </div>
 
         <div className="text-center min-w-[60px]">
-          <div className="text-xs text-amber-600 uppercase">Premio</div>
+          <div className="text-xs text-amber-600 uppercase">Prize</div>
           <div className="text-lg font-black text-green-400">{prize.toFixed(3)}</div>
           <div className="text-xs text-green-700">USDC</div>
         </div>

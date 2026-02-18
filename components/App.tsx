@@ -61,7 +61,7 @@ export default function App() {
           <div className="text-amber-400 text-xs">@{user.username}</div>
         </div>
         <div className="ml-auto flex gap-3">
-          <button onClick={() => setScreen("rules")} className="text-2xl" title="Regole">📖</button>
+          <button onClick={() => setScreen("rules")} className="text-2xl" title="Rules">📖</button>
           <button onClick={() => setScreen("leaderboard")} className="text-2xl" title="Leaderboard">🏆</button>
         </div>
       </div>
@@ -76,15 +76,15 @@ export default function App() {
       <div className="w-full max-w-sm rounded-2xl p-4 border"
         style={{ background: "#2a1500", borderColor: poolEmpty ? "#dc2626" : "#92400e" }}>
         <div className="text-xs text-amber-500 uppercase tracking-widest mb-1 text-center">
-          {poolEmpty ? "⚠️ Prize Pool Esaurito" : "💰 Prize Pool"}
+          {poolEmpty ? "⚠️ Prize Pool Empty" : "💰 Prize Pool"}
         </div>
         <div className={`text-3xl font-black text-center ${poolEmpty ? "text-red-400" : "text-amber-400"}`}>
           {poolBalance.toFixed(3)} USDC
         </div>
         {poolEmpty && (
-          <div className="text-red-400 text-xs text-center mt-1">Il gioco è temporaneamente sospeso</div>
+          <div className="text-red-400 text-xs text-center mt-1">Game temporarily suspended</div>
         )}
-        <div className="text-xs text-amber-700 text-center mt-1">Premio: 0.001 USDC per punto</div>
+        <div className="text-xs text-amber-700 text-center mt-1">Reward: 0.001 USDC per point</div>
       </div>
 
       {/* Last result */}
@@ -93,15 +93,15 @@ export default function App() {
           lastResult.prize > 0 ? "border-green-600 bg-green-950" : "border-amber-800 bg-amber-950"
         }`}>
           {lastResult.prize > 0
-            ? <span className="text-green-300 font-bold">🎉 Hai vinto {lastResult.prize.toFixed(3)} USDC con {lastResult.score} punti!</span>
-            : <span className="text-amber-600 font-bold">Nessun punto — riprova! ({lastResult.score} pt)</span>
+            ? <span className="text-green-300 font-bold">🎉 You won {lastResult.prize.toFixed(3)} USDC with {lastResult.score} points!</span>
+            : <span className="text-amber-600 font-bold">No points scored — try again! ({lastResult.score} pts)</span>
           }
         </div>
       )}
 
       {/* Difficulty selector */}
       <div className="w-full max-w-sm">
-        <div className="text-xs text-amber-600 uppercase tracking-widest mb-2 text-center">Difficoltà</div>
+        <div className="text-xs text-amber-600 uppercase tracking-widest mb-2 text-center">Difficulty</div>
         <div className="grid grid-cols-3 gap-2">
           {(Object.entries(DIFFICULTY_CONFIG) as [Difficulty, typeof DIFFICULTY_CONFIG.easy][]).map(([key, c]) => (
             <button key={key} onClick={() => setDifficulty(key)}
@@ -121,10 +121,10 @@ export default function App() {
 
       {/* Quick rules */}
       <div className="w-full max-w-sm text-xs text-amber-800 grid grid-cols-2 gap-1">
-        <div>🐝 Ape normale → +1 pt</div>
-        <div>⚡ Ape veloce → +3 pt</div>
-        <div>💣 Ape rossa → -2 pt</div>
-        <div>📖 <button onClick={() => setScreen("rules")} className="underline text-amber-600">Tutte le regole</button></div>
+        <div>🐝 Normal bee → +1 pt</div>
+        <div>⚡ Fast bee → +3 pts</div>
+        <div>💣 Red bee → -2 pts</div>
+        <div>📖 <button onClick={() => setScreen("rules")} className="underline text-amber-600">All rules</button></div>
       </div>
 
       {/* Play button */}
@@ -137,7 +137,7 @@ export default function App() {
           boxShadow: poolEmpty ? "none" : "0 8px 30px rgba(251,191,36,0.4)"
         }}
       >
-        {poolEmpty ? "Pool Esaurito 😔" : `GIOCA — ${cfg.fee} USDC 🐝`}
+        {poolEmpty ? "Pool Empty 😔" : `PLAY — ${cfg.fee} USDC 🐝`}
       </button>
     </div>
   );
@@ -148,8 +148,8 @@ function NotConnected() {
     <div className="min-h-dvh flex flex-col items-center justify-center p-6 text-center" style={{ background: "#1a0a00" }}>
       <div className="text-6xl mb-4">🐝</div>
       <h1 className="text-2xl font-black text-white mb-2">Whack-a-Bee</h1>
-      <p className="text-amber-400 text-sm mb-6">Apri questa app da Warpcast per giocare!</p>
-      <div className="text-xs text-amber-800 max-w-xs">Cerca "Whack-a-Bee" su Warpcast o aprila tramite un cast.</div>
+      <p className="text-amber-400 text-sm mb-6">Open this app from Warpcast to play!</p>
+      <div className="text-xs text-amber-800 max-w-xs">Search "Whack-a-Bee" on Warpcast or open it via a cast.</div>
     </div>
   );
 }

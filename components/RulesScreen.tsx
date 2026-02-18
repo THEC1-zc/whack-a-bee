@@ -10,27 +10,27 @@ export default function RulesScreen({ onBack }: { onBack: () => void }) {
       {/* Header */}
       <div className="flex items-center gap-3 px-4 pt-5 pb-3 border-b border-amber-950">
         <button onClick={onBack} className="text-amber-400 font-bold text-sm">← Back</button>
-        <h2 className="text-xl font-black text-white flex-1 text-center">📖 Regole & Prezzi</h2>
+        <h2 className="text-xl font-black text-white flex-1 text-center">📖 Rules & Pricing</h2>
         <div className="w-12" />
       </div>
 
       <div className="flex-1 overflow-y-auto px-4 py-4 space-y-4">
 
         {/* Come si gioca */}
-        <Section title="🎮 Come si gioca">
+        <Section title="🎮 How to Play">
           <p className="text-amber-200 text-sm leading-relaxed">
-            Api compaiono a caso in una griglia 3×3. Tocca le api prima che spariscano per guadagnare punti.
-            Attenzione alle api rosse — ti tolgono punti!
+            Bees appear randomly on a 3×3 grid. Tap them before they disappear to score points.
+            Watch out for red bees — they cost you points!
           </p>
           <div className="mt-3 space-y-2">
-            <BeeRule emoji="🐝" label="Ape normale" desc="Appare per 850–1500ms" points="+1 punto" color="#fbbf24" />
-            <BeeRule emoji="🐝" label="Ape veloce" desc="Appare per 650–1200ms, più rapida" points="+3 punti" color="#3b82f6" fast />
-            <BeeRule emoji="💣" label="Ape rossa" desc="Evitala! Ti penalizza" points="-2 punti" color="#dc2626" />
+            <BeeRule emoji="🐝" label="Normal bee" desc="Visible for 850–1500ms" points="+1 point" color="#fbbf24" />
+            <BeeRule emoji="🐝" label="Fast bee" desc="Visible for 650–1200ms, moves faster" points="+3 points" color="#3b82f6" fast />
+            <BeeRule emoji="💣" label="Red bee" desc="Avoid it! Costs you points" points="-2 points" color="#dc2626" />
           </div>
         </Section>
 
         {/* Difficoltà */}
-        <Section title="⚙️ Difficoltà">
+        <Section title="⚙️ Difficulty">
           <div className="space-y-2">
             {(Object.entries(DIFFICULTY_CONFIG) as any[]).map(([key, cfg]: any) => (
               <div key={key} className="rounded-xl p-3 border" style={{ background: "#0f0800", borderColor: cfg.color + "55" }}>
@@ -42,9 +42,9 @@ export default function RulesScreen({ onBack }: { onBack: () => void }) {
                   <span className="font-black text-lg" style={{ color: cfg.color }}>{cfg.fee} USDC</span>
                 </div>
                 <div className="grid grid-cols-3 gap-2 text-center">
-                  <Stat label="Durata" value={`${cfg.time}s`} />
-                  <Stat label="Max punti" value={`${cfg.maxPts} pt`} />
-                  <Stat label="Premio max" value={`${(cfg.maxPts * PRIZE_PER_POINT).toFixed(3)} USDC`} />
+                  <Stat label="Duration" value={`${cfg.time}s`} />
+                  <Stat label="Max points" value={`${cfg.maxPts} pts`} />
+                  <Stat label="Max prize" value={`${(cfg.maxPts * PRIZE_PER_POINT).toFixed(3)} USDC`} />
                 </div>
               </div>
             ))}
@@ -52,29 +52,29 @@ export default function RulesScreen({ onBack }: { onBack: () => void }) {
         </Section>
 
         {/* Premi */}
-        <Section title="💰 Sistema Premi">
+        <Section title="💰 Prize System">
           <div className="space-y-3">
             <div className="rounded-xl p-3 border border-green-900" style={{ background: "#0a1f0a" }}>
-              <div className="text-green-400 font-bold text-sm mb-1">Premio per punto</div>
+              <div className="text-green-400 font-bold text-sm mb-1">Reward per point</div>
               <div className="text-green-300 text-2xl font-black">{PRIZE_PER_POINT} USDC</div>
-              <div className="text-green-700 text-xs mt-1">per ogni punto segnato</div>
+              <div className="text-green-700 text-xs mt-1">for each point scored</div>
             </div>
 
             <p className="text-amber-700 text-xs leading-relaxed">
-              Il premio viene calcolato automaticamente al termine della partita moltiplicando i punti ottenuti per {PRIZE_PER_POINT} USDC.
-              Il pagamento avviene sul tuo wallet Farcaster connesso.
+              The prize is automatically calculated at the end of each game by multiplying your score by {PRIZE_PER_POINT} USDC.
+              Payment is sent to your connected Farcaster wallet.
             </p>
 
             <div className="rounded-xl p-3 border border-amber-900" style={{ background: "#1f1000" }}>
-              <div className="text-amber-500 text-xs uppercase tracking-widest mb-2">Esempio premi</div>
+              <div className="text-amber-500 text-xs uppercase tracking-widest mb-2">Prize examples</div>
               <div className="space-y-1">
                 {[
-                  { pts: 20, mode: "Easy" },
-                  { pts: 40, mode: "Medium" },
-                  { pts: 60, mode: "Hard" },
+                  { pts: 20, mode: "Easy", diff: "Easy" },
+                  { pts: 40, mode: "Medium", diff: "Medium" },
+                  { pts: 60, mode: "Hard", diff: "Hard" },
                 ].map(ex => (
                   <div key={ex.pts} className="flex justify-between text-sm">
-                    <span className="text-amber-700">{ex.pts} punti ({ex.mode})</span>
+                    <span className="text-amber-700">{ex.pts} pts ({ex.mode})</span>
                     <span className="text-amber-400 font-bold">{(ex.pts * PRIZE_PER_POINT).toFixed(3)} USDC</span>
                   </div>
                 ))}
@@ -86,18 +86,18 @@ export default function RulesScreen({ onBack }: { onBack: () => void }) {
         {/* Prize Pool */}
         <Section title="🏦 Prize Pool">
           <p className="text-amber-200 text-sm leading-relaxed mb-3">
-            Tutti i premi vengono pagati da un pool dedicato. Se il saldo del pool scende sotto <span className="text-amber-400 font-bold">0.10 USDC</span>, il gioco viene temporaneamente sospeso fino alla ricarica.
+            All prizes are paid from a dedicated pool. If the balance drops below <span className="text-amber-400 font-bold">0.10 USDC</span>, the game is temporarily suspended until the pool is refilled.
           </p>
           <div className="rounded-xl p-3 border border-amber-900" style={{ background: "#1f1000" }}>
-            <div className="text-amber-500 text-xs uppercase tracking-widest mb-1">Wallet prize pool</div>
+            <div className="text-amber-500 text-xs uppercase tracking-widest mb-1">Prize pool wallet</div>
             <div className="text-amber-300 font-mono text-sm break-all">{PRIZE_WALLET}</div>
           </div>
         </Section>
 
         {/* Fee */}
-        <Section title="💳 Pagamento Fee">
+        <Section title="💳 Game Fee">
           <p className="text-amber-200 text-sm leading-relaxed mb-3">
-            La fee viene addebitata prima di ogni partita tramite il tuo wallet Farcaster. Il pagamento avviene sulla rete <span className="text-amber-400 font-bold">Base</span> in <span className="text-amber-400 font-bold">USDC</span>.
+            The fee is charged before each game via your Farcaster wallet. Payment is made on the <span className="text-amber-400 font-bold">Base</span> network in <span className="text-amber-400 font-bold">USDC</span>.
           </p>
           <div className="grid grid-cols-3 gap-2 text-center">
             <div className="rounded-xl p-2 border border-green-900" style={{ background: "#0a1a0a" }}>
@@ -117,18 +117,18 @@ export default function RulesScreen({ onBack }: { onBack: () => void }) {
             </div>
           </div>
           <p className="text-amber-800 text-xs mt-3">
-            ⚠️ Le fee non sono rimborsabili. Assicurati di avere USDC su Base prima di giocare.
+            ⚠️ Fees are non-refundable. Make sure you have USDC on Base before playing.
           </p>
         </Section>
 
         {/* Fair play */}
         <Section title="⚖️ Fair Play">
           <ul className="text-amber-700 text-xs space-y-1 leading-relaxed">
-            <li>• Il gioco è completamente on-chain e trasparente</li>
-            <li>• I punteggi vengono registrati sul leaderboard pubblico</li>
-            <li>• Ogni wallet può giocare quante partite vuole</li>
-            <li>• Il prize pool è pubblicamente verificabile</li>
-            <li>• In caso di errori tecnici la fee viene rimborsata</li>
+            <li>• The game is fully on-chain and transparent</li>
+            <li>• Scores are recorded on the public leaderboard</li>
+            <li>• Any wallet can play unlimited games</li>
+            <li>• The prize pool is publicly verifiable</li>
+            <li>• In case of technical errors, the fee will be refunded</li>
           </ul>
         </Section>
 

@@ -49,7 +49,7 @@ export default function LeaderboardScreen({ onBack }: { onBack: () => void }) {
               borderColor: filter === f ? "#fbbf24" : "#3d1a00",
             }}
           >
-            {f === "all" ? "Tutti" : DIFFICULTY_CONFIG[f].emoji + " " + DIFFICULTY_CONFIG[f].label}
+            {f === "all" ? "All" : DIFFICULTY_CONFIG[f].emoji + " " + DIFFICULTY_CONFIG[f].label}
           </button>
         ))}
       </div>
@@ -58,12 +58,12 @@ export default function LeaderboardScreen({ onBack }: { onBack: () => void }) {
         {loading ? (
           <div className="text-center text-amber-600 py-10">
             <div className="text-3xl animate-bounce">🐝</div>
-            <div className="text-sm mt-2">Caricamento...</div>
+            <div className="text-sm mt-2">Loading...</div>
           </div>
         ) : filtered.length === 0 ? (
           <div className="text-center text-amber-700 py-10">
             <div className="text-3xl">😔</div>
-            <div className="text-sm mt-2">Nessun punteggio ancora.</div>
+            <div className="text-sm mt-2">No scores yet.</div>
           </div>
         ) : (
           filtered.map((entry, i) => {
