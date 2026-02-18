@@ -7,7 +7,7 @@ import { payGameFee, claimPrize, getAddress } from "@/lib/payments";
 interface Bee {
   id: number;
   slot: number;
-  type: "normal" | "fast" | "bomb";
+  type: "normal" | "fast" | "bomb" | "super";
   visible: boolean;
   hit: boolean;
 }
@@ -32,6 +32,10 @@ const SPAWN_CONFIG = {
   hard: { base: 720, min: 380, step: 22 },
 } as const;
 
+const SUPER_BEE_CHANCE_PER_GAME = 0.025;
+const SUPER_BEE_BONUS = 0.1; // USDC
+const HIGH_PAYOUT_CHANCE = 0.10; // 10% of games can reach 2x fee
+
 export default function GameScreen({ user, difficulty, onGameEnd }: Props) {
   const cfg = DIFFICULTY_CONFIG[difficulty];
   const [bees, setBees] = useState<Bee[]>([]);
@@ -45,10 +49,23 @@ export default function GameScreen({ user, difficulty, onGameEnd }: Props) {
   const [feeStatus, setFeeStatus] = useState<"waiting" | "paying" | "paid" | "failed">("waiting");
   const [feeError, setFeeError] = useState<string | null>(null);
   const [gameStarted, setGameStarted] = useState(false);
+  const [superBonus, setSuperBonus] = useState(0);
 
   const beeIdRef = useRef(0);
   const scoreRef = useRef(0);
   const effectIdRef = useRef(0);
+  const bonusRef = useRef(0);
+  const superSpawnedRef = useRef(false);
+  const shouldSpawnSuperRef = useRef(Math.random() < SUPER_BEE_CHANCE_PER_GAME);
+  const capScoreRef = useRef<number>(
+    Math.max(
+      1,
+      Math.min(
+        cfg.maxPts,
+        Math.floor(((Math.random() < HIGH_PAYOUT_CHANCE ? 2.0 : 1.5) * cfg.fee) / PRIZE_PER_POINT)
+      )
+    )
+  );
 
   const addHitEffect = useCallback((slot: number, text: string) => {
     const id = effectIdRef.current++;
@@ -56,30 +73,38 @@ export default function GameScreen({ user, difficulty, onGameEnd }: Props) {
     setTimeout(() => setHitEffects(prev => prev.filter(e => e.id !== id)), 500);
   }, []);
 
-  const spawnBee = useCallback(() => {
+  const spawnBees = useCallback((count: number) => {
     setBees(prev => {
-      const usedSlots = new Set(prev.filter(b => b.visible && !b.hit).map(b => b.slot));
-      const available = Array.from({ length: SLOTS }, (_, i) => i).filter(s => !usedSlots.has(s));
-      if (available.length === 0) return prev;
+      let next = prev.filter(b => b.visible);
+      const usedSlots = new Set(next.filter(b => b.visible && !b.hit).map(b => b.slot));
+      for (let i = 0; i < count; i += 1) {
+        const available = Array.from({ length: SLOTS }, (_, idx) => idx).filter(s => !usedSlots.has(s));
+        if (available.length === 0) break;
 
-      const slot = available[Math.floor(Math.random() * available.length)];
-      const rand = Math.random();
+        const slot = available[Math.floor(Math.random() * available.length)];
+        const rand = Math.random();
 
-      // More red bees on harder difficulties
-      const bombChance = BEE_CHANCES[difficulty].bomb;
-      const fastChance = BEE_CHANCES[difficulty].fast;
+        const bombChance = BEE_CHANCES[difficulty].bomb;
+        const fastChance = BEE_CHANCES[difficulty].fast;
 
-      const type: Bee["type"] = rand < bombChance ? "bomb" : rand < bombChance + fastChance ? "fast" : "normal";
-      const id = beeIdRef.current++;
+        let type: Bee["type"] = rand < bombChance ? "bomb" : rand < bombChance + fastChance ? "fast" : "normal";
+        if (shouldSpawnSuperRef.current && !superSpawnedRef.current) {
+          type = "super";
+          superSpawnedRef.current = true;
+        }
 
-      const duration = difficulty === "easy"
-        ? (type === "fast" ? 1200 : 1500)
-        : difficulty === "medium"
-        ? (type === "fast" ? 900 : 1100)
-        : (type === "fast" ? 650 : 850);
+        const id = beeIdRef.current++;
+        const duration = difficulty === "easy"
+          ? (type === "fast" ? 1200 : 1500)
+          : difficulty === "medium"
+          ? (type === "fast" ? 900 : 1100)
+          : (type === "fast" ? 650 : 850);
 
-      setTimeout(() => setBees(p => p.filter(b => b.id !== id)), duration);
-      return [...prev.filter(b => b.visible), { id, slot, type, visible: true, hit: false }];
+        setTimeout(() => setBees(p => p.filter(b => b.id !== id)), duration);
+        next = [...next, { id, slot, type, visible: true, hit: false }];
+        usedSlots.add(slot);
+      }
+      return next;
     });
   }, [difficulty]);
 
@@ -93,9 +118,15 @@ export default function GameScreen({ user, difficulty, onGameEnd }: Props) {
     if (bee.type === "normal") { points = 1; text = "+1"; }
     else if (bee.type === "fast") { points = 3; text = "⚡ +3"; }
     else if (bee.type === "bomb") { points = -2; text = "💥 -2"; }
+    else if (bee.type === "super") {
+      points = 1;
+      text = "💜 +0.10";
+      bonusRef.current = parseFloat((bonusRef.current + SUPER_BEE_BONUS).toFixed(3));
+      setSuperBonus(bonusRef.current);
+    }
 
     addHitEffect(bee.slot, text);
-    scoreRef.current = Math.max(0, Math.min(scoreRef.current + points, cfg.maxPts));
+    scoreRef.current = Math.max(0, Math.min(scoreRef.current + points, capScoreRef.current as number));
     setScore(scoreRef.current);
   }, [addHitEffect, cfg.maxPts]);
 
@@ -145,14 +176,28 @@ export default function GameScreen({ user, difficulty, onGameEnd }: Props) {
     const elapsed = cfg.time - timeLeft;
     const { base, min, step } = SPAWN_CONFIG[difficulty];
     const interval = Math.max(min, base - elapsed * step);
-    const t = setTimeout(spawnBee, interval);
+    const t = setTimeout(() => {
+      const r = Math.random();
+      let count = 1;
+      if (difficulty === "medium") {
+        count = r < 0.10 ? 3 : r < 0.40 ? 2 : 1;
+      } else if (difficulty === "hard") {
+        if (r < 0.15) count = 1;
+        else if (r < 0.40) count = 2;
+        else if (r < 0.70) count = 3;
+        else if (r < 0.90) count = 4;
+        else count = 5;
+      }
+      spawnBees(count);
+    }, interval);
     return () => clearTimeout(t);
-  }, [timeLeft, gameState, spawnBee, cfg.time]);
+  }, [timeLeft, gameState, spawnBees, cfg.time, difficulty]);
 
   async function handleGameEnd() {
     const finalScore = scoreRef.current;
     const adjustedScore = finalScore;
-    const prize = parseFloat((adjustedScore * PRIZE_PER_POINT).toFixed(4));
+    const prizeBase = adjustedScore * PRIZE_PER_POINT;
+    const prize = parseFloat((prizeBase + bonusRef.current).toFixed(4));
     const fee = cfg.fee;
     const address = await getAddress();
 
@@ -202,7 +247,7 @@ export default function GameScreen({ user, difficulty, onGameEnd }: Props) {
 
   const timerPercent = (timeLeft / cfg.time) * 100;
   const timerColor = timeLeft > 8 ? "#fbbf24" : "#ef4444";
-  const prize = parseFloat((score * PRIZE_PER_POINT).toFixed(4));
+  const prize = parseFloat(((score * PRIZE_PER_POINT) + bonusRef.current).toFixed(4));
 
   // Fee payment screen
   if (feeStatus === "waiting" || feeStatus === "paying") {
@@ -255,7 +300,7 @@ export default function GameScreen({ user, difficulty, onGameEnd }: Props) {
 
   if (gameState === "ended") {
     const shownScore = scoreRef.current;
-    const finalPrize = parseFloat((shownScore * PRIZE_PER_POINT).toFixed(4));
+    const finalPrize = parseFloat(((shownScore * PRIZE_PER_POINT) + bonusRef.current).toFixed(4));
     return (
       <div className="min-h-dvh flex flex-col items-center justify-center p-6 text-center gap-4" style={{ background: "#1a0a00" }}>
         <div className="text-5xl">{finalPrize > 0 ? "🎉" : "😔"}</div>
@@ -267,6 +312,9 @@ export default function GameScreen({ user, difficulty, onGameEnd }: Props) {
           <div className="text-xs text-amber-600 uppercase tracking-widest mb-2">Prize</div>
           <div className="text-3xl font-black text-amber-400">{finalPrize.toFixed(3)} USDC</div>
           <div className="text-xs text-amber-700 mt-1">{shownScore} pt × 0.001 USDC</div>
+          {bonusRef.current > 0 && (
+            <div className="text-xs text-purple-300 mt-1">Super bonus +{bonusRef.current.toFixed(3)} USDC</div>
+          )}
 
           {finalPrize > 0 && (
             <div className={`mt-3 text-xs font-bold rounded-lg p-2 ${
@@ -331,8 +379,20 @@ export default function GameScreen({ user, difficulty, onGameEnd }: Props) {
                 onClick={() => bee && whackBee(bee)}
                 className="relative aspect-square rounded-2xl flex items-center justify-center cursor-pointer active:scale-90 transition-transform"
                 style={{
-                  background: bee ? (bee.type === "bomb" ? "#7f1d1d" : bee.type === "fast" ? "#1e3a5f" : "#2a1500") : "#1a0a00",
-                  border: `2px solid ${bee ? (bee.type === "bomb" ? "#dc2626" : bee.type === "fast" ? "#3b82f6" : "#92400e") : "#2a1000"}`,
+                  background: bee
+                    ? (bee.type === "bomb" ? "#7f1d1d"
+                      : bee.type === "fast" ? "#1e3a5f"
+                      : bee.type === "super" ? "#2a1540"
+                      : "#2a1500")
+                    : "#1a0a00",
+                  border: `2px solid ${
+                    bee
+                      ? (bee.type === "bomb" ? "#dc2626"
+                        : bee.type === "fast" ? "#3b82f6"
+                        : bee.type === "super" ? "#a855f7"
+                        : "#92400e")
+                      : "#2a1000"
+                  }`,
                   boxShadow: bee ? "0 0 12px rgba(251,191,36,0.25)" : "none",
                 }}
               >
@@ -341,9 +401,13 @@ export default function GameScreen({ user, difficulty, onGameEnd }: Props) {
                     style={{
                       opacity: bee.hit ? 0 : 1,
                       transition: "opacity 0.15s",
-                      filter: bee.type === "fast" ? "hue-rotate(180deg)" : undefined,
+                      filter:
+                        bee.type === "fast" ? "hue-rotate(180deg)" :
+                        bee.type === "bomb" ? "hue-rotate(330deg) saturate(2)" :
+                        bee.type === "super" ? "hue-rotate(250deg) saturate(2)" :
+                        undefined,
                     }}>
-                    {bee.type === "bomb" ? "🐝🔴" : "🐝"}
+                    {"🐝"}
                   </span>
                 )}
                 {effect && (

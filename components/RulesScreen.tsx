@@ -25,7 +25,7 @@ export default function RulesScreen({ onBack }: { onBack: () => void }) {
           <div className="mt-3 space-y-2">
             <BeeRule emoji="🐝" label="Normal bee" desc="Visible for 850–1500ms" points="+1 point" color="#fbbf24" />
             <BeeRule emoji="🐝" label="Fast bee" desc="Visible for 650–1200ms, moves faster" points="+3 points" color="#3b82f6" fast />
-            <BeeRule emoji="💣" label="Red bee" desc="Avoid it! Costs you points" points="-2 points" color="#dc2626" />
+            <BeeRule emoji="🔴" label="Red bee" desc="Avoid it! Costs you points" points="-2 points" color="#dc2626" />
           </div>
         </Section>
 
