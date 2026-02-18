@@ -21,15 +21,15 @@ interface Props {
 const SLOTS = 9;
 
 const BEE_CHANCES = {
-  easy: { bomb: 0.08, fast: 0.20 },
+  easy: { bomb: 0.07, fast: 0.22 },
   medium: { bomb: 0.10, fast: 0.25 },
   hard: { bomb: 0.18, fast: 0.30 },
 } as const;
 
 const SPAWN_CONFIG = {
-  easy: { base: 950, min: 500, step: 15 },
-  medium: { base: 850, min: 450, step: 18 },
-  hard: { base: 750, min: 400, step: 22 },
+  easy: { base: 900, min: 450, step: 16 },
+  medium: { base: 820, min: 420, step: 18 },
+  hard: { base: 720, min: 380, step: 22 },
 } as const;
 
 export default function GameScreen({ user, difficulty, onGameEnd }: Props) {
