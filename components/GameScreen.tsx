@@ -19,6 +19,7 @@ interface Props {
 }
 
 const SLOTS = 9;
+const WIN_CHANCE = { easy: 0.60, medium: 0.55, hard: 0.50 } as const;
 
 export default function GameScreen({ user, difficulty, onGameEnd }: Props) {
   const cfg = DIFFICULTY_CONFIG[difficulty];
@@ -33,6 +34,10 @@ export default function GameScreen({ user, difficulty, onGameEnd }: Props) {
   const [feeStatus, setFeeStatus] = useState<"waiting" | "paying" | "paid" | "failed">("waiting");
   const [feeError, setFeeError] = useState<string | null>(null);
   const [gameStarted, setGameStarted] = useState(false);
+  const [bonusApplied, setBonusApplied] = useState(false);
+  const [endScore, setEndScore] = useState<number | null>(null);
+  const [endPrize, setEndPrize] = useState<number | null>(null);
+  const [winRoll] = useState(() => Math.random() < WIN_CHANCE[difficulty]);
 
   const beeIdRef = useRef(0);
   const scoreRef = useRef(0);
@@ -54,8 +59,8 @@ export default function GameScreen({ user, difficulty, onGameEnd }: Props) {
       const rand = Math.random();
 
       // More bombs/fast bees on harder difficulties
-      const bombChance = difficulty === "easy" ? 0.10 : difficulty === "medium" ? 0.15 : 0.20;
-      const fastChance = difficulty === "easy" ? 0.15 : difficulty === "medium" ? 0.25 : 0.35;
+      const bombChance = difficulty === "easy" ? 0.06 : difficulty === "medium" ? 0.10 : 0.14;
+      const fastChance = difficulty === "easy" ? 0.20 : difficulty === "medium" ? 0.26 : 0.30;
 
       const type: Bee["type"] = rand < bombChance ? "bomb" : rand < bombChance + fastChance ? "fast" : "normal";
       const id = beeIdRef.current++;
@@ -138,7 +143,11 @@ export default function GameScreen({ user, difficulty, onGameEnd }: Props) {
 
   async function handleGameEnd() {
     const finalScore = scoreRef.current;
-    const prize = parseFloat((finalScore * PRIZE_PER_POINT).toFixed(4));
+    const adjustedScore = finalScore === 0 && winRoll ? 1 : finalScore;
+    if (adjustedScore !== finalScore) setBonusApplied(true);
+    const prize = parseFloat((adjustedScore * PRIZE_PER_POINT).toFixed(4));
+    setEndScore(adjustedScore);
+    setEndPrize(prize);
 
     // Submit score
     try {
@@ -150,7 +159,7 @@ export default function GameScreen({ user, difficulty, onGameEnd }: Props) {
           username: user.username,
           displayName: user.displayName,
           pfpUrl: user.pfpUrl,
-          score: finalScore,
+          score: adjustedScore,
           difficulty,
         }),
       });
@@ -179,7 +188,7 @@ export default function GameScreen({ user, difficulty, onGameEnd }: Props) {
       setPaymentError(null);
     }
 
-    setTimeout(() => onGameEnd(finalScore, prize), 3000);
+    setTimeout(() => onGameEnd(adjustedScore, prize), 3000);
   }
 
   const timerPercent = (timeLeft / cfg.time) * 100;
@@ -236,18 +245,19 @@ export default function GameScreen({ user, difficulty, onGameEnd }: Props) {
   }
 
   if (gameState === "ended") {
-    const finalPrize = parseFloat((scoreRef.current * PRIZE_PER_POINT).toFixed(4));
+    const shownScore = endScore ?? scoreRef.current;
+    const finalPrize = endPrize ?? parseFloat((shownScore * PRIZE_PER_POINT).toFixed(4));
     return (
       <div className="min-h-dvh flex flex-col items-center justify-center p-6 text-center gap-4" style={{ background: "#1a0a00" }}>
         <div className="text-5xl">{finalPrize > 0 ? "🎉" : "😔"}</div>
         <h2 className="text-3xl font-black text-white">Game Over</h2>
-        <div className="text-6xl font-black text-amber-400">{scoreRef.current}</div>
+        <div className="text-6xl font-black text-amber-400">{shownScore}</div>
         <div className="text-amber-600 text-sm">points out of {cfg.maxPts} max</div>
 
         <div className="w-full max-w-xs rounded-2xl p-4 border border-amber-800" style={{ background: "#2a1500" }}>
           <div className="text-xs text-amber-600 uppercase tracking-widest mb-2">Prize</div>
           <div className="text-3xl font-black text-amber-400">{finalPrize.toFixed(3)} USDC</div>
-          <div className="text-xs text-amber-700 mt-1">{scoreRef.current} pt × 0.001 USDC</div>
+          <div className="text-xs text-amber-700 mt-1">{shownScore} pt × 0.001 USDC</div>
 
           {finalPrize > 0 && (
             <div className={`mt-3 text-xs font-bold rounded-lg p-2 ${
@@ -259,6 +269,9 @@ export default function GameScreen({ user, difficulty, onGameEnd }: Props) {
                paymentStatus === "failed" ? "❌ Payment error" :
                "⏳ Processing..."}
             </div>
+          )}
+          {bonusApplied && (
+            <div className="mt-2 text-[11px] text-amber-400">Lucky bonus +1 pt</div>
           )}
           {paymentStatus === "failed" && paymentError && (
             <div className="mt-2 text-[11px] text-red-300 break-words">{paymentError}</div>
