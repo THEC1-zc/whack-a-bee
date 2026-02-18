@@ -1,6 +1,10 @@
 // USDC on Base
 export const USDC_ADDRESS = "0x833589fCD6eDb6E08f4c7C32D4f71b54bdA02913" as const;
-export const PRIZE_WALLET = "0xFd144C774582a450a3F578ae742502ff11Ff92Df" as const;
+const ENV_PRIZE_WALLET = process.env.NEXT_PUBLIC_PRIZE_WALLET_ADDRESS as string | undefined;
+export const PRIZE_WALLET =
+  ((ENV_PRIZE_WALLET && ENV_PRIZE_WALLET !== "undefined")
+    ? (ENV_PRIZE_WALLET as `0x${string}`)
+    : ("0xFd144C774582a450a3F578ae742502ff11Ff92Df" as `0x${string}`));
 
 // USDC has 6 decimals
 export const USDC_DECIMALS = 6;

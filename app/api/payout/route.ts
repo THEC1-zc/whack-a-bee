@@ -6,6 +6,7 @@ import { USDC_ADDRESS, USDC_ABI, toUSDCUnits, fromUSDCUnits, PRIZE_WALLET } from
 
 // Prize pool wallet private key — set in Vercel env vars, NEVER in code
 const PRIZE_PRIVATE_KEY = process.env.PRIZE_WALLET_PRIVATE_KEY as `0x${string}`;
+const PRIZE_WALLET_ADDRESS = process.env.PRIZE_WALLET_ADDRESS as `0x${string}` | undefined;
 const MIN_POOL_BALANCE = 0.10;
 
 export async function POST(req: NextRequest) {
@@ -26,6 +27,13 @@ export async function POST(req: NextRequest) {
     }
 
     const account = privateKeyToAccount(PRIZE_PRIVATE_KEY);
+    if (PRIZE_WALLET_ADDRESS && PRIZE_WALLET_ADDRESS !== account.address) {
+      return NextResponse.json(
+        { error: "Prize wallet mismatch", configured: false },
+        { status: 503 }
+      );
+    }
+    const prizeAddress = PRIZE_WALLET_ADDRESS || account.address;
 
     const publicClient = createPublicClient({
       chain: base,
@@ -37,7 +45,7 @@ export async function POST(req: NextRequest) {
       address: USDC_ADDRESS,
       abi: USDC_ABI,
       functionName: "balanceOf",
-      args: [account.address],
+      args: [prizeAddress],
     });
 
     const poolBalanceHuman = fromUSDCUnits(poolBalance as bigint);
@@ -84,8 +92,7 @@ export async function POST(req: NextRequest) {
 // GET: check current pool balance (public)
 export async function GET() {
   try {
-    const prizeAddress =
-      (process.env.PRIZE_WALLET_ADDRESS as `0x${string}` | undefined) || PRIZE_WALLET;
+    const prizeAddress = PRIZE_WALLET_ADDRESS || PRIZE_WALLET;
     const publicClient = createPublicClient({
       chain: base,
       transport: http("https://mainnet.base.org"),

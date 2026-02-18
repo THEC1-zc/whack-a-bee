@@ -29,6 +29,7 @@ export default function GameScreen({ user, difficulty, onGameEnd }: Props) {
   const [countdown, setCountdown] = useState(3);
   const [hitEffects, setHitEffects] = useState<{ id: number; slot: number; text: string }[]>([]);
   const [paymentStatus, setPaymentStatus] = useState<"pending" | "paid" | "failed">("pending");
+  const [paymentError, setPaymentError] = useState<string | null>(null);
   const [feeStatus, setFeeStatus] = useState<"waiting" | "paying" | "paid" | "failed">("waiting");
   const [feeError, setFeeError] = useState<string | null>(null);
   const [gameStarted, setGameStarted] = useState(false);
@@ -162,12 +163,20 @@ export default function GameScreen({ user, difficulty, onGameEnd }: Props) {
       const address = await getAddress();
       if (address) {
         const result = await claimPrize(address, prize);
-        setPaymentStatus(result.success ? "paid" : "failed");
+        if (result.success) {
+          setPaymentStatus("paid");
+          setPaymentError(null);
+        } else {
+          setPaymentStatus("failed");
+          setPaymentError(result.error || "Payment error");
+        }
       } else {
         setPaymentStatus("failed");
+        setPaymentError("No wallet connected");
       }
     } else {
       setPaymentStatus("paid");
+      setPaymentError(null);
     }
 
     setTimeout(() => onGameEnd(finalScore, prize), 3000);
@@ -250,6 +259,9 @@ export default function GameScreen({ user, difficulty, onGameEnd }: Props) {
                paymentStatus === "failed" ? "❌ Payment error" :
                "⏳ Processing..."}
             </div>
+          )}
+          {paymentStatus === "failed" && paymentError && (
+            <div className="mt-2 text-[11px] text-red-300 break-words">{paymentError}</div>
           )}
         </div>
 
