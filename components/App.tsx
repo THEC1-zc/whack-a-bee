@@ -90,7 +90,7 @@ export default function App() {
 
       {/* Title */}
       <div className="text-center">
-        <div className="text-6xl mb-1" style={{ filter: "drop-shadow(0 0 20px #fbbf24)" }}>🐝</div>
+        <div className="text-6xl mb-1" style={{ filter: "drop-shadow(0 0 20px #fbbf24)" }}>🦋</div>
         <h1 className="text-3xl font-black text-white">Whack-a-Butterfly</h1>
       </div>
 
@@ -177,7 +177,7 @@ export default function App() {
 function NotConnected() {
   return (
     <div className="min-h-dvh flex flex-col items-center justify-center p-6 text-center" style={{ background: "#1a0a00" }}>
-      <div className="text-6xl mb-4">🐝</div>
+      <div className="text-6xl mb-4">🦋</div>
       <h1 className="text-2xl font-black text-white mb-2">Whack-a-Butterfly</h1>
       <p className="text-amber-400 text-sm mb-6">Open this app from Warpcast to play!</p>
       <div className="text-xs text-amber-800 max-w-xs">Search "Whack-a-Butterfly" on Warpcast or open it via a cast.</div>
