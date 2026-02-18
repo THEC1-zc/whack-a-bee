@@ -1,0 +1,17 @@
+{
+  "accountAssociation": {
+    "header": "eyJmaWQiOjEwOTc5NjYsInR5cGUiOiJjdXN0b2R5Iiwia2V5IjoiMHgyNDhCQTdCNkYyZENlNzI3NWNGZjA4RmI0RjY5NTkyOTZEQzY5NWE5In0",
+    "payload": "eyJkb21haW4iOiJ3aGFjay1hLWJlZS52ZXJjZWwuYXBwIn0",
+    "signature": "IlGwBfiLXC57+T5PkG+14ao4AOH9sGrjloIDNcuwCNseGuA7XxuL0iL1DeRc+3KD5A0qxB5FHhqXMIOQmEywIBs="
+  },
+  "frame": {
+    "version": "1",
+    "name": "Whack-a-Bee",
+    "iconUrl": "https://whack-a-bee.vercel.app/icon.png",
+    "homeUrl": "https://whack-a-bee.vercel.app",
+    "imageUrl": "https://whack-a-bee.vercel.app/og-image.png",
+    "buttonTitle": "🐝 Play Now",
+    "splashImageUrl": "https://whack-a-bee.vercel.app/splash.png",
+    "splashBackgroundColor": "#fbbf24"
+  }
+}
