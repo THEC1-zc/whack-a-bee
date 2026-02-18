@@ -1,0 +1,17 @@
+{
+  "accountAssociation": {
+    "header": "REPLACE_AFTER_DEPLOY",
+    "payload": "REPLACE_AFTER_DEPLOY",
+    "signature": "REPLACE_AFTER_DEPLOY"
+  },
+  "frame": {
+    "version": "1",
+    "name": "Whack-a-Bee",
+    "iconUrl": "https://whack-a-bee.vercel.app/icon.png",
+    "homeUrl": "https://whack-a-bee.vercel.app",
+    "imageUrl": "https://whack-a-bee.vercel.app/og-image.png",
+    "buttonTitle": "🐝 Play Now",
+    "splashImageUrl": "https://whack-a-bee.vercel.app/splash.png",
+    "splashBackgroundColor": "#fbbf24"
+  }
+}
