@@ -19,13 +19,14 @@ export default function RulesScreen({ onBack }: { onBack: () => void }) {
         {/* Come si gioca */}
         <Section title="🎮 How to Play">
           <p className="text-amber-200 text-sm leading-relaxed">
-            Bees appear randomly on a 3×3 grid. Tap them before they disappear to score points.
-            Watch out for red bees — they cost you points!
+            Butterflies appear randomly on a 3×3 grid. Tap them before they disappear to score points.
+            Watch out for red butterflies — they cost you points!
           </p>
           <div className="mt-3 space-y-2">
-            <BeeRule emoji="🐝" label="Normal bee" desc="Visible for 850–1500ms" points="+1 point" color="#fbbf24" />
-            <BeeRule emoji="🐝" label="Fast bee" desc="Visible for 650–1200ms, moves faster" points="+3 points" color="#3b82f6" fast />
-            <BeeRule emoji="🔴" label="Red bee" desc="Avoid it! Costs you points" points="-2 points" color="#dc2626" />
+            <BeeRule emoji="🦋" label="Normal butterfly" desc="Visible for 850–1500ms" points="+1 point" color="#fbbf24" />
+            <BeeRule emoji="🦋" label="Fast butterfly" desc="Visible for 650–1200ms, moves faster" points="+3 points" color="#3b82f6" fast />
+            <BeeRule emoji="🔴" label="Red butterfly" desc="Avoid it! Costs you points" points="-2 points" color="#dc2626" />
+            <BeeRule emoji="💜" label="Super butterfly" desc="Rare bonus butterfly" points="+0.10 USDC" color="#a855f7" />
           </div>
         </Section>
 
@@ -102,17 +103,17 @@ export default function RulesScreen({ onBack }: { onBack: () => void }) {
           <div className="grid grid-cols-3 gap-2 text-center">
             <div className="rounded-xl p-2 border border-green-900" style={{ background: "#0a1a0a" }}>
               <div className="text-green-400 text-xs">🟢 Easy</div>
-              <div className="text-green-300 font-black">0.04</div>
+              <div className="text-green-300 font-black">{DIFFICULTY_CONFIG.easy.fee.toFixed(3)}</div>
               <div className="text-green-800 text-xs">USDC</div>
             </div>
             <div className="rounded-xl p-2 border border-yellow-900" style={{ background: "#1a1500" }}>
               <div className="text-yellow-400 text-xs">🟡 Medium</div>
-              <div className="text-yellow-300 font-black">0.05</div>
+              <div className="text-yellow-300 font-black">{DIFFICULTY_CONFIG.medium.fee.toFixed(3)}</div>
               <div className="text-yellow-800 text-xs">USDC</div>
             </div>
             <div className="rounded-xl p-2 border border-red-900" style={{ background: "#1a0a0a" }}>
               <div className="text-red-400 text-xs">🔴 Hard</div>
-              <div className="text-red-300 font-black">0.06</div>
+              <div className="text-red-300 font-black">{DIFFICULTY_CONFIG.hard.fee.toFixed(3)}</div>
               <div className="text-red-800 text-xs">USDC</div>
             </div>
           </div>

@@ -399,7 +399,7 @@ export default function GameScreen({ user, difficulty, onGameEnd }: Props) {
               >
                 {bee && (
                   <img
-                    src="/bee.png"
+                    src="/bf.png"
                     alt=""
                     className="w-14 h-14 select-none pointer-events-none"
                     style={{

@@ -6,11 +6,11 @@
   },
   "frame": {
     "version": "1",
-    "name": "Whack-a-Bee",
+    "name": "Whack-a-Butterfly",
     "iconUrl": "https://whack-a-bee.vercel.app/icon.png",
     "homeUrl": "https://whack-a-bee.vercel.app",
     "imageUrl": "https://whack-a-bee.vercel.app/og-image.png",
-    "buttonTitle": "🐝 Play Now",
+    "buttonTitle": "🦋 Play Now",
     "splashImageUrl": "https://whack-a-bee.vercel.app/splash.png",
     "splashBackgroundColor": "#fbbf24"
   }
