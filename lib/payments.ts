@@ -105,7 +105,7 @@ export async function payGameFee(
 export async function claimPrize(
   recipientAddress: `0x${string}`,
   prizeAmount: number
-): Promise<{ success: boolean; txHash?: string; error?: string; queued?: boolean; bfAmount?: number }> {
+): Promise<{ success: boolean; txHash?: string; error?: string; bfAmount?: number }> {
   try {
     const response = await fetch("/api/payout", {
       method: "POST",
@@ -121,7 +121,7 @@ export async function claimPrize(
       return { success: false, error: data.error || "Payout failed" };
     }
 
-    return { success: true, txHash: data.txHash, queued: data.queued, bfAmount: data.bfAmount };
+    return { success: true, txHash: data.txHash, bfAmount: data.bfAmount };
   } catch (e: any) {
     return { success: false, error: e?.message || "Payout request failed" };
   }

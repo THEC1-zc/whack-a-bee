@@ -1,9 +1,0 @@
-{
-  "crons": [
-    {
-      "path": "/api/payout-batch",
-      "schedule": "0 * * * *"
-    }
-  ]
-}
-

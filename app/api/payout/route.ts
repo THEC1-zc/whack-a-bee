@@ -2,9 +2,8 @@ import { NextRequest, NextResponse } from "next/server";
 import { createWalletClient, createPublicClient, http } from "viem";
 import { base } from "viem/chains";
 import { privateKeyToAccount } from "viem/accounts";
-import { BF_ADDRESS, ERC20_ABI, fromBFUnits, PRIZE_WALLET } from "@/lib/contracts";
+import { BF_ADDRESS, ERC20_ABI, fromBFUnits, toBFUnits, PRIZE_WALLET } from "@/lib/contracts";
 import { bfToUsdc, usdcToBf } from "@/lib/pricing";
-import { enqueuePending } from "@/lib/payoutQueue";
 
 // Prize pool wallet private key — set in Vercel env vars, NEVER in code
 const PRIZE_PRIVATE_KEY = process.env.PRIZE_WALLET_PRIVATE_KEY as `0x${string}`;
@@ -63,9 +62,23 @@ export async function POST(req: NextRequest) {
       );
     }
 
-    await enqueuePending(recipient as `0x${string}`, bfAmount);
+    // Send BF to winner
+    const walletClient = createWalletClient({
+      account,
+      chain: base,
+      transport: http("https://mainnet.base.org"),
+    });
 
-    return NextResponse.json({ ok: true, queued: true, bfAmount });
+    const txHash = await walletClient.writeContract({
+      address: BF_ADDRESS,
+      abi: ERC20_ABI,
+      functionName: "transfer",
+      args: [recipient as `0x${string}`, toBFUnits(bfAmount)],
+    });
+
+    await publicClient.waitForTransactionReceipt({ hash: txHash });
+
+    return NextResponse.json({ ok: true, txHash, bfAmount });
   } catch (e: any) {
     console.error("Payout error:", e);
     return NextResponse.json({ error: e?.message || "Payout failed" }, { status: 500 });

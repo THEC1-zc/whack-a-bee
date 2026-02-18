@@ -47,7 +47,6 @@ export default function GameScreen({ user, difficulty, onGameEnd }: Props) {
   const [hitEffects, setHitEffects] = useState<{ id: number; slot: number; text: string }[]>([]);
   const [paymentStatus, setPaymentStatus] = useState<"pending" | "paid" | "failed">("pending");
   const [paymentError, setPaymentError] = useState<string | null>(null);
-  const [paymentQueued, setPaymentQueued] = useState(false);
   const [feeStatus, setFeeStatus] = useState<"waiting" | "paying" | "paid" | "failed">("waiting");
   const [feeError, setFeeError] = useState<string | null>(null);
   const [gameStarted, setGameStarted] = useState(false);
@@ -231,21 +230,17 @@ export default function GameScreen({ user, difficulty, onGameEnd }: Props) {
         if (result.success) {
           setPaymentStatus("paid");
           setPaymentError(null);
-          setPaymentQueued(Boolean(result.queued));
         } else {
           setPaymentStatus("failed");
           setPaymentError(result.error || "Payment error");
-          setPaymentQueued(false);
         }
       } else {
         setPaymentStatus("failed");
         setPaymentError("No wallet connected");
-        setPaymentQueued(false);
       }
     } else {
       setPaymentStatus("paid");
       setPaymentError(null);
-      setPaymentQueued(false);
     }
 
     setTimeout(() => onGameEnd(adjustedScore, prize), 3000);
@@ -330,9 +325,7 @@ export default function GameScreen({ user, difficulty, onGameEnd }: Props) {
               paymentStatus === "failed" ? "bg-red-900 text-red-300" :
               "bg-amber-900 text-amber-300"
             }`}>
-              {paymentStatus === "paid"
-                ? (paymentQueued ? "✅ Queued for hourly payout" : "✅ Payment processing...")
-                :
+              {paymentStatus === "paid" ? "✅ Payment processing..." :
                paymentStatus === "failed" ? "❌ Payment error" :
                "⏳ Processing..."}
             </div>

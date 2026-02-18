@@ -1,4 +1,4 @@
-# 🐝 Whack-a-Bee — Farcaster Mini App
+# 🦋 Whack-a-Butterfly — Farcaster Mini App
 
 Gioco tipo acchiappa la talpa con le api. Built con Next.js per Farcaster Mini App.
 
@@ -17,8 +17,8 @@ npm run dev
 ## Deploy su Vercel
 ```bash
 # 1. Push su GitHub
-git init && git add . && git commit -m "feat: whack-a-bee mini app"
-gh repo create whack-a-bee --public --push
+git init && git add . && git commit -m "feat: whack-a-butterfly mini app"
+gh repo create whack-a-butterfly --public --push
 
 # 2. Vai su vercel.com → New Project → importa repo
 # Framework: Next.js (auto-rilevato)
