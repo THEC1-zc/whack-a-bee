@@ -32,6 +32,7 @@ export default function App() {
   const [poolBalanceBf, setPoolBalanceBf] = useState<number>(0);
   const [poolLoading, setPoolLoading] = useState(true);
   const [poolConfigured, setPoolConfigured] = useState(true);
+  const [bfPerUsdc, setBfPerUsdc] = useState<number | null>(null);
 
   useEffect(() => {
     fetch("/api/payout")
@@ -44,6 +45,17 @@ export default function App() {
       })
       .catch(() => setPoolLoading(false));
   }, [lastResult]); // refresh after each game
+
+  useEffect(() => {
+    fetch("/api/price")
+      .then(r => r.json())
+      .then(d => {
+        if (typeof d.bfPerUsdc === "number" && d.bfPerUsdc > 0) {
+          setBfPerUsdc(d.bfPerUsdc);
+        }
+      })
+      .catch(() => {});
+  }, []);
 
   if (isLoading) {
     return (
@@ -67,7 +79,7 @@ export default function App() {
   const poolEmpty = !poolLoading && poolConfigured && poolBalanceBf < MIN_POOL_BALANCE_BF;
   const poolUnavailable = !poolLoading && !poolConfigured;
   const poolDisabled = poolEmpty || poolUnavailable;
-  const bfPerPoint = PRIZE_PER_POINT * BF_PER_USDC_FALLBACK;
+  const bfPerPoint = PRIZE_PER_POINT * (bfPerUsdc ?? BF_PER_USDC_FALLBACK);
 
   return (
     <div className="min-h-dvh flex flex-col items-center p-5 gap-4"
@@ -127,6 +139,15 @@ export default function App() {
           <div className="text-red-400 text-xs text-center mt-1">Pool not configured</div>
         )}
         <div className="text-xs text-amber-700 text-center mt-1">Reward: {bfPerPoint.toFixed(0)} BF per point (approx)</div>
+      </div>
+
+      {/* BF/USDC rate */}
+      <div className="w-full max-w-sm rounded-2xl p-3 border border-amber-900 text-center text-xs"
+        style={{ background: "#1f1000" }}>
+        <div className="text-amber-500 uppercase tracking-widest mb-1">Rate</div>
+        <div className="text-amber-200 font-bold">
+          1 USDC ≈ {Math.round((bfPerUsdc ?? BF_PER_USDC_FALLBACK)).toLocaleString()} BF
+        </div>
       </div>
 
       {/* Last result */}
