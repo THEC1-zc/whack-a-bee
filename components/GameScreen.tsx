@@ -8,7 +8,7 @@ import { payGameFee, claimPrize, getAddress } from "@/lib/payments";
 interface Bee {
   id: number;
   slot: number;
-  type: "normal" | "fast" | "bomb" | "super";
+  type: "normal" | "fast" | "fuchsia" | "bomb" | "super";
   visible: boolean;
   hit: boolean;
 }
@@ -27,6 +27,9 @@ const BEE_CHANCES = {
   hard: { bomb: 0.18, fast: 0.30 },
 } as const;
 
+const FUCHSIA_CHANCE = 0.15;
+const FUCHSIA_MAX_PER_GAME = 3;
+
 const SPAWN_CONFIG = {
   easy: { base: 900, min: 450, step: 16 },
   medium: { base: 820, min: 420, step: 18 },
@@ -37,10 +40,10 @@ const SUPER_BEE_CHANCE_PER_GAME = 0.025;
 const SUPER_BEE_BONUS_BF = 100000;
 
 const CAP_DISTRIBUTION = [
-  { mult: 0.75, pct: 19.25 },
-  { mult: 1.0, pct: 35.25 },
-  { mult: 1.5, pct: 23.25 },
-  { mult: 2.0, pct: 16.25 },
+  { mult: 0.95, pct: 21.0 },
+  { mult: 1.2, pct: 29.0 },
+  { mult: 1.5, pct: 30.0 },
+  { mult: 2.0, pct: 17.0 },
   { mult: 3.0, pct: 6.0 }, // Mega Jackpot
 ] as const;
 
@@ -74,6 +77,7 @@ export default function GameScreen({ user, difficulty, onGameEnd }: Props) {
   const effectIdRef = useRef(0);
   const bonusRef = useRef(0);
   const superSpawnedRef = useRef(false);
+  const fuchsiaCountRef = useRef(0);
   const capMultiplierRef = useRef<number>(pickCapMultiplier());
   const isMegaJackpot = capMultiplierRef.current >= 3.0;
   const shouldSpawnSuperRef = useRef(
@@ -101,6 +105,7 @@ export default function GameScreen({ user, difficulty, onGameEnd }: Props) {
       const usedSlots = new Set(next.filter(b => b.visible && !b.hit).map(b => b.slot));
       let redPlaced = false;
       let fastPlaced = 0;
+      let fuchsiaPlaced = false;
       const fastLimit = isMegaJackpot ? 2 : 1;
       for (let i = 0; i < count; i += 1) {
         const available = Array.from({ length: SLOTS }, (_, idx) => idx).filter(s => !usedSlots.has(s));
@@ -118,17 +123,23 @@ export default function GameScreen({ user, difficulty, onGameEnd }: Props) {
         } else if (shouldSpawnSuperRef.current && !superSpawnedRef.current) {
           type = "super";
           superSpawnedRef.current = true;
+        } else if (!fuchsiaPlaced && fuchsiaCountRef.current < FUCHSIA_MAX_PER_GAME && rand < FUCHSIA_CHANCE) {
+          type = "fuchsia";
+          fuchsiaPlaced = true;
+          fuchsiaCountRef.current += 1;
         } else if (fastPlaced < fastLimit && rand < fastChance) {
           type = "fast";
           fastPlaced += 1;
         }
 
         const id = beeIdRef.current++;
-        const duration = difficulty === "easy"
-          ? (type === "fast" ? 1200 : 1500)
-          : difficulty === "medium"
-          ? (type === "fast" ? 900 : 1100)
-          : (type === "fast" ? 650 : 850);
+        const baseFast = difficulty === "easy" ? 1200 : difficulty === "medium" ? 900 : 650;
+        const baseNormal = difficulty === "easy" ? 1500 : difficulty === "medium" ? 1100 : 850;
+        const duration = type === "fast"
+          ? baseFast
+          : type === "fuchsia"
+          ? Math.round(baseFast * (2 / 3))
+          : baseNormal;
 
         setTimeout(() => setBees(p => p.filter(b => b.id !== id)), duration);
         next = [...next, { id, slot, type, visible: true, hit: false }];
@@ -147,6 +158,7 @@ export default function GameScreen({ user, difficulty, onGameEnd }: Props) {
     let text = "";
     if (bee.type === "normal") { points = 1; text = "+1"; }
     else if (bee.type === "fast") { points = 3; text = "⚡ +3"; }
+    else if (bee.type === "fuchsia") { points = 4; text = "💖 +4"; }
     else if (bee.type === "bomb") { points = -2; text = "💥 -2"; }
     else if (bee.type === "super") {
       points = 1;
@@ -430,6 +442,7 @@ export default function GameScreen({ user, difficulty, onGameEnd }: Props) {
                   background: bee
                     ? (bee.type === "bomb" ? "#7f1d1d"
                       : bee.type === "fast" ? "#1e3a5f"
+                      : bee.type === "fuchsia" ? "#3b0a24"
                       : bee.type === "super" ? "#2a1540"
                       : "#2a1500")
                     : "#1a0a00",
@@ -437,6 +450,7 @@ export default function GameScreen({ user, difficulty, onGameEnd }: Props) {
                     bee
                       ? (bee.type === "bomb" ? "#dc2626"
                         : bee.type === "fast" ? "#3b82f6"
+                        : bee.type === "fuchsia" ? "#ec4899"
                         : bee.type === "super" ? "#a855f7"
                         : "#92400e")
                       : "#2a1000"
@@ -454,6 +468,7 @@ export default function GameScreen({ user, difficulty, onGameEnd }: Props) {
                       transition: "opacity 0.15s",
                       filter:
                         bee.type === "fast" ? "hue-rotate(180deg)" :
+                        bee.type === "fuchsia" ? "hue-rotate(310deg) saturate(2) drop-shadow(0 0 6px rgba(236,72,153,0.9))" :
                         bee.type === "bomb" ? "hue-rotate(330deg) saturate(2)" :
                         bee.type === "super" ? "hue-rotate(260deg) saturate(2) drop-shadow(0 0 6px rgba(168,85,247,0.8))" :
                         undefined,

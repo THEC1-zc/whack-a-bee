@@ -26,8 +26,9 @@ export default function RulesScreen({ onBack }: { onBack: () => void }) {
           <div className="mt-3 space-y-2">
             <BeeRule emoji="🦋" label="Normal butterfly" desc="Visible for 850–1500ms" points="+1 point" color="#fbbf24" />
             <BeeRule emoji="🦋" label="Fast butterfly" desc="Visible for 650–1200ms, moves faster" points="+3 points" color="#3b82f6" fast />
+            <BeeRule emoji="💖" label="Fuchsia butterfly" desc="Very fast, rare" points="+4 points" color="#ec4899" fast />
             <BeeRule emoji="🔴" label="Red butterfly" desc="Avoid it! Costs you points" points="-2 points" color="#dc2626" />
-            <BeeRule emoji="💜" label="Super butterfly" desc="Rare bonus butterfly" points={`+${Math.round(0.1 * BF_PER_USDC)} BF`} color="#a855f7" />
+            <BeeRule emoji="💜" label="Super butterfly" desc="Rare bonus butterfly" points="+100000 BF" color="#a855f7" />
           </div>
         </Section>
 

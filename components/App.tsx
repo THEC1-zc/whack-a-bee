@@ -150,6 +150,7 @@ export default function App() {
       <div className="w-full max-w-sm text-xs text-amber-800 grid grid-cols-2 gap-1">
         <div>🦋 Normal butterfly → +1 pt</div>
         <div>⚡ Fast butterfly → +3 pts</div>
+        <div>💖 Fuchsia butterfly → +4 pts</div>
         <div>🔴 Red butterfly → -2 pts</div>
         <div>📖 <button onClick={() => setScreen("rules")} className="underline text-amber-600">All rules</button></div>
       </div>
