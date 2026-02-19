@@ -74,10 +74,11 @@ export default function GameScreen({ user, difficulty, onGameEnd }: Props) {
     setTimeout(() => setHitEffects(prev => prev.filter(e => e.id !== id)), 500);
   }, []);
 
-  const spawnBees = useCallback((count: number) => {
+  const spawnBees = useCallback((count: number, ensureRed: boolean) => {
     setBees(prev => {
       let next = prev.filter(b => b.visible);
       const usedSlots = new Set(next.filter(b => b.visible && !b.hit).map(b => b.slot));
+      let redPlaced = false;
       for (let i = 0; i < count; i += 1) {
         const available = Array.from({ length: SLOTS }, (_, idx) => idx).filter(s => !usedSlots.has(s));
         if (available.length === 0) break;
@@ -89,7 +90,10 @@ export default function GameScreen({ user, difficulty, onGameEnd }: Props) {
         const fastChance = BEE_CHANCES[difficulty].fast;
 
         let type: Bee["type"] = rand < bombChance ? "bomb" : rand < bombChance + fastChance ? "fast" : "normal";
-        if (shouldSpawnSuperRef.current && !superSpawnedRef.current) {
+        if (ensureRed && !redPlaced) {
+          type = "bomb";
+          redPlaced = true;
+        } else if (shouldSpawnSuperRef.current && !superSpawnedRef.current) {
           type = "super";
           superSpawnedRef.current = true;
         }
@@ -179,7 +183,7 @@ export default function GameScreen({ user, difficulty, onGameEnd }: Props) {
     const interval = Math.max(min, base - elapsed * step);
     const t = setTimeout(() => {
       const r = Math.random();
-      let count = 1;
+      let count = 2;
       if (difficulty === "medium") {
         count = r < 0.10 ? 3 : r < 0.40 ? 2 : 1;
       } else if (difficulty === "hard") {
@@ -189,7 +193,8 @@ export default function GameScreen({ user, difficulty, onGameEnd }: Props) {
         else if (r < 0.90) count = 4;
         else count = 5;
       }
-      spawnBees(count);
+      count = Math.max(2, count);
+      spawnBees(count, true);
     }, interval);
     return () => clearTimeout(t);
   }, [timeLeft, gameState, spawnBees, cfg.time, difficulty]);
