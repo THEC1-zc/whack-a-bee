@@ -7,9 +7,12 @@ import { getAdminWallet, getWeeklyState, logWeeklyPayout, resetWeeklyState, setW
 import { getAdminStats, resetLeaderboard } from "@/lib/leaderboard";
 
 const ADMIN_WALLET = getAdminWallet();
+const ADMIN_API_KEY = process.env.ADMIN_API_KEY;
 const POT_PRIVATE_KEY = process.env.POT_WALLET_PRIVATE_KEY as `0x${string}`;
 
 function isAuthorized(req: NextRequest) {
+  const token = req.headers.get("x-admin-token");
+  if (ADMIN_API_KEY && token === ADMIN_API_KEY) return true;
   const addr = req.headers.get("x-admin-wallet") || "";
   return addr.toLowerCase() === ADMIN_WALLET;
 }
@@ -43,6 +46,10 @@ export async function POST(req: NextRequest) {
     }
 
     const weekly = await getWeeklyState();
+    const now = Date.now();
+    if (weekly.payoutAt && now < weekly.payoutAt) {
+      return NextResponse.json({ error: "Too early for payout" }, { status: 403 });
+    }
     const potBf = Number(weekly.potBf || 0);
     if (potBf <= 0) {
       return NextResponse.json({ error: "Weekly pot is empty" }, { status: 400 });
