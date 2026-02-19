@@ -105,7 +105,10 @@ export default function AdminPage() {
     <div className="min-h-dvh p-5" style={{ background: "#1a0a00" }}>
       <div className="max-w-3xl mx-auto space-y-4">
         <div className="flex items-center justify-between">
-          <h1 className="text-2xl font-black text-white">Admin Stats</h1>
+          <div className="flex items-center gap-3">
+            <a href="/" className="text-amber-400 font-bold text-sm">← Back</a>
+            <h1 className="text-2xl font-black text-white">Admin Stats</h1>
+          </div>
           <button
             onClick={handleReset}
             disabled={resetting}
@@ -173,4 +176,3 @@ function Stat({ label, value }: { label: string; value: string }) {
     </div>
   );
 }
-
