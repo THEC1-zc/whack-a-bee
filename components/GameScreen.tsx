@@ -4,6 +4,7 @@ import { FarcasterUser } from "@/hooks/useFarcaster";
 import { DIFFICULTY_CONFIG, PRIZE_PER_POINT, type Difficulty } from "./App";
 import { BF_PER_USDC_FALLBACK } from "@/lib/pricing";
 import { payGameFee, claimPrize, getAddress } from "@/lib/payments";
+import { sdk } from "@farcaster/miniapp-sdk";
 
 interface Bee {
   id: number;
@@ -356,6 +357,14 @@ export default function GameScreen({ user, difficulty, onGameEnd }: Props) {
     const shownScore = scoreRef.current;
     const finalPrizeUsdc = (shownScore * PRIZE_PER_POINT) + bonusRef.current;
     const finalPrizeBf = Math.round(finalPrizeUsdc * BF_PER_USDC_FALLBACK);
+    const pct = Math.round((shownScore / cfg.maxPts) * 100);
+    const ticketEstimate = Math.max(
+      1,
+      1 + Math.floor(shownScore / 1000) + Math.floor(cfg.fee / 0.25)
+    );
+    const appUrl = process.env.NEXT_PUBLIC_APP_URL || "https://whack-a-bee.vercel.app";
+    const shareImage = `${appUrl}/api/share-image?score=${shownScore}&pct=${pct}&prizeBf=${finalPrizeBf}&fee=${cfg.fee}&difficulty=${cfg.label}&tickets=${ticketEstimate}`;
+    const shareText = `I just ended a game on Whack-a-bee by @Thec1, I entered a ${cfg.fee} game, had a ${pct}% and won ${finalPrizeBf} BF and ${ticketEstimate} tickets for the weekly pot! can you do better?`;
     return (
       <div className="min-h-dvh flex flex-col items-center justify-center p-6 text-center gap-4" style={{ background: "#1a0a00" }}>
         <div className="text-5xl">{finalPrizeBf > 0 ? "🎉" : "😔"}</div>
@@ -365,24 +374,19 @@ export default function GameScreen({ user, difficulty, onGameEnd }: Props) {
         <div className="text-amber-500 text-xs mt-1">{cfg.emoji} {cfg.label} difficulty</div>
         <div className="text-amber-400 text-xs mt-1">{capInfo.icon} Max prize was {capInfo.label}</div>
 
-        {(() => {
-          const pct = Math.round((shownScore / cfg.maxPts) * 100);
-          return (
-            <div className="w-full max-w-xs mt-3">
-              <div className="text-amber-500 text-xs mb-1">Your game was {pct}%</div>
-              <div className="h-2 rounded-full bg-amber-950 border border-amber-900 overflow-hidden">
-                <div
-                  className="h-full"
-                  style={{
-                    width: `${pct}%`,
-                    background: "linear-gradient(90deg, #f87171 0%, #fbbf24 50%, #22c55e 100%)",
-                    transition: "width 0.6s ease",
-                  }}
-                />
-              </div>
-            </div>
-          );
-        })()}
+        <div className="w-full max-w-xs mt-3">
+          <div className="text-amber-500 text-xs mb-1">Your game was {pct}%</div>
+          <div className="h-2 rounded-full bg-amber-950 border border-amber-900 overflow-hidden">
+            <div
+              className="h-full"
+              style={{
+                width: `${pct}%`,
+                background: "linear-gradient(90deg, #f87171 0%, #fbbf24 50%, #22c55e 100%)",
+                transition: "width 0.6s ease",
+              }}
+            />
+          </div>
+        </div>
 
         <div className="w-full max-w-xs rounded-2xl p-4 border border-amber-800" style={{ background: "#2a1500" }}>
           <div className="text-xs text-amber-600 uppercase tracking-widest mb-2">Prize</div>
@@ -407,6 +411,23 @@ export default function GameScreen({ user, difficulty, onGameEnd }: Props) {
             <div className="mt-2 text-[11px] text-red-300 break-words">{paymentError}</div>
           )}
         </div>
+
+        <button
+          onClick={async () => {
+            try {
+              await sdk.actions.composeCast({
+                text: shareText,
+                embeds: [shareImage, appUrl],
+              });
+            } catch (e) {
+              console.error("Share error", e);
+            }
+          }}
+          className="mt-3 w-full max-w-xs py-3 rounded-2xl text-sm font-black text-black"
+          style={{ background: "linear-gradient(135deg, #fbbf24, #f59e0b)" }}
+        >
+          Share to Farcaster
+        </button>
 
         <div className="text-xs text-amber-800">Returning to home...</div>
       </div>
