@@ -438,7 +438,7 @@ export default function GameScreen({ user, difficulty, onGameEnd }: Props) {
         </button>
 
         <button
-          onClick={() => onGameEnd(adjustedScore, prize)}
+          onClick={() => onGameEnd(shownScore, prize)}
           className="mt-5 w-full max-w-xs py-4 rounded-2xl text-lg font-black text-black"
           style={{ background: "linear-gradient(135deg, #fbbf24, #f59e0b)" }}
         >
