@@ -6,4 +6,5 @@ Original prompt: end game: aggiungiamo pulsante share to farcaster, che pubblich
 - End game now requires manual Back to exit; added Farcaster icon on Share button.
 - Share image layout scaled down for mobile view.
 - Payment error text shortened to avoid huge blocks.
+- Cap now affects max points and spawn density (not prize multiplier).
 - Playwright smoke run completed (home screen render).

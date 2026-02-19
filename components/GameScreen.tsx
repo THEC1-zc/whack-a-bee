@@ -96,10 +96,7 @@ export default function GameScreen({ user, difficulty, onGameEnd }: Props) {
   const capScoreRef = useRef<number>(
     Math.max(
       1,
-      Math.min(
-        cfg.maxPts,
-        Math.floor((capMultiplierRef.current * cfg.fee) / PRIZE_PER_POINT)
-      )
+      Math.floor(cfg.maxPts * capMultiplierRef.current)
     )
   );
 
@@ -241,7 +238,7 @@ export default function GameScreen({ user, difficulty, onGameEnd }: Props) {
         else if (r < 0.90) count = 4;
         else count = 5;
       }
-      count = Math.max(2, count);
+      count = Math.max(2, Math.round(count * capMultiplierRef.current));
       spawnBees(count, true);
     }, interval);
     return () => clearTimeout(t);
@@ -356,7 +353,8 @@ export default function GameScreen({ user, difficulty, onGameEnd }: Props) {
     const shownScore = scoreRef.current;
     const finalPrizeUsdc = (shownScore * PRIZE_PER_POINT) + bonusRef.current;
     const finalPrizeBf = Math.round(finalPrizeUsdc * BF_PER_USDC_FALLBACK);
-    const pct = Math.round((shownScore / cfg.maxPts) * 100);
+    const capMaxPts = capScoreRef.current;
+    const pct = Math.round((shownScore / capMaxPts) * 100);
     const shortPaymentError = paymentError
       ? (paymentError.includes("replacement transaction underpriced")
         ? "Network busy. Please try again later."
@@ -374,7 +372,7 @@ export default function GameScreen({ user, difficulty, onGameEnd }: Props) {
         <div className="text-5xl">{finalPrizeBf > 0 ? "🎉" : "😔"}</div>
         <h2 className="text-3xl font-black text-white">Game Over</h2>
         <div className="text-6xl font-black text-amber-400">{shownScore}</div>
-        <div className="text-amber-600 text-sm">points out of {cfg.maxPts} max</div>
+        <div className="text-amber-600 text-sm">points out of {capMaxPts} max</div>
         <div className="text-amber-500 text-xs mt-1">{cfg.emoji} {cfg.label} difficulty</div>
         <div className="text-amber-400 text-xs mt-1">{capInfo.icon} Max prize was {capInfo.label}</div>
 
@@ -484,7 +482,7 @@ export default function GameScreen({ user, difficulty, onGameEnd }: Props) {
 
       {/* Difficulty badge */}
       <div className="text-center text-xs mb-2" style={{ color: cfg.color }}>
-        {cfg.emoji} {cfg.label} · max {cfg.maxPts} pt
+        {cfg.emoji} {cfg.label} · max {capScoreRef.current} pt
       </div>
 
       {/* Grid */}
