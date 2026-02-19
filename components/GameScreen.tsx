@@ -2,7 +2,7 @@
 import { useState, useEffect, useRef, useCallback } from "react";
 import { FarcasterUser } from "@/hooks/useFarcaster";
 import { DIFFICULTY_CONFIG, PRIZE_PER_POINT, type Difficulty } from "./App";
-import { BF_PER_USDC } from "@/lib/pricing";
+import { BF_PER_USDC, bfToUsdc } from "@/lib/pricing";
 import { payGameFee, claimPrize, getAddress } from "@/lib/payments";
 
 interface Bee {
@@ -34,8 +34,25 @@ const SPAWN_CONFIG = {
 } as const;
 
 const SUPER_BEE_CHANCE_PER_GAME = 0.025;
-const SUPER_BEE_BONUS = 0.1; // USDC
-const HIGH_PAYOUT_CHANCE = 0.10; // 10% of games can reach 2x fee
+const SUPER_BEE_BONUS_BF = 100000;
+
+const CAP_DISTRIBUTION = [
+  { mult: 0.75, pct: 19.25 },
+  { mult: 1.0, pct: 35.25 },
+  { mult: 1.5, pct: 23.25 },
+  { mult: 2.0, pct: 16.25 },
+  { mult: 3.0, pct: 6.0 }, // Mega Jackpot
+] as const;
+
+function pickCapMultiplier() {
+  const roll = Math.random() * 100;
+  let acc = 0;
+  for (const item of CAP_DISTRIBUTION) {
+    acc += item.pct;
+    if (roll <= acc) return item.mult;
+  }
+  return 1.0;
+}
 
 export default function GameScreen({ user, difficulty, onGameEnd }: Props) {
   const cfg = DIFFICULTY_CONFIG[difficulty];
@@ -57,13 +74,17 @@ export default function GameScreen({ user, difficulty, onGameEnd }: Props) {
   const effectIdRef = useRef(0);
   const bonusRef = useRef(0);
   const superSpawnedRef = useRef(false);
-  const shouldSpawnSuperRef = useRef(Math.random() < SUPER_BEE_CHANCE_PER_GAME);
+  const capMultiplierRef = useRef<number>(pickCapMultiplier());
+  const isMegaJackpot = capMultiplierRef.current >= 3.0;
+  const shouldSpawnSuperRef = useRef(
+    Math.random() < SUPER_BEE_CHANCE_PER_GAME * (isMegaJackpot ? 3 : 1)
+  );
   const capScoreRef = useRef<number>(
     Math.max(
       1,
       Math.min(
         cfg.maxPts,
-        Math.floor(((Math.random() < HIGH_PAYOUT_CHANCE ? 2.0 : 1.5) * cfg.fee) / PRIZE_PER_POINT)
+        Math.floor((capMultiplierRef.current * cfg.fee) / PRIZE_PER_POINT)
       )
     )
   );
@@ -79,6 +100,8 @@ export default function GameScreen({ user, difficulty, onGameEnd }: Props) {
       let next = prev.filter(b => b.visible);
       const usedSlots = new Set(next.filter(b => b.visible && !b.hit).map(b => b.slot));
       let redPlaced = false;
+      let fastPlaced = 0;
+      const fastLimit = isMegaJackpot ? 2 : 1;
       for (let i = 0; i < count; i += 1) {
         const available = Array.from({ length: SLOTS }, (_, idx) => idx).filter(s => !usedSlots.has(s));
         if (available.length === 0) break;
@@ -86,16 +109,18 @@ export default function GameScreen({ user, difficulty, onGameEnd }: Props) {
         const slot = available[Math.floor(Math.random() * available.length)];
         const rand = Math.random();
 
-        const bombChance = BEE_CHANCES[difficulty].bomb;
         const fastChance = BEE_CHANCES[difficulty].fast;
 
-        let type: Bee["type"] = rand < bombChance ? "bomb" : rand < bombChance + fastChance ? "fast" : "normal";
+        let type: Bee["type"] = "normal";
         if (ensureRed && !redPlaced) {
           type = "bomb";
           redPlaced = true;
         } else if (shouldSpawnSuperRef.current && !superSpawnedRef.current) {
           type = "super";
           superSpawnedRef.current = true;
+        } else if (fastPlaced < fastLimit && rand < fastChance) {
+          type = "fast";
+          fastPlaced += 1;
         }
 
         const id = beeIdRef.current++;
@@ -111,7 +136,7 @@ export default function GameScreen({ user, difficulty, onGameEnd }: Props) {
       }
       return next;
     });
-  }, [difficulty]);
+  }, [difficulty, isMegaJackpot]);
 
   const whackBee = useCallback((bee: Bee) => {
     if (bee.hit || !bee.visible) return;
@@ -125,8 +150,9 @@ export default function GameScreen({ user, difficulty, onGameEnd }: Props) {
     else if (bee.type === "bomb") { points = -2; text = "💥 -2"; }
     else if (bee.type === "super") {
       points = 1;
-      text = "💜 +0.10";
-      bonusRef.current = parseFloat((bonusRef.current + SUPER_BEE_BONUS).toFixed(3));
+      text = "💜 +100K BF";
+      const bonusUsdc = bfToUsdc(SUPER_BEE_BONUS_BF);
+      bonusRef.current = parseFloat((bonusRef.current + bonusUsdc).toFixed(6));
       setSuperBonus(bonusRef.current);
     }
 
@@ -370,6 +396,12 @@ export default function GameScreen({ user, difficulty, onGameEnd }: Props) {
           <div className="text-xs text-green-700">BF</div>
         </div>
       </div>
+
+      {isMegaJackpot && (
+        <div className="mx-4 mb-2 rounded-xl border border-purple-700 bg-purple-900/40 text-purple-200 text-xs font-black text-center py-1">
+          💥 MEGA JACKPOT ROUND — 3× CAP
+        </div>
+      )}
 
       {/* Difficulty badge */}
       <div className="text-center text-xs mb-2" style={{ color: cfg.color }}>
