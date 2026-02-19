@@ -88,9 +88,13 @@ export default function WeeklyPage() {
               </div>
               <button
                 onClick={async () => {
+                  if (!user?.address) return;
+                  const headers = new Headers();
+                  headers.set("Content-Type", "application/json");
+                  headers.set("x-wallet-address", user.address);
                   const res = await fetch("/api/weekly/claim", {
                     method: "POST",
-                    headers: { "Content-Type": "application/json", "x-wallet-address": user.address },
+                    headers,
                   });
                   if (res.ok) {
                     const data = await res.json();
