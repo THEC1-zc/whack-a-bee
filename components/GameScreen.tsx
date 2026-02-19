@@ -296,7 +296,6 @@ export default function GameScreen({ user, difficulty, onGameEnd }: Props) {
       setPaymentError(null);
     }
 
-    setTimeout(() => onGameEnd(adjustedScore, prize), 3000);
   }
 
   const timerPercent = (timeLeft / cfg.time) * 100;
@@ -423,13 +422,25 @@ export default function GameScreen({ user, difficulty, onGameEnd }: Props) {
               console.error("Share error", e);
             }
           }}
-          className="mt-3 w-full max-w-xs py-3 rounded-2xl text-sm font-black text-black"
+          className="mt-3 w-full max-w-xs py-3 rounded-2xl text-sm font-black text-black flex items-center justify-center gap-2"
           style={{ background: "linear-gradient(135deg, #fbbf24, #f59e0b)" }}
         >
+          <span
+            className="w-5 h-5 rounded-full flex items-center justify-center text-[11px] font-black"
+            style={{ background: "#6d28d9", color: "#fff" }}
+          >
+            f
+          </span>
           Share to Farcaster
         </button>
 
-        <div className="text-xs text-amber-800">Returning to home...</div>
+        <button
+          onClick={() => onGameEnd(adjustedScore, prize)}
+          className="mt-5 w-full max-w-xs py-4 rounded-2xl text-lg font-black text-black"
+          style={{ background: "linear-gradient(135deg, #fbbf24, #f59e0b)" }}
+        >
+          Back
+        </button>
       </div>
     );
   }

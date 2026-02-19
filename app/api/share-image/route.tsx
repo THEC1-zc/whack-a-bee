@@ -65,16 +65,16 @@ export async function GET(req: Request) {
         <div
           style={{
             position: "relative",
-            width: "1000px",
+            width: "920px",
             display: "flex",
             alignItems: "center",
-            gap: "40px",
+            gap: "32px",
           }}
         >
           <div
             style={{
-              width: "320px",
-              height: "320px",
+              width: "280px",
+              height: "280px",
               borderRadius: "32px",
               background: "rgba(26,10,0,0.75)",
               border: "4px solid #f59e0b",
@@ -86,21 +86,29 @@ export async function GET(req: Request) {
           >
             <img
               src={bfUrl}
-              style={{ width: "240px", height: "240px", objectFit: "contain" }}
+              style={{ width: "200px", height: "200px", objectFit: "contain" }}
             />
           </div>
-          <div style={{ flex: 1, display: "flex", flexDirection: "column", gap: "18px" }}>
+          <div
+            style={{
+              flex: 1,
+              display: "flex",
+              flexDirection: "column",
+              gap: "16px",
+              maxWidth: "560px",
+            }}
+          >
             <div
               style={{
                 display: "flex",
-                fontSize: "56px",
+                fontSize: "44px",
                 fontWeight: 900,
                 letterSpacing: "-1px",
               }}
             >
               Whack-a-Butterfly
             </div>
-            <div style={{ display: "flex", fontSize: "28px", color: "#fbbf24" }}>
+            <div style={{ display: "flex", fontSize: "24px", color: "#fbbf24" }}>
               Game recap · {difficulty || "Battle"}
             </div>
             <div style={{ display: "flex", gap: "24px", alignItems: "center" }}>
@@ -111,7 +119,7 @@ export async function GET(req: Request) {
                   borderRadius: "16px",
                   background: "rgba(251,191,36,0.15)",
                   border: "2px solid #f59e0b",
-                  fontSize: "26px",
+                  fontSize: "22px",
                   fontWeight: 800,
                 }}
               >
@@ -124,21 +132,21 @@ export async function GET(req: Request) {
                   borderRadius: "16px",
                   background: "rgba(16,185,129,0.15)",
                   border: "2px solid #34d399",
-                  fontSize: "26px",
+                  fontSize: "22px",
                   fontWeight: 800,
                 }}
               >
                 Prize {prizeBf.toLocaleString()} BF
               </div>
             </div>
-            <div style={{ display: "flex", fontSize: "24px", color: "#f3f4f6" }}>
+            <div style={{ display: "flex", fontSize: "20px", color: "#f3f4f6" }}>
               Your game was{" "}
               <span style={{ color: "#fbbf24", fontWeight: 800 }}>{pct}%</span>
             </div>
-            <div style={{ display: "flex", fontSize: "20px", color: "#fcd34d" }}>
+            <div style={{ display: "flex", fontSize: "18px", color: "#fcd34d" }}>
               Fee {fee} USDC · Tickets {tickets}
             </div>
-            <div style={{ display: "flex", fontSize: "20px", color: "#f59e0b" }}>
+            <div style={{ display: "flex", fontSize: "18px", color: "#f59e0b" }}>
               Play on Farcaster miniapp
             </div>
           </div>
