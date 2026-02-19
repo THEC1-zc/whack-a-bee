@@ -295,7 +295,7 @@ export default function App() {
           boxShadow: poolDisabled ? "none" : "0 8px 30px rgba(251,191,36,0.4)"
         }}
       >
-        {poolUnavailable ? "Pool Unavailable" : poolEmpty ? "Pool Empty 😔" : `PLAY — ${cfg.fee} USDC 🐝`}
+        {poolUnavailable ? "Pool Unavailable" : poolEmpty ? "Pool Empty 😔" : `PLAY — ${cfg.fee} USDC 🦋`}
       </button>
     </div>
   );

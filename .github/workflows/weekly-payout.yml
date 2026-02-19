@@ -1,0 +1,27 @@
+name: Weekly Payout
+
+on:
+  schedule:
+    # Sunday 00:05 CET/CEST (handled via both UTC offsets).
+    - cron: "5 23 * * 6"  # 00:05 CET (UTC+1) -> 23:05 Sat UTC
+    - cron: "5 22 * * 6"  # 00:05 CEST (UTC+2) -> 22:05 Sat UTC
+  workflow_dispatch: {}
+
+jobs:
+  payout:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Trigger weekly payout
+        env:
+          ADMIN_API_KEY: ${{ secrets.ADMIN_API_KEY }}
+          SITE_URL: ${{ secrets.SITE_URL }}
+        run: |
+          if [ -z "$ADMIN_API_KEY" ]; then
+            echo "Missing ADMIN_API_KEY secret" && exit 1
+          fi
+          if [ -z "$SITE_URL" ]; then
+            echo "Missing SITE_URL secret" && exit 1
+          fi
+          curl -sS -X POST "$SITE_URL/api/admin/weekly-payout" \
+            -H "x-admin-token: $ADMIN_API_KEY" \
+            -H "Content-Type: application/json"
