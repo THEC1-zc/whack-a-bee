@@ -5,4 +5,3 @@ export async function GET() {
   const state = await getWeeklyState();
   return NextResponse.json(state);
 }
-

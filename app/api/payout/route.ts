@@ -8,6 +8,7 @@ import { addWeeklyPot } from "@/lib/weekly";
 
 // Prize pool wallet private key — set in Vercel env vars, NEVER in code
 const PRIZE_PRIVATE_KEY = process.env.PRIZE_WALLET_PRIVATE_KEY as `0x${string}`;
+const POT_WALLET = (process.env.POT_WALLET_ADDRESS || "0x468d066995A4C09209c9c165F30Bd76A4FDB88e0") as `0x${string}`;
 const PRIZE_WALLET_ADDRESS = process.env.PRIZE_WALLET_ADDRESS as `0x${string}` | undefined;
 const MIN_POOL_BALANCE_BF = 100000;
 
@@ -70,19 +71,31 @@ export async function POST(req: NextRequest) {
       transport: http("https://mainnet.base.org"),
     });
 
+    const playerAmount = bfAmount * 0.95;
+    const potAmount = bfAmount * 0.05;
+
     const txHash = await walletClient.writeContract({
       address: BF_ADDRESS,
       abi: ERC20_ABI,
       functionName: "transfer",
-      args: [recipient as `0x${string}`, toBFUnits(bfAmount)],
+      args: [recipient as `0x${string}`, toBFUnits(playerAmount)],
     });
 
     await publicClient.waitForTransactionReceipt({ hash: txHash });
 
-    // weekly pot += 5% of payout
-    await addWeeklyPot(bfAmount * 0.05);
+    // transfer 5% to pot wallet
+    const potTx = await walletClient.writeContract({
+      address: BF_ADDRESS,
+      abi: ERC20_ABI,
+      functionName: "transfer",
+      args: [POT_WALLET, toBFUnits(potAmount)],
+    });
+    await publicClient.waitForTransactionReceipt({ hash: potTx });
 
-    return NextResponse.json({ ok: true, txHash, bfAmount });
+    // weekly pot += 5% of payout
+    await addWeeklyPot(potAmount);
+
+    return NextResponse.json({ ok: true, txHash, bfAmount: playerAmount });
   } catch (e: any) {
     console.error("Payout error:", e);
     return NextResponse.json({ error: e?.message || "Payout failed" }, { status: 500 });
@@ -113,6 +126,7 @@ export async function GET() {
       balanceBf,
       configured: true,
       address: prizeAddress,
+      potAddress: POT_WALLET,
     });
   } catch {
     return NextResponse.json({ balance: 0, configured: false });

@@ -64,7 +64,7 @@ export default function App() {
       .then(r => r.json())
       .then(d => {
         if (typeof d.potBf === "number") setWeeklyPot(d.potBf);
-        if (typeof d.nextReset === "number") setNextReset(d.nextReset);
+        if (typeof d.payoutAt === "number") setNextReset(d.payoutAt);
       })
       .catch(() => {});
   }, [lastResult]);

@@ -3,11 +3,11 @@ import { createPublicClient, createWalletClient, http } from "viem";
 import { base } from "viem/chains";
 import { privateKeyToAccount } from "viem/accounts";
 import { BF_ADDRESS, ERC20_ABI, toBFUnits } from "@/lib/contracts";
-import { getAdminWallet, getWeeklyState, logWeeklyPayout, resetWeeklyState } from "@/lib/weekly";
-import { getAdminStats } from "@/lib/leaderboard";
+import { getAdminWallet, getWeeklyState, logWeeklyPayout, resetWeeklyState, setWeeklySnapshot } from "@/lib/weekly";
+import { getAdminStats, resetLeaderboard } from "@/lib/leaderboard";
 
 const ADMIN_WALLET = getAdminWallet();
-const PRIZE_PRIVATE_KEY = process.env.PRIZE_WALLET_PRIVATE_KEY as `0x${string}`;
+const POT_PRIVATE_KEY = process.env.POT_WALLET_PRIVATE_KEY as `0x${string}`;
 
 function isAuthorized(req: NextRequest) {
   const addr = req.headers.get("x-admin-wallet") || "";
@@ -38,7 +38,7 @@ export async function POST(req: NextRequest) {
     if (!isAuthorized(req)) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
-    if (!PRIZE_PRIVATE_KEY) {
+    if (!POT_PRIVATE_KEY) {
       return NextResponse.json({ error: "Payout not configured" }, { status: 503 });
     }
 
@@ -62,13 +62,15 @@ export async function POST(req: NextRequest) {
     const exclude = new Set(top3);
     const lotteryWinners = weightedPick(weekly.tickets || {}, 7, exclude);
 
-    const account = privateKeyToAccount(PRIZE_PRIVATE_KEY);
+    const account = privateKeyToAccount(POT_PRIVATE_KEY);
     const publicClient = createPublicClient({ chain: base, transport: http("https://mainnet.base.org") });
     const walletClient = createWalletClient({ account, chain: base, transport: http("https://mainnet.base.org") });
 
     const transfers: Array<{ to: string; amountBf: number; group: string }> = [];
     top3.forEach((addr, i) => transfers.push({ to: addr, amountBf: topPayouts[i] || 0, group: "top3" }));
     lotteryWinners.forEach(addr => transfers.push({ to: addr, amountBf: perLottery, group: "lottery" }));
+
+    await setWeeklySnapshot({ top3, lotteryWinners, potBf });
 
     const results: any[] = [];
     for (const t of transfers) {
@@ -85,6 +87,7 @@ export async function POST(req: NextRequest) {
 
     await logWeeklyPayout({ potBf, top3, lotteryWinners, results });
     await resetWeeklyState();
+    await resetLeaderboard();
 
     return NextResponse.json({ ok: true, potBf, top3, lotteryWinners, results });
   } catch (e: any) {
@@ -92,4 +95,3 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: e?.message || "Weekly payout failed" }, { status: 500 });
   }
 }
-
