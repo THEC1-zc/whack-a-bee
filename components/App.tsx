@@ -5,7 +5,7 @@ import GameScreen from "./GameScreen";
 import LeaderboardScreen from "./LeaderboardScreen";
 import RulesScreen from "./RulesScreen";
 import { useEffect } from "react";
-import { BF_PER_USDC } from "@/lib/pricing";
+import { BF_PER_USDC_FALLBACK } from "@/lib/pricing";
 
 type Screen = "home" | "game" | "leaderboard" | "rules";
 
@@ -65,7 +65,7 @@ export default function App() {
   const poolEmpty = !poolLoading && poolConfigured && poolBalance < MIN_POOL_BALANCE;
   const poolUnavailable = !poolLoading && !poolConfigured;
   const poolDisabled = poolEmpty || poolUnavailable;
-  const bfPerPoint = PRIZE_PER_POINT * BF_PER_USDC;
+  const bfPerPoint = PRIZE_PER_POINT * BF_PER_USDC_FALLBACK;
 
   return (
     <div className="min-h-dvh flex flex-col items-center p-5 gap-4"
@@ -133,7 +133,7 @@ export default function App() {
           lastResult.prize > 0 ? "border-green-600 bg-green-950" : "border-amber-800 bg-amber-950"
         }`}>
           {lastResult.prize > 0
-            ? <span className="text-green-300 font-bold">🎉 You won {Math.round(lastResult.prize * BF_PER_USDC).toLocaleString()} BF with {lastResult.score} points!</span>
+            ? <span className="text-green-300 font-bold">🎉 You won {Math.round(lastResult.prize * BF_PER_USDC_FALLBACK).toLocaleString()} BF with {lastResult.score} points!</span>
             : <span className="text-amber-600 font-bold">No points scored — try again! ({lastResult.score} pts)</span>
           }
         </div>
@@ -196,7 +196,7 @@ export default function App() {
               style={{ filter: "hue-rotate(310deg) saturate(2)" }}
             />
           </span>
-          <span>Fuchsia butterfly → +4 pts</span>
+          <span>Fast butterfly → +4 pts</span>
         </div>
         <div className="flex items-center gap-2">
           <span

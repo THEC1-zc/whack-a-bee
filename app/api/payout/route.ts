@@ -45,7 +45,7 @@ export async function POST(req: NextRequest) {
     });
 
     const poolBalanceBf = fromBFUnits(poolBalance as bigint);
-    const poolBalanceUsdc = bfToUsdc(poolBalanceBf);
+    const poolBalanceUsdc = await bfToUsdc(poolBalanceBf);
 
     if (poolBalanceUsdc < MIN_POOL_BALANCE) {
       return NextResponse.json(
@@ -54,7 +54,7 @@ export async function POST(req: NextRequest) {
       );
     }
 
-    const bfAmount = usdcToBf(amount);
+    const bfAmount = await usdcToBf(amount);
     if (poolBalanceBf < bfAmount) {
       return NextResponse.json(
         { error: "Insufficient pool balance", poolBalance: poolBalanceUsdc },

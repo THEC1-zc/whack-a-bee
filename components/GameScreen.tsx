@@ -2,7 +2,7 @@
 import { useState, useEffect, useRef, useCallback } from "react";
 import { FarcasterUser } from "@/hooks/useFarcaster";
 import { DIFFICULTY_CONFIG, PRIZE_PER_POINT, type Difficulty } from "./App";
-import { BF_PER_USDC, bfToUsdc } from "@/lib/pricing";
+import { BF_PER_USDC_FALLBACK } from "@/lib/pricing";
 import { payGameFee, claimPrize, getAddress } from "@/lib/payments";
 
 interface Bee {
@@ -172,7 +172,7 @@ export default function GameScreen({ user, difficulty, onGameEnd }: Props) {
     else if (bee.type === "super") {
       points = 1;
       text = "💜 +100K BF";
-      const bonusUsdc = bfToUsdc(SUPER_BEE_BONUS_BF);
+      const bonusUsdc = SUPER_BEE_BONUS_BF / BF_PER_USDC_FALLBACK;
       bonusRef.current = parseFloat((bonusRef.current + bonusUsdc).toFixed(6));
       setSuperBonus(bonusRef.current);
     }
@@ -301,7 +301,7 @@ export default function GameScreen({ user, difficulty, onGameEnd }: Props) {
   const timerPercent = (timeLeft / cfg.time) * 100;
   const timerColor = timeLeft > 8 ? "#fbbf24" : "#ef4444";
   const prize = parseFloat(((score * PRIZE_PER_POINT) + bonusRef.current).toFixed(4));
-  const prizeBf = Math.round(prize * BF_PER_USDC);
+  const prizeBf = Math.round(prize * BF_PER_USDC_FALLBACK);
 
   // Fee payment screen
   if (feeStatus === "waiting" || feeStatus === "paying") {
@@ -355,7 +355,7 @@ export default function GameScreen({ user, difficulty, onGameEnd }: Props) {
   if (gameState === "ended") {
     const shownScore = scoreRef.current;
     const finalPrizeUsdc = (shownScore * PRIZE_PER_POINT) + bonusRef.current;
-    const finalPrizeBf = Math.round(finalPrizeUsdc * BF_PER_USDC);
+    const finalPrizeBf = Math.round(finalPrizeUsdc * BF_PER_USDC_FALLBACK);
     return (
       <div className="min-h-dvh flex flex-col items-center justify-center p-6 text-center gap-4" style={{ background: "#1a0a00" }}>
         <div className="text-5xl">{finalPrizeBf > 0 ? "🎉" : "😔"}</div>
@@ -370,7 +370,7 @@ export default function GameScreen({ user, difficulty, onGameEnd }: Props) {
           <div className="text-3xl font-black text-amber-400">{finalPrizeBf.toLocaleString()} BF</div>
           <div className="text-xs text-amber-700 mt-1">{shownScore} pt × 0.001 USDC (approx)</div>
           {bonusRef.current > 0 && (
-            <div className="text-xs text-purple-300 mt-1">Super bonus +{Math.round(bonusRef.current * BF_PER_USDC)} BF</div>
+            <div className="text-xs text-purple-300 mt-1">Super bonus +{Math.round(bonusRef.current * BF_PER_USDC_FALLBACK)} BF</div>
           )}
 
           {finalPrizeBf > 0 && (
