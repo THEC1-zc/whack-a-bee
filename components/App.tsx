@@ -212,6 +212,20 @@ export default function App() {
         </div>
       </div>
 
+      {/* Play button */}
+      <button
+        type="button"
+        disabled={poolDisabled}
+        onClick={() => setScreen("game")}
+        className="w-full max-w-sm py-5 rounded-2xl text-xl font-black text-black transition-all active:scale-95 disabled:opacity-40"
+        style={{
+          background: poolDisabled ? "#555" : `linear-gradient(135deg, #fbbf24, #f59e0b)`,
+          boxShadow: poolDisabled ? "none" : "0 8px 30px rgba(251,191,36,0.4)"
+        }}
+      >
+        {poolUnavailable ? "Pool Unavailable" : poolEmpty ? "Pool Empty 😔" : `PLAY — ${cfg.fee} USDC 🦋`}
+      </button>
+
       {/* Quick rules */}
       <div className="w-full max-w-sm text-xs text-amber-800 grid grid-cols-2 gap-1">
         <div className="flex items-center gap-2">
@@ -287,19 +301,6 @@ export default function App() {
         This game is for pure fun only. It is playable as long as there is prize pool available.
         It could end anytime or be paused. Under construction — it may change without notice.
       </div>
-
-      {/* Play button */}
-      <button
-        disabled={poolDisabled}
-        onClick={() => setScreen("game")}
-        className="w-full max-w-sm py-5 rounded-2xl text-xl font-black text-black transition-all active:scale-95 disabled:opacity-40"
-        style={{
-          background: poolDisabled ? "#555" : `linear-gradient(135deg, #fbbf24, #f59e0b)`,
-          boxShadow: poolDisabled ? "none" : "0 8px 30px rgba(251,191,36,0.4)"
-        }}
-      >
-        {poolUnavailable ? "Pool Unavailable" : poolEmpty ? "Pool Empty 😔" : `PLAY — ${cfg.fee} USDC 🦋`}
-      </button>
     </div>
   );
 }

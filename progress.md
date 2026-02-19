@@ -2,4 +2,5 @@ Original prompt: end game: aggiungiamo pulsante share to farcaster, che pubblich
 
 - Added share image endpoint `/api/share-image` (next/og) and wired share button to use it and app URL embeds.
 - Fixed OG rendering constraints (display: flex requirement).
+- Moved Play button above butterfly types.
 - Playwright smoke run completed (home screen render).
