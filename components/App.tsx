@@ -148,10 +148,37 @@ export default function App() {
 
       {/* Quick rules */}
       <div className="w-full max-w-sm text-xs text-amber-800 grid grid-cols-2 gap-1">
-        <div>🦋 Normal butterfly → +1 pt</div>
-        <div>⚡ Fast butterfly → +3 pts</div>
-        <div>💖 Fuchsia butterfly → +4 pts</div>
-        <div>🔴 Red butterfly → -2 pts</div>
+        <div className="flex items-center gap-2">
+          <img src="/bf.png" alt="" className="w-4 h-4" />
+          <span>Normal butterfly → +1 pt</span>
+        </div>
+        <div className="flex items-center gap-2">
+          <img
+            src="/bf.png"
+            alt=""
+            className="w-4 h-4"
+            style={{ filter: "hue-rotate(180deg)" }}
+          />
+          <span>Fast butterfly → +3 pts</span>
+        </div>
+        <div className="flex items-center gap-2">
+          <img
+            src="/bf.png"
+            alt=""
+            className="w-4 h-4"
+            style={{ filter: "hue-rotate(310deg) saturate(2)" }}
+          />
+          <span>Fuchsia butterfly → +4 pts</span>
+        </div>
+        <div className="flex items-center gap-2">
+          <img
+            src="/bf.png"
+            alt=""
+            className="w-4 h-4"
+            style={{ filter: "hue-rotate(330deg) saturate(2)" }}
+          />
+          <span>Red butterfly → -2 pts</span>
+        </div>
         <div>📖 <button onClick={() => setScreen("rules")} className="underline text-amber-600">All rules</button></div>
       </div>
 

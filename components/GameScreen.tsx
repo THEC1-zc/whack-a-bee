@@ -57,6 +57,14 @@ function pickCapMultiplier() {
   return 1.0;
 }
 
+function capLabel(mult: number) {
+  if (mult >= 3) return { icon: "💥", label: "Mega" };
+  if (mult >= 2) return { icon: "🌟", label: "Great" };
+  if (mult >= 1.5) return { icon: "🔥", label: "Good" };
+  if (mult >= 1.2) return { icon: "✅", label: "Basic" };
+  return { icon: "🪫", label: "Low" };
+}
+
 export default function GameScreen({ user, difficulty, onGameEnd }: Props) {
   const cfg = DIFFICULTY_CONFIG[difficulty];
   const [bees, setBees] = useState<Bee[]>([]);
@@ -80,6 +88,7 @@ export default function GameScreen({ user, difficulty, onGameEnd }: Props) {
   const fuchsiaCountRef = useRef(0);
   const capMultiplierRef = useRef<number>(pickCapMultiplier());
   const isMegaJackpot = capMultiplierRef.current >= 3.0;
+  const capInfo = capLabel(capMultiplierRef.current);
   const shouldSpawnSuperRef = useRef(
     Math.random() < SUPER_BEE_CHANCE_PER_GAME * (isMegaJackpot ? 3 : 1)
   );
@@ -353,6 +362,8 @@ export default function GameScreen({ user, difficulty, onGameEnd }: Props) {
         <h2 className="text-3xl font-black text-white">Game Over</h2>
         <div className="text-6xl font-black text-amber-400">{shownScore}</div>
         <div className="text-amber-600 text-sm">points out of {cfg.maxPts} max</div>
+        <div className="text-amber-500 text-xs mt-1">{cfg.emoji} {cfg.label} difficulty</div>
+        <div className="text-amber-400 text-xs mt-1">{capInfo.icon} This game was {capInfo.label}</div>
 
         <div className="w-full max-w-xs rounded-2xl p-4 border border-amber-800" style={{ background: "#2a1500" }}>
           <div className="text-xs text-amber-600 uppercase tracking-widest mb-2">Prize</div>
