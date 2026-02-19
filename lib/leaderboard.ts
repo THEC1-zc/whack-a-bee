@@ -27,6 +27,21 @@ export interface UserStats {
   lastPlayed: number;
 }
 
+export interface AdminPlayerStats extends UserStats {
+  losses: number;
+  winRate: number;
+  gamesByDifficulty: Record<string, number>;
+}
+
+export interface AdminStats {
+  totalGames: number;
+  uniquePlayers: number;
+  totalFees: number;
+  totalPrizes: number;
+  gamesByDifficulty: Record<string, number>;
+  players: AdminPlayerStats[];
+}
+
 const MAX_GAMES = 500;
 const KV_KEY = "leaderboard:games";
 const memoryStore: GameResult[] = [];
@@ -119,4 +134,67 @@ export async function getLeaderboardStats(limit = 20, difficulty?: string): Prom
       b.lastPlayed - a.lastPlayed
     )
     .slice(0, limit);
+}
+
+export async function getAdminStats(): Promise<AdminStats> {
+  const games = await loadGames();
+  const gamesByDifficulty: Record<string, number> = {};
+  const playerMap = new Map<number, AdminPlayerStats>();
+  let totalFees = 0;
+  let totalPrizes = 0;
+
+  for (const g of games) {
+    gamesByDifficulty[g.difficulty] = (gamesByDifficulty[g.difficulty] || 0) + 1;
+    totalFees += g.fee;
+    totalPrizes += g.prize;
+
+    const win = g.prize > g.fee;
+    const existing = playerMap.get(g.fid);
+    if (!existing) {
+      playerMap.set(g.fid, {
+        fid: g.fid,
+        username: g.username,
+        displayName: g.displayName,
+        pfpUrl: g.pfpUrl,
+        address: g.address,
+        games: 1,
+        wins: win ? 1 : 0,
+        losses: win ? 0 : 1,
+        winRate: 0,
+        net: g.prize - g.fee,
+        totalPrize: g.prize,
+        totalFees: g.fee,
+        lastPlayed: g.timestamp,
+        gamesByDifficulty: { [g.difficulty]: 1 },
+      });
+    } else {
+      existing.games += 1;
+      existing.wins += win ? 1 : 0;
+      existing.losses += win ? 0 : 1;
+      existing.net += g.prize - g.fee;
+      existing.totalPrize += g.prize;
+      existing.totalFees += g.fee;
+      existing.lastPlayed = Math.max(existing.lastPlayed, g.timestamp);
+      existing.gamesByDifficulty[g.difficulty] = (existing.gamesByDifficulty[g.difficulty] || 0) + 1;
+      if (!existing.address && g.address) existing.address = g.address;
+    }
+  }
+
+  const players = Array.from(playerMap.values()).map(p => ({
+    ...p,
+    winRate: p.games ? Math.round((p.wins / p.games) * 100) : 0,
+  }));
+
+  return {
+    totalGames: games.length,
+    uniquePlayers: playerMap.size,
+    totalFees,
+    totalPrizes,
+    gamesByDifficulty,
+    players: players.sort((a, b) => b.net - a.net || b.games - a.games),
+  };
+}
+
+export async function resetLeaderboard() {
+  await saveGames([]);
 }

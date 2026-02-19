@@ -21,8 +21,10 @@ export const PRIZE_PER_POINT = 0.001; // USDC
 export const PRIZE_WALLET = "0xFd144C774582a450a3F578ae742502ff11Ff92Df";
 export const MIN_POOL_BALANCE = 0.10;
 
+const ADMIN_WALLET = (process.env.NEXT_PUBLIC_ADMIN_WALLET || "0xd29c790466675153A50DF7860B9EFDb689A21cDe").toLowerCase();
+
 export default function App() {
-  const { user, isLoading, isConnected, logout } = useFarcaster();
+  const { user, isLoading, isConnected, logout, connectWallet } = useFarcaster();
   const [screen, setScreen] = useState<Screen>("home");
   const [difficulty, setDifficulty] = useState<Difficulty>("medium");
   const [lastResult, setLastResult] = useState<{ score: number; prize: number } | null>(null);
@@ -83,6 +85,17 @@ export default function App() {
           >
             Logout
           </button>
+          {!user.address && (
+            <button
+              onClick={connectWallet}
+              className="text-[10px] text-amber-600 hover:text-amber-400 underline mt-1 block"
+            >
+              Connect wallet
+            </button>
+          )}
+          {user.address && user.address.toLowerCase() === ADMIN_WALLET && (
+            <a href="/admin" className="text-[10px] text-amber-400 underline mt-1 block">Admin</a>
+          )}
         </div>
         <div className="ml-auto flex gap-3">
           <button onClick={() => setScreen("rules")} className="text-2xl" title="Rules">📖</button>
@@ -149,35 +162,69 @@ export default function App() {
       {/* Quick rules */}
       <div className="w-full max-w-sm text-xs text-amber-800 grid grid-cols-2 gap-1">
         <div className="flex items-center gap-2">
-          <img src="/bf.png" alt="" className="w-4 h-4" />
+          <span
+            className="w-5 h-5 rounded-md border flex items-center justify-center"
+            style={{ background: "#5b3a1a", borderColor: "#fbbf24" }}
+          >
+            <img src="/bf.png" alt="" className="w-4 h-4" style={{ filter: "hue-rotate(20deg) saturate(0.8)" }} />
+          </span>
           <span>Normal butterfly → +1 pt</span>
         </div>
         <div className="flex items-center gap-2">
-          <img
-            src="/bf.png"
-            alt=""
-            className="w-4 h-4"
-            style={{ filter: "hue-rotate(180deg)" }}
-          />
-          <span>Fast butterfly → +3 pts</span>
+          <span
+            className="w-5 h-5 rounded-md border flex items-center justify-center"
+            style={{ background: "#7dd3fc", borderColor: "#1e3a8a" }}
+          >
+            <img
+              src="/bf.png"
+              alt=""
+              className="w-4 h-4"
+              style={{ filter: "hue-rotate(180deg) saturate(2)" }}
+            />
+          </span>
+          <span>Power butterfly → +3 pts</span>
         </div>
         <div className="flex items-center gap-2">
-          <img
-            src="/bf.png"
-            alt=""
-            className="w-4 h-4"
-            style={{ filter: "hue-rotate(310deg) saturate(2)" }}
-          />
+          <span
+            className="w-5 h-5 rounded-md border flex items-center justify-center"
+            style={{ background: "#f9a8d4", borderColor: "#ec4899" }}
+          >
+            <img
+              src="/bf.png"
+              alt=""
+              className="w-4 h-4"
+              style={{ filter: "hue-rotate(310deg) saturate(2)" }}
+            />
+          </span>
           <span>Fuchsia butterfly → +4 pts</span>
         </div>
         <div className="flex items-center gap-2">
-          <img
-            src="/bf.png"
-            alt=""
-            className="w-4 h-4"
-            style={{ filter: "hue-rotate(330deg) saturate(2)" }}
-          />
+          <span
+            className="w-5 h-5 rounded-md border flex items-center justify-center"
+            style={{ background: "#ef4444", borderColor: "#7f1d1d" }}
+          >
+            <img
+              src="/bf.png"
+              alt=""
+              className="w-4 h-4"
+              style={{ filter: "hue-rotate(330deg) saturate(2)" }}
+            />
+          </span>
           <span>Red butterfly → -2 pts</span>
+        </div>
+        <div className="flex items-center gap-2">
+          <span
+            className="w-5 h-5 rounded-md border flex items-center justify-center"
+            style={{ background: "#a855f7", borderColor: "#4c1d95" }}
+          >
+            <img
+              src="/bf.png"
+              alt=""
+              className="w-4 h-4"
+              style={{ filter: "hue-rotate(260deg) saturate(2)" }}
+            />
+          </span>
+          <span>Mega butterfly → +100000 BF</span>
         </div>
         <div>📖 <button onClick={() => setScreen("rules")} className="underline text-amber-600">All rules</button></div>
       </div>
