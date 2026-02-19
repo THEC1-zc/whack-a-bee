@@ -19,7 +19,7 @@ export const DIFFICULTY_CONFIG = {
 
 export const PRIZE_PER_POINT = 0.001; // USDC
 export const PRIZE_WALLET = "0xFd144C774582a450a3F578ae742502ff11Ff92Df";
-export const MIN_POOL_BALANCE = 0.10;
+export const MIN_POOL_BALANCE_BF = 100000;
 
 const ADMIN_WALLET = (process.env.NEXT_PUBLIC_ADMIN_WALLET || "0xd29c790466675153A50DF7860B9EFDb689A21cDe").toLowerCase();
 
@@ -29,6 +29,7 @@ export default function App() {
   const [difficulty, setDifficulty] = useState<Difficulty>("medium");
   const [lastResult, setLastResult] = useState<{ score: number; prize: number } | null>(null);
   const [poolBalance, setPoolBalance] = useState<number>(0);
+  const [poolBalanceBf, setPoolBalanceBf] = useState<number>(0);
   const [poolLoading, setPoolLoading] = useState(true);
   const [poolConfigured, setPoolConfigured] = useState(true);
 
@@ -37,6 +38,7 @@ export default function App() {
       .then(r => r.json())
       .then(d => {
         setPoolBalance(typeof d.balance === "number" ? d.balance : 0);
+        setPoolBalanceBf(typeof d.balanceBf === "number" ? d.balanceBf : 0);
         setPoolConfigured(d.configured !== false);
         setPoolLoading(false);
       })
@@ -62,7 +64,7 @@ export default function App() {
   if (screen === "rules") return <RulesScreen onBack={() => setScreen("home")} />;
 
   const cfg = DIFFICULTY_CONFIG[difficulty];
-  const poolEmpty = !poolLoading && poolConfigured && poolBalance < MIN_POOL_BALANCE;
+  const poolEmpty = !poolLoading && poolConfigured && poolBalanceBf < MIN_POOL_BALANCE_BF;
   const poolUnavailable = !poolLoading && !poolConfigured;
   const poolDisabled = poolEmpty || poolUnavailable;
   const bfPerPoint = PRIZE_PER_POINT * BF_PER_USDC_FALLBACK;
@@ -116,7 +118,7 @@ export default function App() {
           {poolUnavailable ? "⚠️ Prize Pool Unavailable" : poolEmpty ? "⚠️ Prize Pool Empty" : "💰 Prize Pool (approx)"}
         </div>
         <div className={`text-3xl font-black text-center ${poolEmpty || poolUnavailable ? "text-red-400" : "text-amber-400"}`}>
-          {poolLoading ? "..." : poolUnavailable ? "—" : `${poolBalance.toFixed(3)} USDC`}
+          {poolLoading ? "..." : poolUnavailable ? "—" : `${Math.round(poolBalanceBf).toLocaleString()} BF`}
         </div>
         {poolEmpty && (
           <div className="text-red-400 text-xs text-center mt-1">Game temporarily suspended</div>

@@ -8,7 +8,7 @@ import { bfToUsdc, usdcToBf } from "@/lib/pricing";
 // Prize pool wallet private key — set in Vercel env vars, NEVER in code
 const PRIZE_PRIVATE_KEY = process.env.PRIZE_WALLET_PRIVATE_KEY as `0x${string}`;
 const PRIZE_WALLET_ADDRESS = process.env.PRIZE_WALLET_ADDRESS as `0x${string}` | undefined;
-const MIN_POOL_BALANCE = 0.10;
+const MIN_POOL_BALANCE_BF = 100000;
 
 export async function POST(req: NextRequest) {
   try {
@@ -47,7 +47,7 @@ export async function POST(req: NextRequest) {
     const poolBalanceBf = fromBFUnits(poolBalance as bigint);
     const poolBalanceUsdc = await bfToUsdc(poolBalanceBf);
 
-    if (poolBalanceUsdc < MIN_POOL_BALANCE) {
+    if (poolBalanceBf < MIN_POOL_BALANCE_BF) {
       return NextResponse.json(
         { error: "Prize pool is empty", poolBalance: poolBalanceUsdc },
         { status: 503 }

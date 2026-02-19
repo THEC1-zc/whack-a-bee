@@ -89,7 +89,7 @@ export default function RulesScreen({ onBack }: { onBack: () => void }) {
         {/* Prize Pool */}
         <Section title="🏦 Prize Pool">
           <p className="text-amber-200 text-sm leading-relaxed mb-3">
-            All prizes are paid from a dedicated pool. If the balance drops below <span className="text-amber-400 font-bold">0.10 USDC</span>, the game is temporarily suspended until the pool is refilled.
+            All prizes are paid from a dedicated pool. If the balance drops below <span className="text-amber-400 font-bold">100,000 BF</span>, the game is temporarily suspended until the pool is refilled.
           </p>
           <div className="rounded-xl p-3 border border-amber-900" style={{ background: "#1f1000" }}>
             <div className="text-amber-500 text-xs uppercase tracking-widest mb-1">Prize pool wallet</div>
