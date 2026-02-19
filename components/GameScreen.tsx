@@ -357,6 +357,11 @@ export default function GameScreen({ user, difficulty, onGameEnd }: Props) {
     const finalPrizeUsdc = (shownScore * PRIZE_PER_POINT) + bonusRef.current;
     const finalPrizeBf = Math.round(finalPrizeUsdc * BF_PER_USDC_FALLBACK);
     const pct = Math.round((shownScore / cfg.maxPts) * 100);
+    const shortPaymentError = paymentError
+      ? (paymentError.includes("replacement transaction underpriced")
+        ? "Network busy. Please try again later."
+        : paymentError.split("\n")[0].slice(0, 140))
+      : null;
     const ticketEstimate = Math.max(
       1,
       1 + Math.floor(shownScore / 1000) + Math.floor(cfg.fee / 0.25)
@@ -407,7 +412,7 @@ export default function GameScreen({ user, difficulty, onGameEnd }: Props) {
             </div>
           )}
           {paymentStatus === "failed" && paymentError && (
-            <div className="mt-2 text-[11px] text-red-300 break-words">{paymentError}</div>
+            <div className="mt-2 text-[11px] text-red-300">{shortPaymentError}</div>
           )}
         </div>
 
