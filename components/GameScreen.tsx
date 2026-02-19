@@ -59,9 +59,9 @@ function pickCapMultiplier() {
 
 function capLabel(mult: number) {
   if (mult >= 3) return { icon: "💥", label: "Mega" };
-  if (mult >= 2) return { icon: "🌟", label: "Great" };
-  if (mult >= 1.5) return { icon: "🔥", label: "Good" };
-  if (mult >= 1.2) return { icon: "✅", label: "Basic" };
+  if (mult >= 2) return { icon: "🌟", label: "Big" };
+  if (mult >= 1.5) return { icon: "🔥", label: "Average" };
+  if (mult >= 1.2) return { icon: "✅", label: "Nice" };
   return { icon: "🪫", label: "Low" };
 }
 
@@ -363,7 +363,26 @@ export default function GameScreen({ user, difficulty, onGameEnd }: Props) {
         <div className="text-6xl font-black text-amber-400">{shownScore}</div>
         <div className="text-amber-600 text-sm">points out of {cfg.maxPts} max</div>
         <div className="text-amber-500 text-xs mt-1">{cfg.emoji} {cfg.label} difficulty</div>
-        <div className="text-amber-400 text-xs mt-1">{capInfo.icon} This game was {capInfo.label}</div>
+        <div className="text-amber-400 text-xs mt-1">{capInfo.icon} Max prize was {capInfo.label}</div>
+
+        {(() => {
+          const pct = Math.round((shownScore / cfg.maxPts) * 100);
+          return (
+            <div className="w-full max-w-xs mt-3">
+              <div className="text-amber-500 text-xs mb-1">Your game was {pct}%</div>
+              <div className="h-2 rounded-full bg-amber-950 border border-amber-900 overflow-hidden">
+                <div
+                  className="h-full"
+                  style={{
+                    width: `${pct}%`,
+                    background: "linear-gradient(90deg, #f87171 0%, #fbbf24 50%, #22c55e 100%)",
+                    transition: "width 0.6s ease",
+                  }}
+                />
+              </div>
+            </div>
+          );
+        })()}
 
         <div className="w-full max-w-xs rounded-2xl p-4 border border-amber-800" style={{ background: "#2a1500" }}>
           <div className="text-xs text-amber-600 uppercase tracking-widest mb-2">Prize</div>

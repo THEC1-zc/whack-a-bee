@@ -176,6 +176,9 @@ export default function App() {
         )}
         <a href="/weekly" className="text-amber-400 underline mt-2 inline-block">Weekly details</a>
       </div>
+      <div className="text-xs text-amber-700">
+        Claim tickets in <a href="/weekly" className="text-amber-400 underline">Weekly</a>
+      </div>
 
       {/* Last result */}
       {lastResult && (
