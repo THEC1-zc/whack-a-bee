@@ -4,6 +4,7 @@ import { base } from "viem/chains";
 import { privateKeyToAccount } from "viem/accounts";
 import { BF_ADDRESS, ERC20_ABI, fromBFUnits, toBFUnits, PRIZE_WALLET } from "@/lib/contracts";
 import { bfToUsdc, usdcToBf } from "@/lib/pricing";
+import { addWeeklyPot } from "@/lib/weekly";
 
 // Prize pool wallet private key — set in Vercel env vars, NEVER in code
 const PRIZE_PRIVATE_KEY = process.env.PRIZE_WALLET_PRIVATE_KEY as `0x${string}`;
@@ -77,6 +78,9 @@ export async function POST(req: NextRequest) {
     });
 
     await publicClient.waitForTransactionReceipt({ hash: txHash });
+
+    // weekly pot += 5% of payout
+    await addWeeklyPot(bfAmount * 0.05);
 
     return NextResponse.json({ ok: true, txHash, bfAmount });
   } catch (e: any) {

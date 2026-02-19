@@ -1,4 +1,5 @@
 import Redis from "ioredis";
+import { updateWeeklyTickets } from "./weekly";
 
 export interface GameResult {
   fid: number;
@@ -89,6 +90,7 @@ export async function saveGameResult(entry: GameResult) {
     games.splice(0, games.length - MAX_GAMES);
   }
   await saveGames(games);
+  await updateWeeklyTickets(entry);
 }
 
 export async function getLeaderboardStats(limit = 20, difficulty?: string): Promise<UserStats[]> {

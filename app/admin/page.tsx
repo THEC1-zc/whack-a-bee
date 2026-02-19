@@ -30,6 +30,8 @@ type AdminStats = {
 export default function AdminPage() {
   const { user, connectWallet } = useFarcaster();
   const [stats, setStats] = useState<AdminStats | null>(null);
+  const [weekly, setWeekly] = useState<any | null>(null);
+  const [payoutRunning, setPayoutRunning] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
   const [resetting, setResetting] = useState(false);
@@ -44,7 +46,7 @@ export default function AdminPage() {
       headers: { "x-admin-wallet": address },
     })
       .then(r => r.json())
-      .then(d => { setStats(d); setError(null); })
+      .then(d => { setStats(d.stats); setWeekly(d.weekly); setError(null); })
       .catch(() => setError("Failed to load stats"))
       .finally(() => setLoading(false));
   }, [authorized, address]);
@@ -74,6 +76,39 @@ export default function AdminPage() {
       setError("Reset failed");
     }
     setResetting(false);
+  }
+
+  async function handleWeeklyReset() {
+    if (!authorized) return;
+    if (!confirm("Reset weekly pot & tickets?")) return;
+    const res = await fetch("/api/admin/leaderboard", {
+      method: "POST",
+      headers: { "Content-Type": "application/json", "x-admin-wallet": address },
+      body: JSON.stringify({ action: "weekly_reset" }),
+    });
+    if (res.ok) {
+      setWeekly(null);
+    } else {
+      setError("Weekly reset failed");
+    }
+  }
+
+  async function handleWeeklyPayout() {
+    if (!authorized) return;
+    if (!confirm("Run weekly payout now?")) return;
+    setPayoutRunning(true);
+    const res = await fetch("/api/admin/weekly-payout", {
+      method: "POST",
+      headers: { "x-admin-wallet": address },
+    });
+    if (!res.ok) {
+      setError("Weekly payout failed");
+    } else {
+      setError(null);
+      const data = await res.json();
+      setWeekly({ potBf: 0, ...data });
+    }
+    setPayoutRunning(false);
   }
 
   if (!user?.address) {
@@ -130,6 +165,32 @@ export default function AdminPage() {
               <Stat label="Unique players" value={String(totals?.uniquePlayers)} />
               <Stat label="Total spent (USDC)" value={totals?.totalFees || "0"} />
               <Stat label="Total prizes (USDC)" value={totals?.totalPrizes || "0"} />
+            </div>
+
+            <div className="rounded-xl border border-amber-900 p-3" style={{ background: "#140a00" }}>
+              <div className="flex items-center justify-between mb-2">
+                <div className="text-amber-400 text-xs uppercase tracking-widest">Weekly Pot</div>
+                <div className="flex gap-2">
+                  <button
+                    onClick={handleWeeklyPayout}
+                    disabled={payoutRunning}
+                    className="px-3 py-1 rounded-md text-xs font-black text-black disabled:opacity-50"
+                    style={{ background: "linear-gradient(135deg, #7c3aed, #a855f7)" }}
+                  >
+                    {payoutRunning ? "Paying..." : "Run Payout"}
+                  </button>
+                  <button
+                    onClick={handleWeeklyReset}
+                    className="px-3 py-1 rounded-md text-xs font-black text-black"
+                    style={{ background: "linear-gradient(135deg, #fbbf24, #f59e0b)" }}
+                  >
+                    Reset Weekly
+                  </button>
+                </div>
+              </div>
+              <div className="text-amber-200 text-sm">
+                Pot: {weekly ? Math.round(weekly.potBf || 0).toLocaleString() : 0} BF
+              </div>
             </div>
 
             <div className="rounded-xl border border-amber-900 p-3" style={{ background: "#140a00" }}>

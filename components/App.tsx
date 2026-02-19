@@ -33,6 +33,8 @@ export default function App() {
   const [poolLoading, setPoolLoading] = useState(true);
   const [poolConfigured, setPoolConfigured] = useState(true);
   const [bfPerUsdc, setBfPerUsdc] = useState<number | null>(null);
+  const [weeklyPot, setWeeklyPot] = useState<number | null>(null);
+  const [nextReset, setNextReset] = useState<number | null>(null);
 
   useEffect(() => {
     fetch("/api/payout")
@@ -56,6 +58,16 @@ export default function App() {
       })
       .catch(() => {});
   }, []);
+
+  useEffect(() => {
+    fetch("/api/weekly")
+      .then(r => r.json())
+      .then(d => {
+        if (typeof d.potBf === "number") setWeeklyPot(d.potBf);
+        if (typeof d.nextReset === "number") setNextReset(d.nextReset);
+      })
+      .catch(() => {});
+  }, [lastResult]);
 
   if (isLoading) {
     return (
@@ -148,6 +160,21 @@ export default function App() {
         <div className="text-amber-200 font-bold">
           1 USDC ≈ {Math.round((bfPerUsdc ?? BF_PER_USDC_FALLBACK)).toLocaleString()} BF
         </div>
+      </div>
+
+      {/* Weekly pot */}
+      <div className="w-full max-w-sm rounded-2xl p-3 border border-amber-900 text-center text-xs"
+        style={{ background: "#1f1000" }}>
+        <div className="text-amber-500 uppercase tracking-widest mb-1">Weekly Pot</div>
+        <div className="text-amber-200 font-bold">
+          {weeklyPot == null ? "—" : `${Math.round(weeklyPot).toLocaleString()} BF`}
+        </div>
+        {nextReset && (
+          <div className="text-amber-700 mt-1">
+            Resets {new Date(nextReset).toLocaleString("en-GB", { timeZone: "Europe/Rome" })} CET
+          </div>
+        )}
+        <a href="/weekly" className="text-amber-400 underline mt-2 inline-block">Weekly details</a>
       </div>
 
       {/* Last result */}

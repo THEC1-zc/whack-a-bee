@@ -1,7 +1,8 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getAdminStats, resetLeaderboard } from "@/lib/leaderboard";
+import { getAdminWallet, getWeeklyState, resetWeeklyState } from "@/lib/weekly";
 
-const ADMIN_WALLET = (process.env.ADMIN_WALLET || "0xd29c790466675153A50DF7860B9EFDb689A21cDe").toLowerCase();
+const ADMIN_WALLET = getAdminWallet();
 
 function isAuthorized(req: NextRequest) {
   const addr = req.headers.get("x-admin-wallet") || "";
@@ -12,7 +13,9 @@ export async function GET(req: NextRequest) {
   if (!isAuthorized(req)) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
-  return NextResponse.json(await getAdminStats());
+  const stats = await getAdminStats();
+  const weekly = await getWeeklyState();
+  return NextResponse.json({ stats, weekly });
 }
 
 export async function POST(req: NextRequest) {
@@ -24,6 +27,9 @@ export async function POST(req: NextRequest) {
     await resetLeaderboard();
     return NextResponse.json({ ok: true });
   }
+  if (body?.action === "weekly_reset") {
+    await resetWeeklyState();
+    return NextResponse.json({ ok: true });
+  }
   return NextResponse.json({ error: "Invalid action" }, { status: 400 });
 }
-
