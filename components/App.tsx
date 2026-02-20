@@ -91,7 +91,8 @@ export default function App() {
   const poolEmpty = !poolLoading && poolConfigured && poolBalanceBf < MIN_POOL_BALANCE_BF;
   const poolUnavailable = !poolLoading && !poolConfigured;
   const poolDisabled = poolEmpty || poolUnavailable;
-  const bfPerPoint = PRIZE_PER_POINT * (bfPerUsdc ?? BF_PER_USDC_FALLBACK);
+  const liveBfPerUsdc = bfPerUsdc ?? BF_PER_USDC_FALLBACK;
+  const bfPerPoint = PRIZE_PER_POINT * liveBfPerUsdc;
 
   return (
     <div className="min-h-dvh flex flex-col items-center p-5 gap-4"
@@ -185,10 +186,13 @@ export default function App() {
         <div className={`w-full max-w-sm rounded-2xl p-3 text-center border ${
           lastResult.prize > 0 ? "border-green-600 bg-green-950" : "border-amber-800 bg-amber-950"
         }`}>
-          {lastResult.prize > 0
-            ? <span className="text-green-300 font-bold">🎉 You won {Math.round(lastResult.prize * BF_PER_USDC_FALLBACK).toLocaleString()} BF with {lastResult.score} points!</span>
-            : <span className="text-amber-600 font-bold">No points scored — try again! ({lastResult.score} pts)</span>
-          }
+          {lastResult.prize > 0 ? (
+            <span className="text-green-300 font-bold">
+              🎉 You won {Math.round(lastResult.prize * liveBfPerUsdc * 0.95).toLocaleString()} BF with {lastResult.score} points!
+            </span>
+          ) : (
+            <span className="text-amber-600 font-bold">No points scored — try again! ({lastResult.score} pts)</span>
+          )}
         </div>
       )}
 
