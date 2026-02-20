@@ -80,6 +80,7 @@ export default function GameScreen({ user, difficulty, onGameEnd }: Props) {
   const [feeError, setFeeError] = useState<string | null>(null);
   const [gameStarted, setGameStarted] = useState(false);
   const [superBonus, setSuperBonus] = useState(0);
+  const [bfPerUsdc, setBfPerUsdc] = useState(BF_PER_USDC_FALLBACK);
 
   const beeIdRef = useRef(0);
   const scoreRef = useRef(0);
@@ -104,6 +105,17 @@ export default function GameScreen({ user, difficulty, onGameEnd }: Props) {
     const id = effectIdRef.current++;
     setHitEffects(prev => [...prev, { id, slot, text }]);
     setTimeout(() => setHitEffects(prev => prev.filter(e => e.id !== id)), 500);
+  }, []);
+
+  useEffect(() => {
+    fetch("/api/price")
+      .then(r => r.json())
+      .then(d => {
+        if (typeof d.bfPerUsdc === "number" && d.bfPerUsdc > 0) {
+          setBfPerUsdc(d.bfPerUsdc);
+        }
+      })
+      .catch(() => {});
   }, []);
 
   const spawnBees = useCallback((count: number, ensureRed: boolean) => {
@@ -170,7 +182,7 @@ export default function GameScreen({ user, difficulty, onGameEnd }: Props) {
     else if (bee.type === "super") {
       points = 1;
       text = "💜 +100K BF";
-      const bonusUsdc = SUPER_BEE_BONUS_BF / BF_PER_USDC_FALLBACK;
+      const bonusUsdc = SUPER_BEE_BONUS_BF / bfPerUsdc;
       bonusRef.current = parseFloat((bonusRef.current + bonusUsdc).toFixed(6));
       setSuperBonus(bonusRef.current);
     }
@@ -298,7 +310,8 @@ export default function GameScreen({ user, difficulty, onGameEnd }: Props) {
   const timerPercent = (timeLeft / cfg.time) * 100;
   const timerColor = timeLeft > 8 ? "#fbbf24" : "#ef4444";
   const prize = parseFloat(((score * PRIZE_PER_POINT) + bonusRef.current).toFixed(4));
-  const prizeBf = Math.round(prize * BF_PER_USDC_FALLBACK);
+  const prizeBfGross = Math.round(prize * bfPerUsdc);
+  const prizeBfNet = Math.round(prizeBfGross * 0.95);
 
   // Fee payment screen
   if (feeStatus === "waiting" || feeStatus === "paying") {
@@ -352,7 +365,8 @@ export default function GameScreen({ user, difficulty, onGameEnd }: Props) {
   if (gameState === "ended") {
     const shownScore = scoreRef.current;
     const finalPrizeUsdc = (shownScore * PRIZE_PER_POINT) + bonusRef.current;
-    const finalPrizeBf = Math.round(finalPrizeUsdc * BF_PER_USDC_FALLBACK);
+    const finalPrizeBfGross = Math.round(finalPrizeUsdc * bfPerUsdc);
+    const finalPrizeBfNet = Math.round(finalPrizeBfGross * 0.95);
     const capMaxPts = capScoreRef.current;
     const pct = Math.round((shownScore / capMaxPts) * 100);
     const shortPaymentError = paymentError
@@ -365,11 +379,11 @@ export default function GameScreen({ user, difficulty, onGameEnd }: Props) {
       1 + Math.floor(shownScore / 1000) + Math.floor(cfg.fee / 0.25)
     );
     const appUrl = process.env.NEXT_PUBLIC_APP_URL || "https://whack-a-bee.vercel.app";
-    const shareImage = `${appUrl}/api/share-image?score=${shownScore}&pct=${pct}&prizeBf=${finalPrizeBf}&fee=${cfg.fee}&difficulty=${cfg.label}&tickets=${ticketEstimate}`;
-    const shareText = `I just ended a game on Whack-a-bee by @Thec1, I entered a ${cfg.fee} game, had a ${pct}% and won ${finalPrizeBf} BF and ${ticketEstimate} tickets for the weekly pot! can you do better?`;
+    const shareImage = `${appUrl}/api/share-image?score=${shownScore}&pct=${pct}&prizeBf=${finalPrizeBfNet}&fee=${cfg.fee}&difficulty=${cfg.label}&tickets=${ticketEstimate}`;
+    const shareText = `I just ended a game on Whack-a-bee by @Thec1, I entered a ${cfg.fee} game, had a ${pct}% and won ${finalPrizeBfNet} BF and ${ticketEstimate} tickets for the weekly pot! can you do better?`;
     return (
       <div className="min-h-dvh flex flex-col items-center justify-center p-6 text-center gap-4" style={{ background: "#1a0a00" }}>
-        <div className="text-5xl">{finalPrizeBf > 0 ? "🎉" : "😔"}</div>
+        <div className="text-5xl">{finalPrizeBfNet > 0 ? "🎉" : "😔"}</div>
         <h2 className="text-3xl font-black text-white">Game Over</h2>
         <div className="text-6xl font-black text-amber-400">{shownScore}</div>
         <div className="text-amber-600 text-sm">points out of {capMaxPts} max</div>
@@ -392,13 +406,14 @@ export default function GameScreen({ user, difficulty, onGameEnd }: Props) {
 
         <div className="w-full max-w-xs rounded-2xl p-4 border border-amber-800" style={{ background: "#2a1500" }}>
           <div className="text-xs text-amber-600 uppercase tracking-widest mb-2">Prize</div>
-          <div className="text-3xl font-black text-amber-400">{finalPrizeBf.toLocaleString()} BF</div>
+          <div className="text-3xl font-black text-amber-400">{finalPrizeBfNet.toLocaleString()} BF</div>
           <div className="text-xs text-amber-700 mt-1">{shownScore} pt × 0.001 USDC (approx)</div>
+          <div className="text-[11px] text-amber-600 mt-1">Gross: {finalPrizeBfGross.toLocaleString()} BF · 5% to weekly pot</div>
           {bonusRef.current > 0 && (
-            <div className="text-xs text-purple-300 mt-1">Super bonus +{Math.round(bonusRef.current * BF_PER_USDC_FALLBACK)} BF</div>
+            <div className="text-xs text-purple-300 mt-1">Super bonus +{Math.round(bonusRef.current * bfPerUsdc)} BF</div>
           )}
 
-          {finalPrizeBf > 0 && (
+          {finalPrizeBfNet > 0 && (
             <div className={`mt-3 text-xs font-bold rounded-lg p-2 ${
               paymentStatus === "paid" ? "bg-green-900 text-green-300" :
               paymentStatus === "failed" ? "bg-red-900 text-red-300" :
@@ -469,7 +484,7 @@ export default function GameScreen({ user, difficulty, onGameEnd }: Props) {
 
         <div className="text-center min-w-[60px]">
           <div className="text-xs text-amber-600 uppercase">Prize</div>
-          <div className="text-lg font-black text-green-400">{prizeBf.toLocaleString()}</div>
+          <div className="text-lg font-black text-green-400">{prizeBfNet.toLocaleString()}</div>
           <div className="text-xs text-green-700">BF</div>
         </div>
       </div>
