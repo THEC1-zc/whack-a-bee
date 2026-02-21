@@ -26,6 +26,62 @@ export function getWalletClient() {
   });
 }
 
+function baseChainHex() {
+  return `0x${base.id.toString(16)}`;
+}
+
+async function ensureBaseChain(): Promise<{ ok: boolean; error?: string }> {
+  const provider = sdk.wallet.ethProvider;
+
+  try {
+    const current = await provider.request({ method: "eth_chainId" });
+    const currentId =
+      typeof current === "string" ? parseInt(current, 16) : Number(current);
+
+    if (currentId === base.id) {
+      return { ok: true };
+    }
+
+    try {
+      await provider.request({
+        method: "wallet_switchEthereumChain",
+        params: [{ chainId: baseChainHex() }],
+      });
+      return { ok: true };
+    } catch (e: any) {
+      if (e?.code === 4902) {
+        const blockExplorerUrl = base.blockExplorers?.default?.url;
+        const blockExplorerUrls = blockExplorerUrl ? [blockExplorerUrl] : [];
+
+        await provider.request({
+          method: "wallet_addEthereumChain",
+          params: [
+            {
+              chainId: baseChainHex(),
+              chainName: base.name,
+              rpcUrls: base.rpcUrls.default.http,
+              nativeCurrency: base.nativeCurrency,
+              blockExplorerUrls,
+            },
+          ],
+        });
+
+        return { ok: true };
+      }
+
+      return {
+        ok: false,
+        error: "Switch your wallet network to Base (chain id 8453) and try again.",
+      };
+    }
+  } catch {
+    return {
+      ok: false,
+      error: "Switch your wallet network to Base (chain id 8453) and try again.",
+    };
+  }
+}
+
 // Get connected wallet address
 export async function getAddress(): Promise<`0x${string}` | null> {
   try {
@@ -58,6 +114,11 @@ export async function payGameFee(
   feeAmount: number
 ): Promise<{ success: boolean; txHash?: string; error?: string }> {
   try {
+    const chainCheck = await ensureBaseChain();
+    if (!chainCheck.ok) {
+      return { success: false, error: chainCheck.error };
+    }
+
     const walletClient = getWalletClient();
     const [address] = await walletClient.requestAddresses();
 
@@ -101,7 +162,7 @@ export async function payGameFee(
 }
 
 // Pay prize to winner: called from backend API (server-side)
-// This is a placeholder — real payout needs a backend wallet with USDC
+// This is a placeholder - real payout needs a backend wallet with USDC
 export async function claimPrize(
   recipientAddress: `0x${string}`,
   prizeAmount: number
