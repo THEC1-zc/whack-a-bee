@@ -42,6 +42,7 @@ export default function AdminPage() {
   const [payoutLogs, setPayoutLogs] = useState<Array<{ at?: number; potBf?: number; force?: boolean; results?: Array<{ txHash: string }> }>>([]);
   const [payoutRunning, setPayoutRunning] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [info, setInfo] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
   const [resetting, setResetting] = useState(false);
   const [savingWeeklyConfig, setSavingWeeklyConfig] = useState(false);
@@ -103,7 +104,7 @@ export default function AdminPage() {
 
   async function handleWeeklyReset() {
     if (!authorized) return;
-    if (!confirm("Reset weekly pot & tickets?")) return;
+    setInfo("Reset weekly in corso...");
     const res = await fetch("/api/admin/leaderboard", {
       method: "POST",
       headers: { "Content-Type": "application/json", "x-admin-wallet": address },
@@ -111,18 +112,21 @@ export default function AdminPage() {
     });
     if (res.ok) {
       setWeekly(null);
+      setError(null);
+      setInfo("Weekly reset completato");
     } else {
       setError("Weekly reset failed");
+      setInfo(null);
     }
   }
 
   async function handleWeeklyPayout(force = false, mode: "manual" | "auto" = "manual") {
     if (!authorized) return;
-    if (!confirm(force ? "Force payout now (ignore schedule)?" : "Run weekly payout now?")) return;
+    setInfo(`Avvio payout ${force ? "FORCE" : "standard"}...`);
     setPayoutRunning(true);
     const res = await fetch("/api/admin/weekly-payout", {
       method: "POST",
-      headers: { "x-admin-wallet": address },
+      headers: { "Content-Type": "application/json", "x-admin-wallet": address },
       body: JSON.stringify({
         force,
         mode,
@@ -132,10 +136,12 @@ export default function AdminPage() {
     if (!res.ok) {
       const data = await res.json().catch(() => ({}));
       setError(data?.error || "Weekly payout failed");
+      setInfo(null);
     } else {
       setError(null);
       const data = await res.json();
       setWeekly({ potBf: 0, ...data });
+      setInfo(`Payout OK · tx: ${Array.isArray(data?.results) ? data.results.length : 0}`);
       fetch("/api/admin/weekly-config", {
         headers: { "x-admin-wallet": address },
       })
@@ -211,6 +217,7 @@ export default function AdminPage() {
         </div>
 
         {error && <div className="text-red-400 text-sm">{error}</div>}
+        {info && <div className="text-green-400 text-sm">{info}</div>}
 
         {!stats || loading ? (
           <div className="text-amber-500 text-sm">Loading…</div>

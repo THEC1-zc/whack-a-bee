@@ -29,3 +29,7 @@ Original prompt: end game: aggiungiamo pulsante share to farcaster, che pubblich
   - New admin API `/api/admin/weekly-payouts` for detailed payout reporting rows.
   - New admin subpage `/admin/payouts` with week/user-wallet/amount/txhash/status listing.
   - Added `vercel.json` cron schedule for `/api/cron/weekly-payout`.
+- Admin buttons responsiveness fix for Farcaster miniapp:
+  - Removed blocking `confirm()` dependency for weekly actions (often invisible in embed context).
+  - Added visible status feedback (`info`) for run/reset actions.
+  - Added explicit `Content-Type: application/json` on weekly payout POST.
