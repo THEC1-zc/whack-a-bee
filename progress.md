@@ -33,3 +33,7 @@ Original prompt: end game: aggiungiamo pulsante share to farcaster, che pubblich
   - Removed blocking `confirm()` dependency for weekly actions (often invisible in embed context).
   - Added visible status feedback (`info`) for run/reset actions.
   - Added explicit `Content-Type: application/json` on weekly payout POST.
+- Admin button interaction hardening in miniapp:
+  - Added explicit `type="button"` to weekly action buttons.
+  - Added immediate `onPointerDown` status feedback to prove tap/click is received.
+  - Added per-action running state labels (`Paying...`, `Reset...`) for visibility.

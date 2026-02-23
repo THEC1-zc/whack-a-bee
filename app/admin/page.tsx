@@ -41,6 +41,7 @@ export default function AdminPage() {
   const [weeklyConfig, setWeeklyConfig] = useState<WeeklyConfig | null>(null);
   const [payoutLogs, setPayoutLogs] = useState<Array<{ at?: number; potBf?: number; force?: boolean; results?: Array<{ txHash: string }> }>>([]);
   const [payoutRunning, setPayoutRunning] = useState(false);
+  const [runningAction, setRunningAction] = useState<"payout" | "force" | "auto" | "resetWeekly" | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [info, setInfo] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
@@ -105,6 +106,7 @@ export default function AdminPage() {
   async function handleWeeklyReset() {
     if (!authorized) return;
     setInfo("Reset weekly in corso...");
+    setRunningAction("resetWeekly");
     const res = await fetch("/api/admin/leaderboard", {
       method: "POST",
       headers: { "Content-Type": "application/json", "x-admin-wallet": address },
@@ -118,11 +120,13 @@ export default function AdminPage() {
       setError("Weekly reset failed");
       setInfo(null);
     }
+    setRunningAction(null);
   }
 
   async function handleWeeklyPayout(force = false, mode: "manual" | "auto" = "manual") {
     if (!authorized) return;
     setInfo(`Avvio payout ${force ? "FORCE" : "standard"}...`);
+    setRunningAction(mode === "auto" ? "auto" : force ? "force" : "payout");
     setPayoutRunning(true);
     const res = await fetch("/api/admin/weekly-payout", {
       method: "POST",
@@ -153,6 +157,7 @@ export default function AdminPage() {
         .catch(() => {});
     }
     setPayoutRunning(false);
+    setRunningAction(null);
   }
 
   async function updateWeeklyConfig(next: Partial<WeeklyConfig>) {
@@ -242,35 +247,44 @@ export default function AdminPage() {
                     Payout Report
                   </Link>
                   <button
+                    type="button"
+                    onPointerDown={() => setInfo("Run Payout cliccato")}
                     onClick={() => handleWeeklyPayout(false, "manual")}
                     disabled={payoutRunning}
                     className="px-3 py-1 rounded-md text-xs font-black text-black disabled:opacity-50"
                     style={{ background: "linear-gradient(135deg, #7c3aed, #a855f7)" }}
                   >
-                    {payoutRunning ? "Paying..." : "Run Payout"}
+                    {runningAction === "payout" ? "Paying..." : "Run Payout"}
                   </button>
                   <button
+                    type="button"
+                    onPointerDown={() => setInfo("Force Payout cliccato")}
                     onClick={() => handleWeeklyPayout(true, "manual")}
                     disabled={payoutRunning}
                     className="px-3 py-1 rounded-md text-xs font-black text-black disabled:opacity-50"
                     style={{ background: "linear-gradient(135deg, #ef4444, #f97316)" }}
                   >
-                    {payoutRunning ? "Paying..." : "Force Payout"}
+                    {runningAction === "force" ? "Paying..." : "Force Payout"}
                   </button>
                   <button
+                    type="button"
+                    onPointerDown={() => setInfo("Run Auto cliccato")}
                     onClick={() => handleWeeklyPayout(true, "auto")}
                     disabled={payoutRunning || !weeklyConfig?.autoPayoutEnabled}
                     className="px-3 py-1 rounded-md text-xs font-black text-black disabled:opacity-50"
                     style={{ background: "linear-gradient(135deg, #10b981, #22c55e)" }}
                   >
-                    {payoutRunning ? "Paying..." : "Run Auto"}
+                    {runningAction === "auto" ? "Paying..." : "Run Auto"}
                   </button>
                   <button
+                    type="button"
+                    onPointerDown={() => setInfo("Reset Weekly cliccato")}
                     onClick={handleWeeklyReset}
+                    disabled={runningAction === "resetWeekly"}
                     className="px-3 py-1 rounded-md text-xs font-black text-black"
                     style={{ background: "linear-gradient(135deg, #fbbf24, #f59e0b)" }}
                   >
-                    Reset Weekly
+                    {runningAction === "resetWeekly" ? "Reset..." : "Reset Weekly"}
                   </button>
                 </div>
               </div>
