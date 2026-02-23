@@ -11,24 +11,37 @@ const PRIZE_PRIVATE_KEY = process.env.PRIZE_WALLET_PRIVATE_KEY as `0x${string}`;
 const POT_WALLET = (process.env.POT_WALLET_ADDRESS || "0x468d066995A4C09209c9c165F30Bd76A4FDB88e0") as `0x${string}`;
 const PRIZE_WALLET_ADDRESS = process.env.PRIZE_WALLET_ADDRESS as `0x${string}` | undefined;
 const MIN_POOL_BALANCE_BF = 100000;
+const CORS_HEADERS = {
+  "Access-Control-Allow-Origin": "*",
+  "Access-Control-Allow-Methods": "GET, POST, OPTIONS",
+  "Access-Control-Allow-Headers": "Content-Type, Authorization",
+};
+
+function jsonWithCors(body: unknown, status = 200) {
+  return NextResponse.json(body, { status, headers: CORS_HEADERS });
+}
+
+export async function OPTIONS() {
+  return new NextResponse(null, { status: 204, headers: CORS_HEADERS });
+}
 
 export async function POST(req: NextRequest) {
   try {
     if (!PRIZE_PRIVATE_KEY) {
-      return NextResponse.json({ error: "Payout not configured" }, { status: 503 });
+      return jsonWithCors({ error: "Payout not configured" }, 503);
     }
 
     const { recipient, amount } = await req.json();
 
     if (!recipient || typeof amount !== "number" || amount <= 0) {
-      return NextResponse.json({ error: "Invalid request" }, { status: 400 });
+      return jsonWithCors({ error: "Invalid request" }, 400);
     }
 
     const account = privateKeyToAccount(PRIZE_PRIVATE_KEY);
     if (PRIZE_WALLET_ADDRESS && PRIZE_WALLET_ADDRESS !== account.address) {
-      return NextResponse.json(
+      return jsonWithCors(
         { error: "Prize wallet mismatch", configured: false },
-        { status: 503 }
+        503
       );
     }
     const prizeAddress = PRIZE_WALLET_ADDRESS || account.address;
@@ -50,17 +63,17 @@ export async function POST(req: NextRequest) {
     const poolBalanceUsdc = await bfToUsdc(poolBalanceBf);
 
     if (poolBalanceBf < MIN_POOL_BALANCE_BF) {
-      return NextResponse.json(
+      return jsonWithCors(
         { error: "Prize pool is empty", poolBalance: poolBalanceUsdc },
-        { status: 503 }
+        503
       );
     }
 
     const bfAmount = await usdcToBf(amount);
     if (poolBalanceBf < bfAmount) {
-      return NextResponse.json(
+      return jsonWithCors(
         { error: "Insufficient pool balance", poolBalance: poolBalanceUsdc },
-        { status: 503 }
+        503
       );
     }
 
@@ -95,10 +108,10 @@ export async function POST(req: NextRequest) {
     // weekly pot += 5% of payout
     await addWeeklyPot(potAmount);
 
-    return NextResponse.json({ ok: true, txHash, bfAmount: playerAmount });
+    return jsonWithCors({ ok: true, txHash, bfAmount: playerAmount });
   } catch (e: any) {
     console.error("Payout error:", e);
-    return NextResponse.json({ error: e?.message || "Payout failed" }, { status: 500 });
+    return jsonWithCors({ error: e?.message || "Payout failed" }, 500);
   }
 }
 
@@ -121,7 +134,7 @@ export async function GET() {
     const balanceBf = fromBFUnits(balance as bigint);
     const balanceUsdc = bfToUsdc(balanceBf);
 
-    return NextResponse.json({
+    return jsonWithCors({
       balance: balanceUsdc,
       balanceBf,
       configured: true,
@@ -129,6 +142,6 @@ export async function GET() {
       potAddress: POT_WALLET,
     });
   } catch {
-    return NextResponse.json({ balance: 0, configured: false });
+    return jsonWithCors({ balance: 0, configured: false });
   }
 }

@@ -10,6 +10,8 @@ import {
   fromUSDCUnits,
 } from "./contracts";
 
+const DEFAULT_APP_URL = "https://whack-a-bee.vercel.app";
+
 // Public client for read-only calls (balance check)
 export function getPublicClient() {
   return createPublicClient({
@@ -167,22 +169,39 @@ export async function claimPrize(
   recipientAddress: `0x${string}`,
   prizeAmount: number
 ): Promise<{ success: boolean; txHash?: string; error?: string; bfAmount?: number }> {
-  try {
-    const response = await fetch("/api/payout", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({
-        recipient: recipientAddress,
-        amount: prizeAmount,
-      }),
-    });
+  const configuredAppUrl =
+    process.env.NEXT_PUBLIC_APP_URL || DEFAULT_APP_URL;
+  const absolutePayoutUrl = `${configuredAppUrl.replace(/\/$/, "")}/api/payout`;
+  const endpoints = ["/api/payout", absolutePayoutUrl];
+  let lastError = "Payout request failed";
 
-    const data = await response.json();
-    if (!response.ok) {
-      return { success: false, error: data.error || "Payout failed" };
+  try {
+    for (const endpoint of endpoints) {
+      try {
+        const response = await fetch(endpoint, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            recipient: recipientAddress,
+            amount: prizeAmount,
+          }),
+        });
+
+        const data = await response.json().catch(() => ({}));
+        if (!response.ok) {
+          return {
+            success: false,
+            error: data?.error || `Payout failed (${response.status})`,
+          };
+        }
+
+        return { success: true, txHash: data.txHash, bfAmount: data.bfAmount };
+      } catch (e: any) {
+        lastError = e?.message || "Payout request failed";
+      }
     }
 
-    return { success: true, txHash: data.txHash, bfAmount: data.bfAmount };
+    return { success: false, error: lastError };
   } catch (e: any) {
     return { success: false, error: e?.message || "Payout request failed" };
   }
