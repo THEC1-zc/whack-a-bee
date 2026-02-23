@@ -21,6 +21,20 @@ function jsonWithCors(body: unknown, status = 200) {
   return NextResponse.json(body, { status, headers: CORS_HEADERS });
 }
 
+function isRetryableNonceError(message: string) {
+  const lowered = message.toLowerCase();
+  return (
+    lowered.includes("replacement transaction underpriced") ||
+    lowered.includes("transaction underpriced") ||
+    lowered.includes("nonce too low") ||
+    lowered.includes("already known")
+  );
+}
+
+function sleep(ms: number) {
+  return new Promise((resolve) => setTimeout(resolve, ms));
+}
+
 export async function OPTIONS() {
   return new NextResponse(null, { status: 204, headers: CORS_HEADERS });
 }
@@ -77,7 +91,6 @@ export async function POST(req: NextRequest) {
       );
     }
 
-    // Send BF to winner
     const walletClient = createWalletClient({
       account,
       chain: base,
@@ -87,31 +100,55 @@ export async function POST(req: NextRequest) {
     const playerAmount = bfAmount * 0.95;
     const potAmount = bfAmount * 0.05;
 
-    const txHash = await walletClient.writeContract({
-      address: BF_ADDRESS,
-      abi: ERC20_ABI,
-      functionName: "transfer",
-      args: [recipient as `0x${string}`, toBFUnits(playerAmount)],
-    });
+    const sendTransfer = async (to: `0x${string}`, value: number, label: string) => {
+      let lastError: unknown;
 
-    await publicClient.waitForTransactionReceipt({ hash: txHash });
+      for (let attempt = 0; attempt < 3; attempt++) {
+        try {
+          const nonce = await publicClient.getTransactionCount({
+            address: account.address,
+            blockTag: "pending",
+          });
+
+          const txHash = await walletClient.writeContract({
+            address: BF_ADDRESS,
+            abi: ERC20_ABI,
+            functionName: "transfer",
+            args: [to, toBFUnits(value)],
+            nonce,
+          });
+
+          await publicClient.waitForTransactionReceipt({ hash: txHash });
+          return txHash;
+        } catch (error: unknown) {
+          lastError = error;
+          const message = error instanceof Error ? error.message : String(error || "");
+          if (!isRetryableNonceError(message) || attempt === 2) {
+            throw error;
+          }
+
+          console.warn(`[payout] retrying ${label} transfer (attempt ${attempt + 2}/3):`, message);
+          await sleep(700 * (attempt + 1));
+        }
+      }
+
+      throw lastError;
+    };
+
+    // Send BF to winner
+    const txHash = await sendTransfer(recipient as `0x${string}`, playerAmount, "winner");
 
     // transfer 5% to pot wallet
-    const potTx = await walletClient.writeContract({
-      address: BF_ADDRESS,
-      abi: ERC20_ABI,
-      functionName: "transfer",
-      args: [POT_WALLET, toBFUnits(potAmount)],
-    });
-    await publicClient.waitForTransactionReceipt({ hash: potTx });
+    await sendTransfer(POT_WALLET, potAmount, "pot");
 
     // weekly pot += 5% of payout
     await addWeeklyPot(potAmount);
 
     return jsonWithCors({ ok: true, txHash, bfAmount: playerAmount });
-  } catch (e: any) {
+  } catch (e: unknown) {
     console.error("Payout error:", e);
-    return jsonWithCors({ error: e?.message || "Payout failed" }, 500);
+    const message = e instanceof Error ? e.message : "Payout failed";
+    return jsonWithCors({ error: message }, 500);
   }
 }
 

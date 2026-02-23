@@ -8,3 +8,6 @@ Original prompt: end game: aggiungiamo pulsante share to farcaster, che pubblich
 - Payment error text shortened to avoid huge blocks.
 - Cap now affects max points and spawn density (not prize multiplier).
 - Playwright smoke run completed (home screen render).
+- Debug payout retry issue: screenshot showed "Network busy. Please try again later." (mapped from underpriced/nonce errors).
+- Updated `/app/api/payout/route.ts` to send transfers with explicit `pending` nonce and retry (max 3) on retryable nonce/underpriced errors before failing.
+- Preserved CORS/OPTIONS handling and payout API contract; checked touched file with `npx eslint app/api/payout/route.ts`.
