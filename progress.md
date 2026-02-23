@@ -37,3 +37,4 @@ Original prompt: end game: aggiungiamo pulsante share to farcaster, che pubblich
   - Added explicit `type="button"` to weekly action buttons.
   - Added immediate `onPointerDown` status feedback to prove tap/click is received.
   - Added per-action running state labels (`Paying...`, `Reset...`) for visibility.
+- Added visible Admin build stamp line: `Build: 2026-02-23-c11925e` (fallback via `NEXT_PUBLIC_BUILD_STAMP`).

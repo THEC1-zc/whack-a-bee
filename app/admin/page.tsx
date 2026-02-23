@@ -4,6 +4,7 @@ import Link from "next/link";
 import { useFarcaster } from "@/hooks/useFarcaster";
 
 const ADMIN_WALLET = (process.env.NEXT_PUBLIC_ADMIN_WALLET || "0xd29c790466675153A50DF7860B9EFDb689A21cDe").toLowerCase();
+const BUILD_STAMP = process.env.NEXT_PUBLIC_BUILD_STAMP || "2026-02-23-c11925e";
 
 type AdminStats = {
   totalGames: number;
@@ -220,6 +221,7 @@ export default function AdminPage() {
             {resetting ? "Resetting..." : "Reset Leaderboard"}
           </button>
         </div>
+        <div className="text-[11px] text-amber-600">Build: {BUILD_STAMP}</div>
 
         {error && <div className="text-red-400 text-sm">{error}</div>}
         {info && <div className="text-green-400 text-sm">{info}</div>}
