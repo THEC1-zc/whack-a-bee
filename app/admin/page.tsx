@@ -1,5 +1,6 @@
 "use client";
 import { useEffect, useMemo, useState } from "react";
+import Link from "next/link";
 import { useFarcaster } from "@/hooks/useFarcaster";
 
 const ADMIN_WALLET = (process.env.NEXT_PUBLIC_ADMIN_WALLET || "0xd29c790466675153A50DF7860B9EFDb689A21cDe").toLowerCase();
@@ -226,6 +227,13 @@ export default function AdminPage() {
               <div className="flex items-center justify-between mb-2">
                 <div className="text-amber-400 text-xs uppercase tracking-widest">Weekly Pot</div>
                 <div className="flex gap-2">
+                  <Link
+                    href="/admin/payouts"
+                    className="px-3 py-1 rounded-md text-xs font-black text-black"
+                    style={{ background: "linear-gradient(135deg, #38bdf8, #22d3ee)" }}
+                  >
+                    Payout Report
+                  </Link>
                   <button
                     onClick={() => handleWeeklyPayout(false, "manual")}
                     disabled={payoutRunning}

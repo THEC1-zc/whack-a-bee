@@ -4,14 +4,18 @@ import { base } from "viem/chains";
 import { privateKeyToAccount } from "viem/accounts";
 import { BF_ADDRESS, ERC20_ABI, toBFUnits } from "@/lib/contracts";
 import {
+  acquireWeeklyPayoutLock,
   getAdminWallet,
   getWeeklyConfig,
+  getWeeklyMeta,
   getWeeklyState,
   logWeeklyPayout,
   markWeeklyPayoutDone,
   mergePendingTicketsIntoClaimed,
+  releaseWeeklyPayoutLock,
   resetWeeklyState,
   setWeeklySnapshot,
+  type WeeklyTransferResult,
 } from "@/lib/weekly";
 import { getAdminStats, resetLeaderboard } from "@/lib/leaderboard";
 
@@ -23,6 +27,12 @@ type WeeklyPayoutRequest = {
   force?: boolean;
   autoClaimPendingTickets?: boolean;
   mode?: "manual" | "auto";
+};
+
+type TransferPlan = {
+  to: string;
+  amountBf: number;
+  group: string;
 };
 
 function isAuthorized(req: NextRequest) {
@@ -51,29 +61,40 @@ function weightedPick(map: Record<string, number>, count: number, exclude: Set<s
   return winners;
 }
 
-async function sendBfTransfers(transfers: Array<{ to: string; amountBf: number; group: string }>) {
+async function sendBfTransfers(transfers: TransferPlan[]): Promise<WeeklyTransferResult[]> {
   const account = privateKeyToAccount(POT_PRIVATE_KEY);
   const publicClient = createPublicClient({ chain: base, transport: http("https://mainnet.base.org") });
   const walletClient = createWalletClient({ account, chain: base, transport: http("https://mainnet.base.org") });
-  const results: Array<{ to: string; amountBf: number; group: string; txHash: string }> = [];
+  const results: WeeklyTransferResult[] = [];
 
   for (const t of transfers) {
     if (t.amountBf <= 0) continue;
 
-    const txHash = await walletClient.writeContract({
-      address: BF_ADDRESS,
-      abi: ERC20_ABI,
-      functionName: "transfer",
-      args: [t.to as `0x${string}`, toBFUnits(t.amountBf)],
-    });
-    await publicClient.waitForTransactionReceipt({ hash: txHash });
-    results.push({ ...t, txHash });
+    try {
+      const txHash = await walletClient.writeContract({
+        address: BF_ADDRESS,
+        abi: ERC20_ABI,
+        functionName: "transfer",
+        args: [t.to as `0x${string}`, toBFUnits(t.amountBf)],
+      });
+      await publicClient.waitForTransactionReceipt({ hash: txHash });
+      results.push({ ...t, txHash, ok: true });
+    } catch (e: unknown) {
+      const error = e instanceof Error ? e.message : "transfer failed";
+      results.push({ ...t, ok: false, error });
+    }
   }
 
   return results;
 }
 
 export async function POST(req: NextRequest) {
+  const meta = getWeeklyMeta();
+  const lock = await acquireWeeklyPayoutLock(meta.weekId, 180000);
+  if (!lock) {
+    return NextResponse.json({ error: "Weekly payout already running" }, { status: 409 });
+  }
+
   try {
     if (!isAuthorized(req)) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
@@ -84,23 +105,23 @@ export async function POST(req: NextRequest) {
 
     const body = (await req.json().catch(() => ({}))) as WeeklyPayoutRequest;
     const cfg = await getWeeklyConfig();
-    const isAutoMode = body.mode === "auto";
+    const mode = body.mode || "manual";
+    const isAutoMode = mode === "auto";
     if (isAutoMode && !cfg.autoPayoutEnabled) {
       return NextResponse.json({ error: "Auto payout is disabled" }, { status: 403 });
     }
-    const force = Boolean(body.force) || cfg.forceBypassSchedule;
+
+    const force = Boolean(body.force) || (isAutoMode && cfg.forceBypassSchedule);
     const shouldAutoClaimPending = body.autoClaimPendingTickets ?? cfg.autoClaimPendingTickets;
 
     const weeklyPre = await getWeeklyState();
     const now = Date.now();
     if (!force && weeklyPre.payoutAt && now < weeklyPre.payoutAt) {
-      return NextResponse.json({
-        error: "Too early for payout",
-        payoutAt: weeklyPre.payoutAt,
-      }, { status: 403 });
+      return NextResponse.json({ error: "Too early for payout", payoutAt: weeklyPre.payoutAt }, { status: 403 });
     }
 
-    if (weeklyPre.lastPayoutAt && !force) {
+    const allowManualReplay = force && mode === "manual";
+    if (weeklyPre.lastPayoutAt && !allowManualReplay) {
       return NextResponse.json({
         error: "Payout already executed for this week",
         lastPayoutAt: weeklyPre.lastPayoutAt,
@@ -118,10 +139,7 @@ export async function POST(req: NextRequest) {
     }
 
     const stats = await getAdminStats();
-    const top3 = stats.players
-      .filter((p) => p.address)
-      .slice(0, 3)
-      .map((p) => p.address!.toLowerCase());
+    const top3 = stats.players.filter((p) => p.address).slice(0, 3).map((p) => p.address!.toLowerCase());
 
     const topShare = potBf * 0.6;
     const topPayouts = [0.5, 0.3, 0.2].map((p) => topShare * p);
@@ -131,7 +149,7 @@ export async function POST(req: NextRequest) {
     const exclude = new Set(top3);
     const lotteryWinners = weightedPick(weekly.tickets || {}, 7, exclude);
 
-    const transfers: Array<{ to: string; amountBf: number; group: string }> = [];
+    const transfers: TransferPlan[] = [];
     top3.forEach((addr, i) => transfers.push({ to: addr, amountBf: topPayouts[i] || 0, group: "top3" }));
     lotteryWinners.forEach((addr) => transfers.push({ to: addr, amountBf: perLottery, group: "lottery" }));
 
@@ -139,30 +157,103 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: "No eligible winners (no addresses/tickets)" }, { status: 400 });
     }
 
-    await setWeeklySnapshot({ top3, lotteryWinners, potBf, force, autoClaimPendingTickets: shouldAutoClaimPending });
+    const startedAt = Date.now();
+    await setWeeklySnapshot({
+      status: "running",
+      weekId: meta.weekId,
+      startedAt,
+      potBf,
+      force,
+      mode,
+      autoClaimPendingTickets: shouldAutoClaimPending,
+      top3,
+      lotteryWinners,
+      transfers,
+    });
+
     const results = await sendBfTransfers(transfers);
+    const failed = results.filter((r) => !r.ok);
+
+    if (failed.length > 0) {
+      await setWeeklySnapshot({
+        status: "partial_failed",
+        weekId: meta.weekId,
+        startedAt,
+        completedAt: Date.now(),
+        potBf,
+        force,
+        mode,
+        autoClaimPendingTickets: shouldAutoClaimPending,
+        top3,
+        lotteryWinners,
+        results,
+        failed,
+      });
+
+      await logWeeklyPayout({
+        weekId: meta.weekId,
+        status: "partial_failed",
+        mode,
+        force,
+        autoClaimPendingTickets: shouldAutoClaimPending,
+        potBf,
+        top3,
+        lotteryWinners,
+        results,
+        failedCount: failed.length,
+        notes: "Some transfers failed; weekly state NOT reset",
+      });
+
+      return NextResponse.json({
+        error: "Weekly payout partial failure",
+        weekId: meta.weekId,
+        failedCount: failed.length,
+        results,
+      }, { status: 500 });
+    }
+
+    await setWeeklySnapshot({
+      status: "paid",
+      weekId: meta.weekId,
+      startedAt,
+      completedAt: Date.now(),
+      potBf,
+      force,
+      mode,
+      autoClaimPendingTickets: shouldAutoClaimPending,
+      top3,
+      lotteryWinners,
+      results,
+    });
 
     await logWeeklyPayout({
+      weekId: meta.weekId,
+      status: "paid",
+      mode,
+      force,
+      autoClaimPendingTickets: shouldAutoClaimPending,
       potBf,
       top3,
       lotteryWinners,
       results,
-      force,
-      autoClaimPendingTickets: shouldAutoClaimPending,
+      failedCount: 0,
     });
-    await markWeeklyPayoutDone();
+
     await resetWeeklyState();
+    await markWeeklyPayoutDone();
     await resetLeaderboard();
 
     const after = await getAdminStats();
 
     return NextResponse.json({
       ok: true,
+      weekId: meta.weekId,
       potBf,
       top3,
       lotteryWinners,
       results,
       force,
+      mode,
       autoClaimPendingTickets: shouldAutoClaimPending,
       leaderboardAfterReset: {
         totalGames: after.totalGames,
@@ -173,5 +264,7 @@ export async function POST(req: NextRequest) {
     console.error("Weekly payout error:", e);
     const message = e instanceof Error ? e.message : "Weekly payout failed";
     return NextResponse.json({ error: message }, { status: 500 });
+  } finally {
+    await releaseWeeklyPayoutLock(lock);
   }
 }

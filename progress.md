@@ -22,3 +22,10 @@ Original prompt: end game: aggiungiamo pulsante share to farcaster, che pubblich
   - Added `/api/admin/weekly-config` API for admin toggles + payout log.
   - Added `/api/cron/weekly-payout` endpoint (secret-protected) to trigger automatic payout via cron.
   - Extended `/app/admin/page.tsx` with Force Payout, Run Auto, weekly automation toggles, and recent payout log preview.
+- Added full weekly payout hardening package:
+  - Redis/memory payout lock (idempotency) to prevent concurrent weekly executions.
+  - Full payout history store (`weekly:payout:history`) and per-week logs with status and transfer-level details.
+  - Partial-failure handling in `/api/admin/weekly-payout`: logs + snapshot status, no weekly/leaderboard reset on partial failure.
+  - New admin API `/api/admin/weekly-payouts` for detailed payout reporting rows.
+  - New admin subpage `/admin/payouts` with week/user-wallet/amount/txhash/status listing.
+  - Added `vercel.json` cron schedule for `/api/cron/weekly-payout`.
