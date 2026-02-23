@@ -14,3 +14,11 @@ Original prompt: end game: aggiungiamo pulsante share to farcaster, che pubblich
 - Moved weekly tickets UX to home: added "My Tickets" card in `/components/App.tsx` with counter (pending/claimed), connect-wallet CTA, and claim action.
 - Home now fetches `/api/weekly/my` for connected users and calls `/api/weekly/claim` directly from the card.
 - Removed ticket claim/counter section from `/app/weekly/page.tsx`; weekly page now focuses on pot rules and countdown only.
+- Weekly payout reliability/automation pass:
+  - Added weekly config storage in `lib/weekly.ts` (`autoPayoutEnabled`, `forceBypassSchedule`, `autoClaimPendingTickets`).
+  - Added payout log retrieval (`getWeeklyPayoutLog`) and payout completion marker (`lastPayoutAt`).
+  - Added pending->claimed merge helper so payout can include unclaimed tickets.
+  - Refactored `/api/admin/weekly-payout` to support force mode, auto mode, auto-claim pending tickets, and explicit reset verification payload.
+  - Added `/api/admin/weekly-config` API for admin toggles + payout log.
+  - Added `/api/cron/weekly-payout` endpoint (secret-protected) to trigger automatic payout via cron.
+  - Extended `/app/admin/page.tsx` with Force Payout, Run Auto, weekly automation toggles, and recent payout log preview.

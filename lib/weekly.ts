@@ -3,10 +3,40 @@ import { getBfPerUsdc } from "./pricing";
 
 const WEEKLY_KEY = "weekly:state:";
 const WEEKLY_LOG_KEY = "weekly:log:";
+const WEEKLY_CFG_KEY = "weekly:config";
 const ADMIN_WALLET = (process.env.ADMIN_WALLET || "0xd29c790466675153A50DF7860B9EFDb689A21cDe").toLowerCase();
 
 let redis: Redis | null = null;
-const memoryStore = new Map<string, any>();
+const memoryStore = new Map<string, unknown>();
+
+type WeeklyState = {
+  potBf: number;
+  tickets: Record<string, number>;
+  wins: Record<string, number>;
+  pendingTickets: Record<string, number>;
+  snapshot: unknown;
+  lastPayoutAt?: number;
+};
+
+type WeeklyConfig = {
+  autoPayoutEnabled: boolean;
+  forceBypassSchedule: boolean;
+  autoClaimPendingTickets: boolean;
+};
+
+const DEFAULT_WEEKLY_STATE: WeeklyState = {
+  potBf: 0,
+  tickets: {},
+  wins: {},
+  pendingTickets: {},
+  snapshot: null,
+};
+
+const DEFAULT_WEEKLY_CONFIG: WeeklyConfig = {
+  autoPayoutEnabled: false,
+  forceBypassSchedule: true,
+  autoClaimPendingTickets: true,
+};
 
 function getRedis() {
   if (redis) return redis;
@@ -68,15 +98,15 @@ export function getWeeklyMeta() {
 async function loadState(weekId: string) {
   const client = getRedis();
   const key = WEEKLY_KEY + weekId;
-  const empty = { potBf: 0, tickets: {}, wins: {}, pendingTickets: {}, snapshot: null };
   if (client) {
     const raw = await client.get(key);
-    return raw ? { ...empty, ...JSON.parse(raw) } : empty;
+    return raw ? { ...DEFAULT_WEEKLY_STATE, ...JSON.parse(raw) } : { ...DEFAULT_WEEKLY_STATE };
   }
-  return memoryStore.get(key) || empty;
+  const existing = memoryStore.get(key) as WeeklyState | undefined;
+  return existing ? { ...DEFAULT_WEEKLY_STATE, ...existing } : { ...DEFAULT_WEEKLY_STATE };
 }
 
-async function saveState(weekId: string, state: any) {
+async function saveState(weekId: string, state: WeeklyState) {
   const client = getRedis();
   const key = WEEKLY_KEY + weekId;
   if (client) {
@@ -134,22 +164,22 @@ export async function getWeeklyState() {
 
 export async function resetWeeklyState() {
   const { weekId } = getWeeklyMeta();
-  await saveState(weekId, { potBf: 0, tickets: {}, wins: {}, pendingTickets: {}, snapshot: null });
+  await saveState(weekId, { ...DEFAULT_WEEKLY_STATE });
 }
 
-export async function logWeeklyPayout(entry: any) {
+export async function logWeeklyPayout(entry: Record<string, unknown>) {
   const { weekId } = getWeeklyMeta();
   const key = WEEKLY_LOG_KEY + weekId;
   const client = getRedis();
   const item = { ...entry, at: Date.now() };
   if (client) {
     const raw = await client.get(key);
-    const arr = raw ? JSON.parse(raw) : [];
+    const arr = (raw ? JSON.parse(raw) : []) as Array<Record<string, unknown>>;
     arr.push(item);
     await client.set(key, JSON.stringify(arr));
     return;
   }
-  const arr = memoryStore.get(key) || [];
+  const arr = (memoryStore.get(key) as Array<Record<string, unknown>> | undefined) || [];
   arr.push(item);
   memoryStore.set(key, arr);
 }
@@ -180,11 +210,76 @@ export async function getUserTickets(address: string) {
   };
 }
 
-export async function setWeeklySnapshot(snapshot: any) {
+export async function setWeeklySnapshot(snapshot: unknown) {
   const { weekId } = getWeeklyMeta();
   const state = await loadState(weekId);
   state.snapshot = snapshot;
   await saveState(weekId, state);
+}
+
+export async function markWeeklyPayoutDone() {
+  const { weekId } = getWeeklyMeta();
+  const state = await loadState(weekId);
+  state.lastPayoutAt = Date.now();
+  await saveState(weekId, state);
+}
+
+export async function mergePendingTicketsIntoClaimed() {
+  const { weekId } = getWeeklyMeta();
+  const state = await loadState(weekId);
+  const pending = state.pendingTickets || {};
+  const tickets = state.tickets || {};
+
+  for (const [addrRaw, amountRaw] of Object.entries(pending)) {
+    const addr = addrRaw.toLowerCase();
+    const amount = Number(amountRaw || 0);
+    if (amount <= 0) continue;
+    tickets[addr] = (tickets[addr] || 0) + amount;
+    delete pending[addrRaw];
+  }
+
+  state.pendingTickets = pending;
+  state.tickets = tickets;
+  await saveState(weekId, state);
+  return state;
+}
+
+export async function getWeeklyPayoutLog(limit = 10) {
+  const { weekId } = getWeeklyMeta();
+  const key = WEEKLY_LOG_KEY + weekId;
+  const client = getRedis();
+
+  let logs: unknown;
+  if (client) {
+    const raw = await client.get(key);
+    logs = raw ? JSON.parse(raw) : [];
+  } else {
+    logs = (memoryStore.get(key) as Array<Record<string, unknown>> | undefined) || [];
+  }
+
+  return Array.isArray(logs) ? logs.slice(-limit).reverse() : [];
+}
+
+export async function getWeeklyConfig() {
+  const client = getRedis();
+  if (client) {
+    const raw = await client.get(WEEKLY_CFG_KEY);
+    if (!raw) return { ...DEFAULT_WEEKLY_CONFIG };
+    return { ...DEFAULT_WEEKLY_CONFIG, ...JSON.parse(raw) } as WeeklyConfig;
+  }
+  const raw = memoryStore.get(WEEKLY_CFG_KEY) as WeeklyConfig | undefined;
+  return raw ? { ...DEFAULT_WEEKLY_CONFIG, ...raw } : { ...DEFAULT_WEEKLY_CONFIG };
+}
+
+export async function setWeeklyConfig(partial: Partial<WeeklyConfig>) {
+  const next = { ...(await getWeeklyConfig()), ...partial };
+  const client = getRedis();
+  if (client) {
+    await client.set(WEEKLY_CFG_KEY, JSON.stringify(next));
+  } else {
+    memoryStore.set(WEEKLY_CFG_KEY, next);
+  }
+  return next;
 }
 
 export function getAdminWallet() {

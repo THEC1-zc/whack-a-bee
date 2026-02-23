@@ -27,14 +27,23 @@ type AdminStats = {
   }>;
 };
 
+type WeeklyConfig = {
+  autoPayoutEnabled: boolean;
+  forceBypassSchedule: boolean;
+  autoClaimPendingTickets: boolean;
+};
+
 export default function AdminPage() {
   const { user, connectWallet } = useFarcaster();
   const [stats, setStats] = useState<AdminStats | null>(null);
   const [weekly, setWeekly] = useState<any | null>(null);
+  const [weeklyConfig, setWeeklyConfig] = useState<WeeklyConfig | null>(null);
+  const [payoutLogs, setPayoutLogs] = useState<Array<{ at?: number; potBf?: number; force?: boolean; results?: Array<{ txHash: string }> }>>([]);
   const [payoutRunning, setPayoutRunning] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
   const [resetting, setResetting] = useState(false);
+  const [savingWeeklyConfig, setSavingWeeklyConfig] = useState(false);
 
   const address = user?.address?.toLowerCase() || "";
   const authorized = address === ADMIN_WALLET;
@@ -49,6 +58,19 @@ export default function AdminPage() {
       .then(d => { setStats(d.stats); setWeekly(d.weekly); setError(null); })
       .catch(() => setError("Failed to load stats"))
       .finally(() => setLoading(false));
+  }, [authorized, address]);
+
+  useEffect(() => {
+    if (!authorized) return;
+    fetch("/api/admin/weekly-config", {
+      headers: { "x-admin-wallet": address },
+    })
+      .then(r => r.json())
+      .then(d => {
+        setWeeklyConfig(d.config || null);
+        setPayoutLogs(Array.isArray(d.logs) ? d.logs : []);
+      })
+      .catch(() => {});
   }, [authorized, address]);
 
   const totals = useMemo(() => {
@@ -93,22 +115,55 @@ export default function AdminPage() {
     }
   }
 
-  async function handleWeeklyPayout() {
+  async function handleWeeklyPayout(force = false, mode: "manual" | "auto" = "manual") {
     if (!authorized) return;
-    if (!confirm("Run weekly payout now?")) return;
+    if (!confirm(force ? "Force payout now (ignore schedule)?" : "Run weekly payout now?")) return;
     setPayoutRunning(true);
     const res = await fetch("/api/admin/weekly-payout", {
       method: "POST",
       headers: { "x-admin-wallet": address },
+      body: JSON.stringify({
+        force,
+        mode,
+        autoClaimPendingTickets: weeklyConfig?.autoClaimPendingTickets ?? true,
+      }),
     });
     if (!res.ok) {
-      setError("Weekly payout failed");
+      const data = await res.json().catch(() => ({}));
+      setError(data?.error || "Weekly payout failed");
     } else {
       setError(null);
       const data = await res.json();
       setWeekly({ potBf: 0, ...data });
+      fetch("/api/admin/weekly-config", {
+        headers: { "x-admin-wallet": address },
+      })
+        .then(r => r.json())
+        .then(d => {
+          setWeeklyConfig(d.config || null);
+          setPayoutLogs(Array.isArray(d.logs) ? d.logs : []);
+        })
+        .catch(() => {});
     }
     setPayoutRunning(false);
+  }
+
+  async function updateWeeklyConfig(next: Partial<WeeklyConfig>) {
+    if (!authorized) return;
+    setSavingWeeklyConfig(true);
+    const res = await fetch("/api/admin/weekly-config", {
+      method: "POST",
+      headers: { "Content-Type": "application/json", "x-admin-wallet": address },
+      body: JSON.stringify(next),
+    });
+    if (!res.ok) {
+      setError("Failed to save weekly config");
+    } else {
+      const data = await res.json();
+      setWeeklyConfig(data.config || null);
+      setError(null);
+    }
+    setSavingWeeklyConfig(false);
   }
 
   if (!user?.address) {
@@ -172,12 +227,28 @@ export default function AdminPage() {
                 <div className="text-amber-400 text-xs uppercase tracking-widest">Weekly Pot</div>
                 <div className="flex gap-2">
                   <button
-                    onClick={handleWeeklyPayout}
+                    onClick={() => handleWeeklyPayout(false, "manual")}
                     disabled={payoutRunning}
                     className="px-3 py-1 rounded-md text-xs font-black text-black disabled:opacity-50"
                     style={{ background: "linear-gradient(135deg, #7c3aed, #a855f7)" }}
                   >
                     {payoutRunning ? "Paying..." : "Run Payout"}
+                  </button>
+                  <button
+                    onClick={() => handleWeeklyPayout(true, "manual")}
+                    disabled={payoutRunning}
+                    className="px-3 py-1 rounded-md text-xs font-black text-black disabled:opacity-50"
+                    style={{ background: "linear-gradient(135deg, #ef4444, #f97316)" }}
+                  >
+                    {payoutRunning ? "Paying..." : "Force Payout"}
+                  </button>
+                  <button
+                    onClick={() => handleWeeklyPayout(true, "auto")}
+                    disabled={payoutRunning || !weeklyConfig?.autoPayoutEnabled}
+                    className="px-3 py-1 rounded-md text-xs font-black text-black disabled:opacity-50"
+                    style={{ background: "linear-gradient(135deg, #10b981, #22c55e)" }}
+                  >
+                    {payoutRunning ? "Paying..." : "Run Auto"}
                   </button>
                   <button
                     onClick={handleWeeklyReset}
@@ -191,6 +262,51 @@ export default function AdminPage() {
               <div className="text-amber-200 text-sm">
                 Pot: {weekly ? Math.round(weekly.potBf || 0).toLocaleString() : 0} BF
               </div>
+              <div className="text-amber-700 text-xs mt-2">
+                Leaderboard entries: {stats?.totalGames ?? 0}
+              </div>
+              <div className="mt-3 space-y-2 text-xs">
+                <label className="flex items-center justify-between gap-3 text-amber-200">
+                  <span>Auto payout enabled</span>
+                  <input
+                    type="checkbox"
+                    checked={weeklyConfig?.autoPayoutEnabled ?? false}
+                    onChange={(e) => updateWeeklyConfig({ autoPayoutEnabled: e.target.checked })}
+                    disabled={savingWeeklyConfig}
+                  />
+                </label>
+                <label className="flex items-center justify-between gap-3 text-amber-200">
+                  <span>Bypass schedule in auto mode</span>
+                  <input
+                    type="checkbox"
+                    checked={weeklyConfig?.forceBypassSchedule ?? true}
+                    onChange={(e) => updateWeeklyConfig({ forceBypassSchedule: e.target.checked })}
+                    disabled={savingWeeklyConfig}
+                  />
+                </label>
+                <label className="flex items-center justify-between gap-3 text-amber-200">
+                  <span>Auto-claim pending tickets</span>
+                  <input
+                    type="checkbox"
+                    checked={weeklyConfig?.autoClaimPendingTickets ?? true}
+                    onChange={(e) => updateWeeklyConfig({ autoClaimPendingTickets: e.target.checked })}
+                    disabled={savingWeeklyConfig}
+                  />
+                </label>
+              </div>
+              {payoutLogs.length > 0 && (
+                <div className="mt-3 pt-2 border-t border-amber-900">
+                  <div className="text-amber-400 text-xs uppercase tracking-widest mb-1">Recent Payouts</div>
+                  {payoutLogs.slice(0, 3).map((log, i) => (
+                    <div key={i} className="text-amber-200 text-xs">
+                      {log.at ? new Date(log.at).toLocaleString("en-GB", { timeZone: "Europe/Rome" }) : "n/a"} ·
+                      pot {Math.round(Number(log.potBf || 0)).toLocaleString()} BF ·
+                      tx {Array.isArray(log.results) ? log.results.length : 0} ·
+                      {log.force ? " forced" : " scheduled"}
+                    </div>
+                  ))}
+                </div>
+              )}
             </div>
 
             <div className="rounded-xl border border-amber-900 p-3" style={{ background: "#140a00" }}>
