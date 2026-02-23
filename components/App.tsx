@@ -35,6 +35,9 @@ export default function App() {
   const [bfPerUsdc, setBfPerUsdc] = useState<number | null>(null);
   const [weeklyPot, setWeeklyPot] = useState<number | null>(null);
   const [nextReset, setNextReset] = useState<number | null>(null);
+  const [myTickets, setMyTickets] = useState<{ pending: number; claimed: number } | null>(null);
+  const [claimingTickets, setClaimingTickets] = useState(false);
+  const [claimError, setClaimError] = useState<string | null>(null);
 
   useEffect(() => {
     fetch("/api/payout")
@@ -68,6 +71,45 @@ export default function App() {
       })
       .catch(() => {});
   }, [lastResult]);
+
+  useEffect(() => {
+    if (!user?.address) {
+      setMyTickets(null);
+      return;
+    }
+    fetch("/api/weekly/my", { headers: { "x-wallet-address": user.address } })
+      .then(r => r.json())
+      .then(d => setMyTickets(d))
+      .catch(() => {});
+  }, [user?.address, lastResult]);
+
+  async function handleClaimTickets() {
+    if (!user?.address || claimingTickets) return;
+    setClaimError(null);
+    setClaimingTickets(true);
+    try {
+      const headers = new Headers();
+      headers.set("Content-Type", "application/json");
+      headers.set("x-wallet-address", user.address);
+      const res = await fetch("/api/weekly/claim", {
+        method: "POST",
+        headers,
+      });
+      const data = await res.json().catch(() => ({}));
+      if (!res.ok) {
+        setClaimError(data?.error || "Claim failed");
+        return;
+      }
+      setMyTickets({
+        pending: 0,
+        claimed: typeof data.total === "number" ? data.total : (myTickets?.claimed ?? 0),
+      });
+    } catch {
+      setClaimError("Claim failed");
+    } finally {
+      setClaimingTickets(false);
+    }
+  }
 
   if (isLoading) {
     return (
@@ -177,8 +219,34 @@ export default function App() {
         )}
         <a href="/weekly" className="text-amber-400 underline mt-2 inline-block">Weekly details</a>
       </div>
-      <div className="text-xs text-amber-700">
-        Claim tickets in <a href="/weekly" className="text-amber-400 underline">Weekly</a>
+
+      <div className="w-full max-w-sm rounded-2xl p-3 border border-amber-900 text-center text-xs"
+        style={{ background: "#1f1000" }}>
+        <div className="text-amber-500 uppercase tracking-widest mb-1">My Tickets</div>
+        {!user.address ? (
+          <button
+            onClick={connectWallet}
+            className="px-4 py-2 rounded-lg text-sm font-black text-black"
+            style={{ background: "linear-gradient(135deg, #fbbf24, #f59e0b)" }}
+          >
+            Connect Wallet
+          </button>
+        ) : (
+          <>
+            <div className="text-amber-200 font-bold">
+              Pending: {myTickets?.pending ?? 0} · Claimed: {myTickets?.claimed ?? 0}
+            </div>
+            <button
+              onClick={handleClaimTickets}
+              disabled={claimingTickets || (myTickets?.pending ?? 0) <= 0}
+              className="mt-2 px-4 py-2 rounded-lg text-sm font-black text-black disabled:opacity-50"
+              style={{ background: "linear-gradient(135deg, #7c3aed, #a855f7)" }}
+            >
+              {claimingTickets ? "Claiming..." : "Claim Tickets"}
+            </button>
+            {claimError && <div className="text-red-400 mt-2">{claimError}</div>}
+          </>
+        )}
       </div>
 
       {/* Last result */}

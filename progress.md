@@ -11,3 +11,6 @@ Original prompt: end game: aggiungiamo pulsante share to farcaster, che pubblich
 - Debug payout retry issue: screenshot showed "Network busy. Please try again later." (mapped from underpriced/nonce errors).
 - Updated `/app/api/payout/route.ts` to send transfers with explicit `pending` nonce and retry (max 3) on retryable nonce/underpriced errors before failing.
 - Preserved CORS/OPTIONS handling and payout API contract; checked touched file with `npx eslint app/api/payout/route.ts`.
+- Moved weekly tickets UX to home: added "My Tickets" card in `/components/App.tsx` with counter (pending/claimed), connect-wallet CTA, and claim action.
+- Home now fetches `/api/weekly/my` for connected users and calls `/api/weekly/claim` directly from the card.
+- Removed ticket claim/counter section from `/app/weekly/page.tsx`; weekly page now focuses on pot rules and countdown only.
