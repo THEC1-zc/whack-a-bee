@@ -33,6 +33,9 @@ type TransferPlan = {
   to: string;
   amountBf: number;
   group: string;
+  playerName?: string;
+  playerUsername?: string;
+  playerFid?: number;
 };
 
 function normalizePrivateKey(value: string | undefined) {
@@ -152,6 +155,15 @@ export async function POST(req: NextRequest) {
     }
 
     const stats = await getAdminStats();
+    const addressProfiles = new Map<string, { playerName?: string; playerUsername?: string; playerFid?: number }>();
+    for (const p of stats.players) {
+      if (!p.address) continue;
+      addressProfiles.set(p.address.toLowerCase(), {
+        playerName: p.displayName,
+        playerUsername: p.username,
+        playerFid: p.fid,
+      });
+    }
     const top3 = stats.players.filter((p) => p.address).slice(0, 3).map((p) => p.address!.toLowerCase());
 
     const topShare = potBf * 0.6;
@@ -163,8 +175,14 @@ export async function POST(req: NextRequest) {
     const lotteryWinners = weightedPick(weekly.tickets || {}, 7, exclude);
 
     const transfers: TransferPlan[] = [];
-    top3.forEach((addr, i) => transfers.push({ to: addr, amountBf: topPayouts[i] || 0, group: "top3" }));
-    lotteryWinners.forEach((addr) => transfers.push({ to: addr, amountBf: perLottery, group: "lottery" }));
+    top3.forEach((addr, i) => {
+      const profile = addressProfiles.get(addr) || {};
+      transfers.push({ to: addr, amountBf: topPayouts[i] || 0, group: "top3", ...profile });
+    });
+    lotteryWinners.forEach((addr) => {
+      const profile = addressProfiles.get(addr) || {};
+      transfers.push({ to: addr, amountBf: perLottery, group: "lottery", ...profile });
+    });
 
     if (!transfers.length) {
       return NextResponse.json({ error: "No eligible winners (no addresses/tickets)" }, { status: 400 });

@@ -21,9 +21,12 @@ function toRows(logs: WeeklyPayoutLogEntry[]) {
     autoClaimPendingTickets: boolean;
     potBf: number;
     group: string;
+    player: string;
+    playerUsername: string;
     wallet: string;
     amountBf: number;
     txHash: string;
+    basescanUrl: string;
     ok: boolean;
     error: string;
   }> = [];
@@ -39,9 +42,12 @@ function toRows(logs: WeeklyPayoutLogEntry[]) {
         autoClaimPendingTickets: log.autoClaimPendingTickets,
         potBf: log.potBf,
         group: result.group || "n/a",
+        player: result.playerName || "",
+        playerUsername: result.playerUsername || "",
         wallet: result.to || "",
         amountBf: Number(result.amountBf || 0),
         txHash: result.txHash || "",
+        basescanUrl: result.txHash ? `https://basescan.org/tx/${result.txHash}` : "",
         ok: Boolean(result.ok),
         error: result.error || "",
       });

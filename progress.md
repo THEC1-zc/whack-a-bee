@@ -52,3 +52,10 @@ Original prompt: end game: aggiungiamo pulsante share to farcaster, che pubblich
   - `personal_sign` now uses `stringToHex(message)` plus typed wallet address (`0x...`) to satisfy provider typings.
   - Verified with successful `npm run build`.
 - Made payout key parsing tolerant: `POT_WALLET_PRIVATE_KEY` now accepts 64 hex chars with or without `0x` (also trims quotes/spaces).
+- Added payout database details for admin reporting:
+  - Weekly payout transfer rows now carry player metadata (`playerName`, `playerUsername`, `playerFid`) when available.
+  - `/api/admin/weekly-payouts` now returns `player`, `playerUsername`, and `basescanUrl` per row.
+  - `/admin/payouts` table now shows player + wallet and tx hash with direct BaseScan links.
+- Added weekly winners share feature:
+  - New endpoint `/api/admin/weekly-winners` builds a Farcaster-ready winners post from latest paid weekly payout.
+  - New Admin button `Share Winners` opens Farcaster composer with tagged winners + report embeds.

@@ -32,6 +32,9 @@ export type WeeklyTransferResult = {
   amountBf: number;
   group: string;
   txHash?: string;
+  playerName?: string;
+  playerUsername?: string;
+  playerFid?: number;
   ok: boolean;
   error?: string;
 };

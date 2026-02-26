@@ -37,13 +37,18 @@ type WeeklyConfig = {
   autoClaimPendingTickets: boolean;
 };
 
+type WeeklyState = {
+  potBf?: number;
+};
+
 export default function AdminPage() {
   const { user, connectWallet } = useFarcaster();
   const [stats, setStats] = useState<AdminStats | null>(null);
-  const [weekly, setWeekly] = useState<any | null>(null);
+  const [weekly, setWeekly] = useState<WeeklyState | null>(null);
   const [weeklyConfig, setWeeklyConfig] = useState<WeeklyConfig | null>(null);
   const [payoutLogs, setPayoutLogs] = useState<Array<{ at?: number; potBf?: number; force?: boolean; results?: Array<{ txHash: string }> }>>([]);
   const [payoutRunning, setPayoutRunning] = useState(false);
+  const [sharingWinners, setSharingWinners] = useState(false);
   const [runningAction, setRunningAction] = useState<"payout" | "force" | "auto" | "resetWeekly" | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [info, setInfo] = useState<string | null>(null);
@@ -234,6 +239,34 @@ export default function AdminPage() {
     setSavingWeeklyConfig(false);
   }
 
+  async function handleShareWeeklyWinners() {
+    if (!authorized || sharingWinners) return;
+    setSharingWinners(true);
+    setInfo("Preparing weekly winners post...");
+    setError(null);
+    try {
+      const res = await fetch("/api/admin/weekly-winners", {
+        headers: { "x-admin-wallet": address },
+      });
+      const data = await res.json().catch(() => ({}));
+      if (!res.ok) {
+        setError(data?.error || "Unable to prepare winners post");
+        setInfo(null);
+        return;
+      }
+      await sdk.actions.composeCast({
+        text: data.castText || "",
+        embeds: Array.isArray(data.embeds) ? data.embeds : [],
+      });
+      setInfo("Winners post ready in Farcaster composer");
+    } catch {
+      setError("Share winners failed");
+      setInfo(null);
+    } finally {
+      setSharingWinners(false);
+    }
+  }
+
   if (!user?.address) {
     return (
       <div className="min-h-dvh flex flex-col items-center justify-center p-6 text-center" style={{ background: "#1a0a00" }}>
@@ -264,7 +297,7 @@ export default function AdminPage() {
       <div className="max-w-3xl mx-auto space-y-4">
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-3">
-            <a href="/" className="text-amber-400 font-bold text-sm">← Back</a>
+            <Link href="/" className="text-amber-400 font-bold text-sm">← Back</Link>
             <h1 className="text-2xl font-black text-white">Admin Stats</h1>
           </div>
           <button
@@ -303,6 +336,15 @@ export default function AdminPage() {
                   >
                     Payout Report
                   </Link>
+                  <button
+                    type="button"
+                    onClick={handleShareWeeklyWinners}
+                    disabled={sharingWinners}
+                    className="px-3 py-1 rounded-md text-xs font-black text-black disabled:opacity-50"
+                    style={{ background: "linear-gradient(135deg, #60a5fa, #3b82f6)" }}
+                  >
+                    {sharingWinners ? "Sharing..." : "Share Winners"}
+                  </button>
                   <button
                     type="button"
                     onPointerDown={() => setInfo("Run Payout cliccato")}

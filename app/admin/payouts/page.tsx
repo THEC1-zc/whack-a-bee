@@ -15,9 +15,12 @@ type PayoutRow = {
   autoClaimPendingTickets: boolean;
   potBf: number;
   group: string;
+  player: string;
+  playerUsername: string;
   wallet: string;
   amountBf: number;
   txHash: string;
+  basescanUrl: string;
   ok: boolean;
   error: string;
 };
@@ -124,7 +127,8 @@ export default function AdminPayoutsPage() {
                 <th className="text-left p-2">Week</th>
                 <th className="text-left p-2">Date CET</th>
                 <th className="text-left p-2">Status</th>
-                <th className="text-left p-2">User/Wallet</th>
+                <th className="text-left p-2">Player</th>
+                <th className="text-left p-2">Wallet</th>
                 <th className="text-left p-2">Group</th>
                 <th className="text-left p-2">Amount BF</th>
                 <th className="text-left p-2">Tx Hash</th>
@@ -134,20 +138,23 @@ export default function AdminPayoutsPage() {
             </thead>
             <tbody>
               {loading ? (
-                <tr><td className="p-3 text-amber-500" colSpan={9}>Loading...</td></tr>
+                <tr><td className="p-3 text-amber-500" colSpan={10}>Loading...</td></tr>
               ) : rows.length === 0 ? (
-                <tr><td className="p-3 text-amber-500" colSpan={9}>No payout rows</td></tr>
+                <tr><td className="p-3 text-amber-500" colSpan={10}>No payout rows</td></tr>
               ) : rows.map((r, idx) => (
                 <tr key={`${r.weekId}-${r.txHash || idx}`} className="border-b border-amber-950 text-amber-200">
                   <td className="p-2">{r.weekId}</td>
                   <td className="p-2">{new Date(r.at).toLocaleString("en-GB", { timeZone: "Europe/Rome" })}</td>
                   <td className={`p-2 ${r.ok ? "text-green-400" : "text-red-400"}`}>{r.status}</td>
+                  <td className="p-2">
+                    {r.playerUsername ? `@${r.playerUsername}` : (r.player || "-")}
+                  </td>
                   <td className="p-2" title={r.wallet}>{shortWallet(r.wallet)}</td>
                   <td className="p-2">{r.group}</td>
                   <td className="p-2">{Math.round(r.amountBf).toLocaleString()}</td>
                   <td className="p-2" title={r.txHash || r.error || ""}>
                     {r.txHash ? (
-                      <a className="text-amber-400 underline" href={`https://basescan.org/tx/${r.txHash}`} target="_blank" rel="noreferrer">
+                      <a className="text-amber-400 underline" href={r.basescanUrl} target="_blank" rel="noreferrer">
                         {shortTx(r.txHash)}
                       </a>
                     ) : (
