@@ -2,6 +2,7 @@
 import { useEffect, useMemo, useState } from "react";
 import Link from "next/link";
 import { sdk } from "@farcaster/miniapp-sdk";
+import { stringToHex } from "viem";
 import { useFarcaster } from "@/hooks/useFarcaster";
 
 const ADMIN_WALLET = (process.env.NEXT_PUBLIC_ADMIN_WALLET || "0xd29c790466675153A50DF7860B9EFDb689A21cDe").toLowerCase();
@@ -124,9 +125,11 @@ export default function AdminPage() {
     let signature = "";
     try {
       const provider = sdk.wallet.ethProvider;
+      const hexMessage = stringToHex(message);
+      const signerAddress = address as `0x${string}`;
       const sig = await provider.request({
         method: "personal_sign",
-        params: [message, address],
+        params: [hexMessage, signerAddress],
       });
       signature = String(sig || "");
       if (!signature) {

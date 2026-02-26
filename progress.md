@@ -48,3 +48,6 @@ Original prompt: end game: aggiungiamo pulsante share to farcaster, che pubblich
   - Updated end-game cast embed to prioritize image preview only (`embeds: [shareImage]`) and moved app URL into cast text.
   - Added `v=2` query param on share image URL to reduce stale preview cache.
 - Vercel Hobby cron compatibility fix: changed `vercel.json` schedule from hourly (`0 * * * *`) to daily (`0 1 * * *`) to satisfy plan limits.
+- Fixed Vercel build blocker in admin signature flow:
+  - `personal_sign` now uses `stringToHex(message)` plus typed wallet address (`0x...`) to satisfy provider typings.
+  - Verified with successful `npm run build`.
