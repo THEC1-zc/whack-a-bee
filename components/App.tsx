@@ -1,6 +1,7 @@
 "use client";
 import { useState } from "react";
 import { useFarcaster } from "@/hooks/useFarcaster";
+import { sdk } from "@farcaster/miniapp-sdk";
 import GameScreen from "./GameScreen";
 import LeaderboardScreen from "./LeaderboardScreen";
 import RulesScreen from "./RulesScreen";
@@ -38,6 +39,7 @@ export default function App() {
   const [myTickets, setMyTickets] = useState<{ pending: number; claimed: number } | null>(null);
   const [claimingTickets, setClaimingTickets] = useState(false);
   const [claimError, setClaimError] = useState<string | null>(null);
+  const [shareError, setShareError] = useState<string | null>(null);
 
   useEffect(() => {
     fetch("/api/payout")
@@ -111,6 +113,21 @@ export default function App() {
     }
   }
 
+  async function handleShareApp() {
+    const appUrl = process.env.NEXT_PUBLIC_APP_URL || "https://whack-a-bee.vercel.app";
+    const shareText = "Whack-a-Butterfly by @Thec1 is live on Farcaster. Enter, play, win BF, and climb the weekly pot leaderboard.";
+    setShareError(null);
+    try {
+      await sdk.actions.composeCast({
+        text: shareText,
+        embeds: [appUrl],
+      });
+    } catch (e) {
+      console.error("Home share error", e);
+      setShareError("Share failed");
+    }
+  }
+
   if (isLoading) {
     return (
       <div className="flex items-center justify-center min-h-dvh" style={{ background: "#1a0a00" }}>
@@ -176,6 +193,21 @@ export default function App() {
       <div className="text-center">
         <div className="text-6xl mb-1" style={{ filter: "drop-shadow(0 0 20px #fbbf24)" }}>🦋</div>
         <h1 className="text-3xl font-black text-white">Whack-a-Butterfly</h1>
+        <button
+          type="button"
+          onClick={handleShareApp}
+          className="mt-3 px-4 py-2 rounded-xl text-xs font-black text-black inline-flex items-center gap-2"
+          style={{ background: "linear-gradient(135deg, #fbbf24, #f59e0b)" }}
+        >
+          <span
+            className="w-4 h-4 rounded-full flex items-center justify-center text-[10px] font-black"
+            style={{ background: "#6d28d9", color: "#fff" }}
+          >
+            f
+          </span>
+          Share app to Farcaster
+        </button>
+        {shareError && <div className="text-red-400 text-xs mt-1">{shareError}</div>}
       </div>
 
       {/* Prize Pool */}
