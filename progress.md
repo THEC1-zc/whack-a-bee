@@ -47,3 +47,4 @@ Original prompt: end game: aggiungiamo pulsante share to farcaster, che pubblich
   - Simplified layout to avoid clipping/misalignment in Farcaster preview.
   - Updated end-game cast embed to prioritize image preview only (`embeds: [shareImage]`) and moved app URL into cast text.
   - Added `v=2` query param on share image URL to reduce stale preview cache.
+- Vercel Hobby cron compatibility fix: changed `vercel.json` schedule from hourly (`0 * * * *`) to daily (`0 1 * * *`) to satisfy plan limits.
