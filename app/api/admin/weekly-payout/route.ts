@@ -35,6 +35,11 @@ type TransferPlan = {
   group: string;
 };
 
+function normalizePrivateKey(value: string | undefined) {
+  const raw = (value || "").trim().replace(/^['"]|['"]$/g, "");
+  return raw;
+}
+
 function isAuthorized(req: NextRequest) {
   const token = req.headers.get("x-admin-token");
   if (ADMIN_API_KEY && token === ADMIN_API_KEY) return true;
@@ -62,7 +67,11 @@ function weightedPick(map: Record<string, number>, count: number, exclude: Set<s
 }
 
 async function sendBfTransfers(transfers: TransferPlan[]): Promise<WeeklyTransferResult[]> {
-  const account = privateKeyToAccount(POT_PRIVATE_KEY);
+  const key = normalizePrivateKey(POT_PRIVATE_KEY);
+  if (!/^0x[0-9a-fA-F]{64}$/.test(key)) {
+    throw new Error("POT_WALLET_PRIVATE_KEY invalid: expected 0x + 64 hex chars");
+  }
+  const account = privateKeyToAccount(key as `0x${string}`);
   const publicClient = createPublicClient({ chain: base, transport: http("https://mainnet.base.org") });
   const walletClient = createWalletClient({ account, chain: base, transport: http("https://mainnet.base.org") });
   const results: WeeklyTransferResult[] = [];

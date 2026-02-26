@@ -1,6 +1,7 @@
 "use client";
 import { useEffect, useMemo, useState } from "react";
 import Link from "next/link";
+import { sdk } from "@farcaster/miniapp-sdk";
 import { useFarcaster } from "@/hooks/useFarcaster";
 
 const ADMIN_WALLET = (process.env.NEXT_PUBLIC_ADMIN_WALLET || "0xd29c790466675153A50DF7860B9EFDb689A21cDe").toLowerCase();
@@ -89,17 +90,68 @@ export default function AdminPage() {
 
   async function handleReset() {
     if (!authorized) return;
-    if (!confirm("Reset leaderboard? This will delete all game history.")) return;
     setResetting(true);
+    setInfo("Firma richiesta per autorizzare reset leaderboard...");
+    setError(null);
+
+    let message = "";
+    let challenge = "";
+    try {
+      const challengeRes = await fetch("/api/admin/auth/challenge", {
+        method: "POST",
+        headers: { "Content-Type": "application/json", "x-admin-wallet": address },
+        body: JSON.stringify({ action: "reset_leaderboard", address }),
+      });
+      const challengeData = await challengeRes.json().catch(() => ({}));
+      if (!challengeRes.ok) {
+        setError(challengeData?.error || "Unable to request signature challenge");
+        setResetting(false);
+        return;
+      }
+      message = String(challengeData?.message || "");
+      challenge = String(challengeData?.token || "");
+      if (!message || !challenge) {
+        setError("Invalid challenge payload");
+        setResetting(false);
+        return;
+      }
+    } catch {
+      setError("Challenge request failed");
+      setResetting(false);
+      return;
+    }
+
+    let signature = "";
+    try {
+      const provider = sdk.wallet.ethProvider;
+      const sig = await provider.request({
+        method: "personal_sign",
+        params: [message, address],
+      });
+      signature = String(sig || "");
+      if (!signature) {
+        setError("Signature cancelled");
+        setResetting(false);
+        return;
+      }
+    } catch {
+      setError("Signature cancelled or not supported");
+      setResetting(false);
+      return;
+    }
+
     const res = await fetch("/api/admin/leaderboard", {
       method: "POST",
       headers: { "Content-Type": "application/json", "x-admin-wallet": address },
-      body: JSON.stringify({ action: "reset" }),
+      body: JSON.stringify({ action: "reset", challenge, message, signature }),
     });
     if (res.ok) {
       setStats(null);
+      setInfo("Leaderboard reset completato");
     } else {
-      setError("Reset failed");
+      const data = await res.json().catch(() => ({}));
+      setError(data?.error || "Reset failed");
+      setInfo(null);
     }
     setResetting(false);
   }
