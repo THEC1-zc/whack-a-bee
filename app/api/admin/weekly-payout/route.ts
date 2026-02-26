@@ -21,7 +21,7 @@ import { getAdminStats, resetLeaderboard } from "@/lib/leaderboard";
 
 const ADMIN_WALLET = getAdminWallet();
 const ADMIN_API_KEY = process.env.ADMIN_API_KEY;
-const POT_PRIVATE_KEY = process.env.POT_WALLET_PRIVATE_KEY as `0x${string}`;
+const POT_PRIVATE_KEY = process.env.POT_WALLET_PRIVATE_KEY;
 
 type WeeklyPayoutRequest = {
   force?: boolean;
@@ -37,7 +37,11 @@ type TransferPlan = {
 
 function normalizePrivateKey(value: string | undefined) {
   const raw = (value || "").trim().replace(/^['"]|['"]$/g, "");
-  return raw;
+  const compact = raw.replace(/\s+/g, "");
+  if (/^[0-9a-fA-F]{64}$/.test(compact)) {
+    return `0x${compact}`;
+  }
+  return compact;
 }
 
 function isAuthorized(req: NextRequest) {
@@ -69,7 +73,7 @@ function weightedPick(map: Record<string, number>, count: number, exclude: Set<s
 async function sendBfTransfers(transfers: TransferPlan[]): Promise<WeeklyTransferResult[]> {
   const key = normalizePrivateKey(POT_PRIVATE_KEY);
   if (!/^0x[0-9a-fA-F]{64}$/.test(key)) {
-    throw new Error("POT_WALLET_PRIVATE_KEY invalid: expected 0x + 64 hex chars");
+    throw new Error("POT_WALLET_PRIVATE_KEY invalid: expected 64 hex chars (with or without 0x)");
   }
   const account = privateKeyToAccount(key as `0x${string}`);
   const publicClient = createPublicClient({ chain: base, transport: http("https://mainnet.base.org") });

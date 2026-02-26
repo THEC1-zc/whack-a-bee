@@ -51,3 +51,4 @@ Original prompt: end game: aggiungiamo pulsante share to farcaster, che pubblich
 - Fixed Vercel build blocker in admin signature flow:
   - `personal_sign` now uses `stringToHex(message)` plus typed wallet address (`0x...`) to satisfy provider typings.
   - Verified with successful `npm run build`.
+- Made payout key parsing tolerant: `POT_WALLET_PRIVATE_KEY` now accepts 64 hex chars with or without `0x` (also trims quotes/spaces).
