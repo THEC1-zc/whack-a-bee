@@ -15,12 +15,8 @@ export async function GET(req: Request) {
   const pct = Math.max(0, Math.min(100, Math.floor(readNumber(searchParams.get("pct"), 0))));
   const prizeBf = Math.max(0, Math.floor(readNumber(searchParams.get("prizeBf"), 0)));
   const fee = readNumber(searchParams.get("fee"), 0.0);
-  const difficulty = searchParams.get("difficulty") || "";
+  const difficulty = (searchParams.get("difficulty") || "Battle").slice(0, 16);
   const tickets = Math.max(0, Math.floor(readNumber(searchParams.get("tickets"), 0)));
-
-  const appUrl = process.env.NEXT_PUBLIC_APP_URL || "https://whack-a-bee.vercel.app";
-  const bgUrl = new URL("/back-portrait.png", appUrl).toString();
-  const bfUrl = new URL("/bf.png", appUrl).toString();
 
   return new ImageResponse(
     (
@@ -28,126 +24,104 @@ export async function GET(req: Request) {
         style={{
           width: "1200px",
           height: "630px",
-          position: "relative",
           display: "flex",
           alignItems: "center",
           justifyContent: "center",
-          background: "#120700",
+          background: "linear-gradient(180deg, #1a0a00 0%, #2a1200 100%)",
           color: "#fff",
           fontFamily: "Arial, sans-serif",
         }}
       >
         <div
           style={{
-            position: "absolute",
-            inset: 0,
-            display: "flex",
-          }}
-        >
-          <img
-            src={bgUrl}
-            style={{
-              width: "1200px",
-              height: "630px",
-              objectFit: "cover",
-              filter: "brightness(0.55)",
-            }}
-          />
-        </div>
-        <div
-          style={{
-            position: "absolute",
-            inset: 0,
-            display: "flex",
-            background: "linear-gradient(180deg, rgba(10,6,0,0.8), rgba(20,10,0,0.9))",
-          }}
-        />
-        <div
-          style={{
-            position: "relative",
-            width: "920px",
+            width: "1040px",
+            height: "520px",
+            borderRadius: "36px",
+            border: "3px solid #92400e",
+            background: "rgba(20, 9, 0, 0.9)",
             display: "flex",
             alignItems: "center",
-            gap: "32px",
+            justifyContent: "space-between",
+            padding: "44px",
           }}
         >
           <div
             style={{
-              width: "280px",
-              height: "280px",
-              borderRadius: "32px",
-              background: "rgba(26,10,0,0.75)",
-              border: "4px solid #f59e0b",
+              width: "360px",
+              height: "430px",
+              borderRadius: "28px",
+              border: "2px solid #f59e0b",
+              background: "linear-gradient(180deg, rgba(251,191,36,0.16), rgba(251,191,36,0.04))",
               display: "flex",
-              alignItems: "center",
+              flexDirection: "column",
               justifyContent: "center",
-              boxShadow: "0 12px 40px rgba(0,0,0,0.4)",
+              gap: "20px",
             }}
           >
-            <img
-              src={bfUrl}
-              style={{ width: "200px", height: "200px", objectFit: "contain" }}
-            />
+            <div style={{ display: "flex", fontSize: "34px", color: "#fbbf24", fontWeight: 900 }}>
+              GAME OVER
+            </div>
+            <div style={{ display: "flex", fontSize: "110px", lineHeight: 1, color: "#fbbf24", fontWeight: 900 }}>
+              {score}
+            </div>
+            <div style={{ display: "flex", fontSize: "24px", color: "#f3f4f6", fontWeight: 700 }}>
+              {pct}% performance
+            </div>
+            <div style={{ display: "flex", fontSize: "24px", color: "#22c55e", fontWeight: 900 }}>
+              {prizeBf.toLocaleString()} BF
+            </div>
           </div>
           <div
             style={{
-              flex: 1,
+              width: "590px",
               display: "flex",
               flexDirection: "column",
-              gap: "16px",
-              maxWidth: "560px",
+              gap: "18px",
             }}
           >
             <div
               style={{
                 display: "flex",
-                fontSize: "44px",
+                fontSize: "58px",
                 fontWeight: 900,
                 letterSpacing: "-1px",
               }}
             >
               Whack-a-Butterfly
             </div>
-            <div style={{ display: "flex", fontSize: "24px", color: "#fbbf24" }}>
-              Game recap · {difficulty || "Battle"}
+            <div style={{ display: "flex", fontSize: "30px", color: "#fbbf24", fontWeight: 800 }}>
+              {difficulty} mode recap
             </div>
-            <div style={{ display: "flex", gap: "24px", alignItems: "center" }}>
+            <div style={{ display: "flex", gap: "12px", alignItems: "center" }}>
               <div
                 style={{
                   display: "flex",
-                  padding: "12px 18px",
+                  padding: "10px 16px",
                   borderRadius: "16px",
                   background: "rgba(251,191,36,0.15)",
                   border: "2px solid #f59e0b",
-                  fontSize: "22px",
+                  fontSize: "20px",
                   fontWeight: 800,
                 }}
               >
-                Score {score}
+                Fee {fee} USDC
               </div>
               <div
                 style={{
                   display: "flex",
-                  padding: "12px 18px",
+                  padding: "10px 16px",
                   borderRadius: "16px",
                   background: "rgba(16,185,129,0.15)",
                   border: "2px solid #34d399",
-                  fontSize: "22px",
+                  fontSize: "20px",
                   fontWeight: 800,
                 }}
               >
-                Prize {prizeBf.toLocaleString()} BF
+                Tickets {tickets}
               </div>
             </div>
-            <div style={{ display: "flex", fontSize: "20px", color: "#f3f4f6" }}>
-              Your game was{" "}
-              <span style={{ color: "#fbbf24", fontWeight: 800 }}>{pct}%</span>
-            </div>
-            <div style={{ display: "flex", fontSize: "18px", color: "#fcd34d" }}>
-              Fee {fee} USDC · Tickets {tickets}
-            </div>
-            <div style={{ display: "flex", fontSize: "18px", color: "#f59e0b" }}>
-              Play on Farcaster miniapp
+            <div style={{ display: "flex", fontSize: "30px", color: "#f3f4f6", fontWeight: 700 }}>
+              Tap to play on Farcaster miniapp
             </div>
           </div>
         </div>

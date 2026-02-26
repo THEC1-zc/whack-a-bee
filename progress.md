@@ -42,3 +42,8 @@ Original prompt: end game: aggiungiamo pulsante share to farcaster, che pubblich
   - New button: "Share app to Farcaster" under title.
   - Uses `sdk.actions.composeCast` with app embed URL.
   - Added small UI error feedback if compose fails.
+- End-game share preview mobile fix:
+  - Rebuilt `/api/share-image` as centered, mobile-safe OG card without external image dependencies (no bg/png fetches).
+  - Simplified layout to avoid clipping/misalignment in Farcaster preview.
+  - Updated end-game cast embed to prioritize image preview only (`embeds: [shareImage]`) and moved app URL into cast text.
+  - Added `v=2` query param on share image URL to reduce stale preview cache.

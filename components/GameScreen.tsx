@@ -379,7 +379,7 @@ export default function GameScreen({ user, difficulty, onGameEnd }: Props) {
       1 + Math.floor(shownScore / 1000) + Math.floor(cfg.fee / 0.25)
     );
     const appUrl = process.env.NEXT_PUBLIC_APP_URL || "https://whack-a-bee.vercel.app";
-    const shareImage = `${appUrl}/api/share-image?score=${shownScore}&pct=${pct}&prizeBf=${finalPrizeBfNet}&fee=${cfg.fee}&difficulty=${cfg.label}&tickets=${ticketEstimate}`;
+    const shareImage = `${appUrl}/api/share-image?score=${shownScore}&pct=${pct}&prizeBf=${finalPrizeBfNet}&fee=${cfg.fee}&difficulty=${cfg.label}&tickets=${ticketEstimate}&v=2`;
     const shareText = `I just ended a game on Whack-a-bee by @Thec1, I entered a ${cfg.fee} game, had a ${pct}% and won ${finalPrizeBfNet} BF and ${ticketEstimate} tickets for the weekly pot! can you do better?`;
     return (
       <div className="min-h-dvh flex flex-col items-center justify-center p-6 text-center gap-4" style={{ background: "#1a0a00" }}>
@@ -433,8 +433,8 @@ export default function GameScreen({ user, difficulty, onGameEnd }: Props) {
           onClick={async () => {
             try {
               await sdk.actions.composeCast({
-                text: shareText,
-                embeds: [shareImage, appUrl],
+                text: `${shareText}\n${appUrl}`,
+                embeds: [shareImage],
               });
             } catch (e) {
               console.error("Share error", e);
