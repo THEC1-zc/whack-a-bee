@@ -35,6 +35,11 @@ function sleep(ms: number) {
   return new Promise((resolve) => setTimeout(resolve, ms));
 }
 
+function extractErrorMessage(error: unknown) {
+  if (error instanceof Error) return error.message;
+  return String(error || "Payout failed");
+}
+
 export async function OPTIONS() {
   return new NextResponse(null, { status: 204, headers: CORS_HEADERS });
 }
@@ -135,19 +140,30 @@ export async function POST(req: NextRequest) {
       throw lastError;
     };
 
-    // Send BF to winner
+    // Send BF to winner (critical path)
     const txHash = await sendTransfer(recipient as `0x${string}`, playerAmount, "winner");
 
-    // transfer 5% to pot wallet
-    await sendTransfer(POT_WALLET, potAmount, "pot");
+    // Pot transfer is best-effort; winner payout should not fail because of pot wallet issues
+    let potTxHash: `0x${string}` | null = null;
+    let potWarning: string | null = null;
+    try {
+      potTxHash = await sendTransfer(POT_WALLET, potAmount, "pot");
+      await addWeeklyPot(potAmount);
+    } catch (potError: unknown) {
+      potWarning = extractErrorMessage(potError);
+      console.error("Pot transfer warning:", potWarning);
+    }
 
-    // weekly pot += 5% of payout
-    await addWeeklyPot(potAmount);
-
-    return jsonWithCors({ ok: true, txHash, bfAmount: playerAmount });
+    return jsonWithCors({
+      ok: true,
+      txHash,
+      potTxHash,
+      bfAmount: playerAmount,
+      warning: potWarning,
+    });
   } catch (e: unknown) {
     console.error("Payout error:", e);
-    const message = e instanceof Error ? e.message : "Payout failed";
+    const message = extractErrorMessage(e);
     return jsonWithCors({ error: message }, 500);
   }
 }
