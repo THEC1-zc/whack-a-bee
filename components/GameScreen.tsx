@@ -20,6 +20,14 @@ interface Props {
   onGameEnd: (score: number, prize: number) => void;
 }
 
+type HitStats = {
+  normal: number;
+  fast: number;
+  fuchsia: number;
+  bomb: number;
+  super: number;
+};
+
 const SLOTS = 9;
 
 const BEE_CHANCES = {
@@ -81,6 +89,13 @@ export default function GameScreen({ user, difficulty, onGameEnd }: Props) {
   const [gameStarted, setGameStarted] = useState(false);
   const [superBonus, setSuperBonus] = useState(0);
   const [bfPerUsdc, setBfPerUsdc] = useState(BF_PER_USDC_FALLBACK);
+  const [hitStats, setHitStats] = useState<HitStats>({
+    normal: 0,
+    fast: 0,
+    fuchsia: 0,
+    bomb: 0,
+    super: 0,
+  });
 
   const beeIdRef = useRef(0);
   const scoreRef = useRef(0);
@@ -173,6 +188,7 @@ export default function GameScreen({ user, difficulty, onGameEnd }: Props) {
     if (bee.hit || !bee.visible) return;
     setBees(prev => prev.map(b => b.id === bee.id ? { ...b, hit: true } : b));
     setTimeout(() => setBees(prev => prev.filter(b => b.id !== bee.id)), 150);
+    setHitStats((prev) => ({ ...prev, [bee.type]: prev[bee.type] + 1 }));
 
     let points = 0;
     let text = "";
@@ -405,6 +421,15 @@ export default function GameScreen({ user, difficulty, onGameEnd }: Props) {
               }}
             />
           </div>
+        </div>
+
+        <div className="w-full max-w-xs rounded-2xl p-3 border border-amber-900 text-xs" style={{ background: "#1f1000" }}>
+          <div className="text-amber-500 uppercase tracking-widest mb-2">Hit Counter</div>
+          <div className="text-amber-200">Normal: {hitStats.normal}</div>
+          <div className="text-amber-200">Fast: {hitStats.fast}</div>
+          <div className="text-amber-200">Fuchsia: {hitStats.fuchsia}</div>
+          <div className="text-amber-200">Bomb: {hitStats.bomb}</div>
+          <div className="text-amber-200">Super: {hitStats.super}</div>
         </div>
 
         <div className="w-full max-w-xs rounded-2xl p-4 border border-amber-800" style={{ background: "#2a1500" }}>

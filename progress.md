@@ -76,3 +76,4 @@ Original prompt: end game: aggiungiamo pulsante share to farcaster, che pubblich
 - Wallet-connect-once UX improvement:
   - `useFarcaster` now auto-restores wallet via cached localStorage + `eth_accounts` probe.
   - After first connect, admin pages can reuse wallet without repeated connect prompts in normal flow.
+- Added end-game hit counters by butterfly type in `GameScreen` (normal, fast, fuchsia, bomb, super), incremented on each valid tap.
