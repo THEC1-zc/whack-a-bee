@@ -62,3 +62,8 @@ Original prompt: end game: aggiungiamo pulsante share to farcaster, che pubblich
 - Payout reliability fix: `/api/payout` now treats winner transfer as critical and pot transfer as best-effort.
 - If pot transfer reverts, player payout still returns success; warning is logged and returned without blocking end-game payment status.
 - Added Home red alert banner: "Currently fixing some txs issues, updated version is coming soon".
+- Transaction debug section 1 (winner payout diagnostics):
+  - Added tolerant parsing/validation for `PRIZE_WALLET_PRIVATE_KEY`.
+  - Added preflight `simulateContract` for winner transfer with structured error payload.
+  - Added recipient contract detection (`recipientIsContract`) to flag possible smart-wallet token restrictions.
+  - Added preflight simulation for pot transfer (best-effort path keeps winner payout priority).

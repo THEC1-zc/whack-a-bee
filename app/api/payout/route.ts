@@ -7,7 +7,7 @@ import { bfToUsdc, usdcToBf } from "@/lib/pricing";
 import { addWeeklyPot } from "@/lib/weekly";
 
 // Prize pool wallet private key — set in Vercel env vars, NEVER in code
-const PRIZE_PRIVATE_KEY = process.env.PRIZE_WALLET_PRIVATE_KEY as `0x${string}`;
+const PRIZE_PRIVATE_KEY = process.env.PRIZE_WALLET_PRIVATE_KEY;
 const POT_WALLET = (process.env.POT_WALLET_ADDRESS || "0x468d066995A4C09209c9c165F30Bd76A4FDB88e0") as `0x${string}`;
 const PRIZE_WALLET_ADDRESS = process.env.PRIZE_WALLET_ADDRESS as `0x${string}` | undefined;
 const MIN_POOL_BALANCE_BF = 100000;
@@ -40,6 +40,15 @@ function extractErrorMessage(error: unknown) {
   return String(error || "Payout failed");
 }
 
+function normalizePrivateKey(value: string | undefined) {
+  const raw = (value || "").trim().replace(/^['"]|['"]$/g, "");
+  const compact = raw.replace(/\s+/g, "");
+  if (/^[0-9a-fA-F]{64}$/.test(compact)) {
+    return `0x${compact}`;
+  }
+  return compact;
+}
+
 export async function OPTIONS() {
   return new NextResponse(null, { status: 204, headers: CORS_HEADERS });
 }
@@ -49,6 +58,13 @@ export async function POST(req: NextRequest) {
     if (!PRIZE_PRIVATE_KEY) {
       return jsonWithCors({ error: "Payout not configured" }, 503);
     }
+    const normalizedPrizeKey = normalizePrivateKey(PRIZE_PRIVATE_KEY);
+    if (!/^0x[0-9a-fA-F]{64}$/.test(normalizedPrizeKey)) {
+      return jsonWithCors(
+        { error: "PRIZE_WALLET_PRIVATE_KEY invalid: expected 64 hex chars (with or without 0x)" },
+        503
+      );
+    }
 
     const { recipient, amount } = await req.json();
 
@@ -56,7 +72,7 @@ export async function POST(req: NextRequest) {
       return jsonWithCors({ error: "Invalid request" }, 400);
     }
 
-    const account = privateKeyToAccount(PRIZE_PRIVATE_KEY);
+    const account = privateKeyToAccount(normalizedPrizeKey as `0x${string}`);
     if (PRIZE_WALLET_ADDRESS && PRIZE_WALLET_ADDRESS !== account.address) {
       return jsonWithCors(
         { error: "Prize wallet mismatch", configured: false },
@@ -104,6 +120,37 @@ export async function POST(req: NextRequest) {
 
     const playerAmount = bfAmount * 0.95;
     const potAmount = bfAmount * 0.05;
+    const playerAmountUnits = toBFUnits(playerAmount);
+    const potAmountUnits = toBFUnits(potAmount);
+    const recipientAddress = recipient as `0x${string}`;
+
+    const recipientCode = await publicClient.getCode({ address: recipientAddress });
+    const recipientIsContract = Boolean(recipientCode && recipientCode !== "0x");
+
+    // Preflight simulation for the winner transfer to get deterministic revert reason before tx send
+    try {
+      await publicClient.simulateContract({
+        account,
+        address: BF_ADDRESS,
+        abi: ERC20_ABI,
+        functionName: "transfer",
+        args: [recipientAddress, playerAmountUnits],
+      });
+    } catch (simulateError: unknown) {
+      const reason = extractErrorMessage(simulateError);
+      const hint = recipientIsContract
+        ? " Recipient is a smart-contract wallet; token transfer rules may block contract recipients."
+        : "";
+      return jsonWithCors(
+        {
+          error: `Winner transfer simulation failed: ${reason}${hint}`,
+          recipient: recipientAddress,
+          recipientIsContract,
+          amountBf: playerAmount,
+        },
+        500
+      );
+    }
 
     const sendTransfer = async (to: `0x${string}`, value: number, label: string) => {
       let lastError: unknown;
@@ -141,12 +188,19 @@ export async function POST(req: NextRequest) {
     };
 
     // Send BF to winner (critical path)
-    const txHash = await sendTransfer(recipient as `0x${string}`, playerAmount, "winner");
+    const txHash = await sendTransfer(recipientAddress, playerAmount, "winner");
 
     // Pot transfer is best-effort; winner payout should not fail because of pot wallet issues
     let potTxHash: `0x${string}` | null = null;
     let potWarning: string | null = null;
     try {
+      await publicClient.simulateContract({
+        account,
+        address: BF_ADDRESS,
+        abi: ERC20_ABI,
+        functionName: "transfer",
+        args: [POT_WALLET, potAmountUnits],
+      });
       potTxHash = await sendTransfer(POT_WALLET, potAmount, "pot");
       await addWeeklyPot(potAmount);
     } catch (potError: unknown) {
