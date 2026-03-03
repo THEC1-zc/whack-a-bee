@@ -61,3 +61,4 @@ Original prompt: end game: aggiungiamo pulsante share to farcaster, che pubblich
   - New Admin button `Share Winners` opens Farcaster composer with tagged winners + report embeds.
 - Payout reliability fix: `/api/payout` now treats winner transfer as critical and pot transfer as best-effort.
 - If pot transfer reverts, player payout still returns success; warning is logged and returned without blocking end-game payment status.
+- Added Home red alert banner: "Currently fixing some txs issues, updated version is coming soon".

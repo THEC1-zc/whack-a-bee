@@ -210,6 +210,15 @@ export default function App() {
         {shareError && <div className="text-red-400 text-xs mt-1">{shareError}</div>}
       </div>
 
+      <div
+        className="w-full max-w-sm rounded-2xl p-3 border text-center"
+        style={{ background: "#3b0000", borderColor: "#ef4444" }}
+      >
+        <div className="text-red-200 text-sm font-black">
+          Currently fixing some txs issues, updated version is coming soon
+        </div>
+      </div>
+
       {/* Prize Pool */}
       <div className="w-full max-w-sm rounded-2xl p-4 border"
         style={{ background: "#2a1500", borderColor: poolEmpty ? "#dc2626" : "#92400e" }}>
