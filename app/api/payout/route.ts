@@ -2,7 +2,17 @@ import { NextRequest, NextResponse } from "next/server";
 import { createWalletClient, createPublicClient, http } from "viem";
 import { base } from "viem/chains";
 import { privateKeyToAccount } from "viem/accounts";
-import { BF_ADDRESS, ERC20_ABI, fromBFUnits, toBFUnits, PRIZE_WALLET } from "@/lib/contracts";
+import {
+  BF_ADDRESS,
+  ERC20_ABI,
+  fromBFUnits,
+  toBFUnits,
+  PRIZE_WALLET,
+  USDC_ADDRESS,
+  USDC_ABI,
+  fromUSDCUnits,
+  toUSDCUnits,
+} from "@/lib/contracts";
 import { bfToUsdc, usdcToBf } from "@/lib/pricing";
 import { addWeeklyPot, getWeeklyMeta } from "@/lib/weekly";
 import { logTxRecord } from "@/lib/txLedger";
@@ -96,22 +106,8 @@ export async function POST(req: NextRequest) {
     });
 
     const poolBalanceBf = fromBFUnits(poolBalance as bigint);
-    const poolBalanceUsdc = await bfToUsdc(poolBalanceBf);
-
-    if (poolBalanceBf < MIN_POOL_BALANCE_BF) {
-      return jsonWithCors(
-        { error: "Prize pool is empty", poolBalance: poolBalanceUsdc },
-        503
-      );
-    }
 
     const bfAmount = await usdcToBf(amount);
-    if (poolBalanceBf < bfAmount) {
-      return jsonWithCors(
-        { error: "Insufficient pool balance", poolBalance: poolBalanceUsdc },
-        503
-      );
-    }
 
     const walletClient = createWalletClient({
       account,
@@ -123,34 +119,32 @@ export async function POST(req: NextRequest) {
     const potAmount = bfAmount * 0.05;
     const playerAmountUnits = toBFUnits(playerAmount);
     const potAmountUnits = toBFUnits(potAmount);
+    const playerUsdcAmount = amount * 0.95;
+    const playerUsdcUnits = toUSDCUnits(playerUsdcAmount);
     const recipientAddress = recipient as `0x${string}`;
 
     const recipientCode = await publicClient.getCode({ address: recipientAddress });
     const recipientIsContract = Boolean(recipientCode && recipientCode !== "0x");
 
-    // Preflight simulation for the winner transfer to get deterministic revert reason before tx send
-    try {
-      await publicClient.simulateContract({
-        account,
-        address: BF_ADDRESS,
-        abi: ERC20_ABI,
-        functionName: "transfer",
-        args: [recipientAddress, playerAmountUnits],
-      });
-    } catch (simulateError: unknown) {
-      const reason = extractErrorMessage(simulateError);
-      const hint = recipientIsContract
-        ? " Recipient is a smart-contract wallet; token transfer rules may block contract recipients."
-        : "";
-      return jsonWithCors(
-        {
-          error: `Winner transfer simulation failed: ${reason}${hint}`,
-          recipient: recipientAddress,
-          recipientIsContract,
-          amountBf: playerAmount,
-        },
-        500
-      );
+    const bfPoolEligible = poolBalanceBf >= MIN_POOL_BALANCE_BF && poolBalanceBf >= bfAmount;
+    let bfPreflightError: string | null = null;
+    if (bfPoolEligible) {
+      try {
+        await publicClient.simulateContract({
+          account,
+          address: BF_ADDRESS,
+          abi: ERC20_ABI,
+          functionName: "transfer",
+          args: [recipientAddress, playerAmountUnits],
+        });
+      } catch (simulateError: unknown) {
+        bfPreflightError = extractErrorMessage(simulateError);
+      }
+    } else {
+      bfPreflightError =
+        poolBalanceBf < MIN_POOL_BALANCE_BF
+          ? "Prize BF pool below minimum threshold"
+          : "Prize BF pool insufficient for this payout";
     }
 
     const sendTransfer = async (to: `0x${string}`, value: number, label: string) => {
@@ -190,17 +184,90 @@ export async function POST(req: NextRequest) {
 
     const { weekId } = getWeeklyMeta();
 
-    // Send BF to winner (critical path)
-    const txHash = await sendTransfer(recipientAddress, playerAmount, "winner");
-    await logTxRecord({
-      kind: "game_prize_out",
-      status: "ok",
-      weekId,
-      to: recipientAddress,
-      amountBf: playerAmount,
-      txHash,
-      stage: "winner_transfer",
-    });
+    // Prefer BF payout; fallback to USDC if BF transfer path reverts
+    let payoutToken: "BF" | "USDC" = "BF";
+    let txHash: `0x${string}` | null = null;
+    let payoutWarning: string | null = null;
+
+    if (!bfPreflightError) {
+      try {
+        txHash = await sendTransfer(recipientAddress, playerAmount, "winner");
+        await logTxRecord({
+          kind: "game_prize_out",
+          status: "ok",
+          weekId,
+          to: recipientAddress,
+          amountBf: playerAmount,
+          txHash,
+          stage: "winner_transfer_bf",
+        });
+      } catch (winnerError: unknown) {
+        bfPreflightError = extractErrorMessage(winnerError);
+      }
+    }
+
+    if (!txHash) {
+      payoutToken = "USDC";
+      const usdcBalance = await publicClient.readContract({
+        address: USDC_ADDRESS,
+        abi: USDC_ABI,
+        functionName: "balanceOf",
+        args: [prizeAddress],
+      });
+      const usdcBalanceHuman = fromUSDCUnits(usdcBalance as bigint);
+      if ((usdcBalance as bigint) < playerUsdcUnits) {
+        return jsonWithCors(
+          {
+            error: `Winner payout failed: BF path reverted (${bfPreflightError || "unknown"}) and USDC fallback insufficient (${usdcBalanceHuman.toFixed(6)} USDC)`,
+            recipient: recipientAddress,
+            recipientIsContract,
+            amountUsdc: playerUsdcAmount,
+          },
+          500
+        );
+      }
+
+      try {
+        txHash = await walletClient.writeContract({
+          address: USDC_ADDRESS,
+          abi: USDC_ABI,
+          functionName: "transfer",
+          args: [recipientAddress, playerUsdcUnits],
+        });
+        await publicClient.waitForTransactionReceipt({ hash: txHash });
+        payoutWarning = `BF transfer reverted (${bfPreflightError || "unknown"}). Paid in USDC fallback.`;
+        await logTxRecord({
+          kind: "game_prize_out",
+          status: "ok",
+          weekId,
+          to: recipientAddress,
+          amountUsdc: playerUsdcAmount,
+          txHash,
+          stage: "winner_transfer_usdc_fallback",
+          reason: bfPreflightError || undefined,
+        });
+      } catch (usdcError: unknown) {
+        const usdcReason = extractErrorMessage(usdcError);
+        await logTxRecord({
+          kind: "payout_error",
+          status: "failed",
+          weekId,
+          to: recipientAddress,
+          amountUsdc: playerUsdcAmount,
+          stage: "winner_transfer_usdc_fallback",
+          reason: usdcReason,
+        });
+        return jsonWithCors(
+          {
+            error: `Winner payout failed: BF path reverted (${bfPreflightError || "unknown"}) and USDC fallback failed (${usdcReason})`,
+            recipient: recipientAddress,
+            recipientIsContract,
+            amountUsdc: playerUsdcAmount,
+          },
+          500
+        );
+      }
+    }
 
     // Pot transfer is best-effort; winner payout should not fail because of pot wallet issues
     let potTxHash: `0x${string}` | null = null;
@@ -243,7 +310,8 @@ export async function POST(req: NextRequest) {
       txHash,
       potTxHash,
       bfAmount: playerAmount,
-      warning: potWarning,
+      payoutToken,
+      warning: [payoutWarning, potWarning].filter(Boolean).join(" | ") || null,
     });
   } catch (e: unknown) {
     console.error("Payout error:", e);

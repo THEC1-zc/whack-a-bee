@@ -77,3 +77,7 @@ Original prompt: end game: aggiungiamo pulsante share to farcaster, che pubblich
   - `useFarcaster` now auto-restores wallet via cached localStorage + `eth_accounts` probe.
   - After first connect, admin pages can reuse wallet without repeated connect prompts in normal flow.
 - Added end-game hit counters by butterfly type in `GameScreen` (normal, fast, fuchsia, bomb, super), incremented on each valid tap.
+- Payout fallback hardening:
+  - Winner payout now prefers BF but automatically falls back to USDC when BF path reverts or BF pool is not eligible.
+  - Added clearer structured failure message when both BF and USDC fallback fail.
+  - Added payout token indicator (`payoutToken`) in API response and richer warning aggregation.
