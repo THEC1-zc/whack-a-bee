@@ -67,3 +67,12 @@ Original prompt: end game: aggiungiamo pulsante share to farcaster, che pubblich
   - Added preflight `simulateContract` for winner transfer with structured error payload.
   - Added recipient contract detection (`recipientIsContract`) to flag possible smart-wallet token restrictions.
   - Added preflight simulation for pot transfer (best-effort path keeps winner payout priority).
+- Tx observability + records section implemented:
+  - Added persistent tx ledger (`lib/txLedger.ts`) for `game_fee_in`, `game_prize_out`, `game_pot_in`, `weekly_payout_out`, `payout_error`.
+  - Added logging hooks in `/api/leaderboard`, `/api/payout`, `/api/admin/weekly-payout`.
+  - Added admin API `/api/admin/tx-records`.
+  - Added admin page `/admin/tx-records` with per-transaction table (amounts, player, wallet, stage, reason, BaseScan link).
+  - Added quick diagnostics panel in `/admin` with recent tx errors.
+- Wallet-connect-once UX improvement:
+  - `useFarcaster` now auto-restores wallet via cached localStorage + `eth_accounts` probe.
+  - After first connect, admin pages can reuse wallet without repeated connect prompts in normal flow.

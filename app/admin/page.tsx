@@ -41,6 +41,14 @@ type WeeklyState = {
   potBf?: number;
 };
 
+type TxDiagnostic = {
+  id: string;
+  at: number;
+  stage?: string;
+  reason?: string;
+  playerUsername?: string;
+};
+
 export default function AdminPage() {
   const { user, connectWallet } = useFarcaster();
   const [stats, setStats] = useState<AdminStats | null>(null);
@@ -55,6 +63,7 @@ export default function AdminPage() {
   const [loading, setLoading] = useState(false);
   const [resetting, setResetting] = useState(false);
   const [savingWeeklyConfig, setSavingWeeklyConfig] = useState(false);
+  const [txDiagnostics, setTxDiagnostics] = useState<TxDiagnostic[]>([]);
 
   const address = user?.address?.toLowerCase() || "";
   const authorized = address === ADMIN_WALLET;
@@ -81,6 +90,16 @@ export default function AdminPage() {
         setWeeklyConfig(d.config || null);
         setPayoutLogs(Array.isArray(d.logs) ? d.logs : []);
       })
+      .catch(() => {});
+  }, [authorized, address]);
+
+  useEffect(() => {
+    if (!authorized) return;
+    fetch("/api/admin/tx-records?limit=8&status=failed&kinds=payout_error,weekly_payout_out", {
+      headers: { "x-admin-wallet": address },
+    })
+      .then(r => r.json())
+      .then(d => setTxDiagnostics(Array.isArray(d.records) ? d.records : []))
       .catch(() => {});
   }, [authorized, address]);
 
@@ -336,6 +355,13 @@ export default function AdminPage() {
                   >
                     Payout Report
                   </Link>
+                  <Link
+                    href="/admin/tx-records"
+                    className="px-3 py-1 rounded-md text-xs font-black text-black"
+                    style={{ background: "linear-gradient(135deg, #f472b6, #ec4899)" }}
+                  >
+                    Tx Records
+                  </Link>
                   <button
                     type="button"
                     onClick={handleShareWeeklyWinners}
@@ -431,6 +457,16 @@ export default function AdminPage() {
                       pot {Math.round(Number(log.potBf || 0)).toLocaleString()} BF ·
                       tx {Array.isArray(log.results) ? log.results.length : 0} ·
                       {log.force ? " forced" : " scheduled"}
+                    </div>
+                  ))}
+                </div>
+              )}
+              {txDiagnostics.length > 0 && (
+                <div className="mt-3 pt-2 border-t border-amber-900">
+                  <div className="text-red-300 text-xs uppercase tracking-widest mb-1">Recent Tx Errors</div>
+                  {txDiagnostics.slice(0, 4).map((e) => (
+                    <div key={e.id} className="text-red-200 text-xs">
+                      {new Date(e.at).toLocaleString("en-GB", { timeZone: "Europe/Rome" })} · {e.stage || "unknown"} · {e.reason || "error"}
                     </div>
                   ))}
                 </div>

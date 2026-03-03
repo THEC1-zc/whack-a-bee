@@ -18,6 +18,7 @@ import {
   type WeeklyTransferResult,
 } from "@/lib/weekly";
 import { getAdminStats, resetLeaderboard } from "@/lib/leaderboard";
+import { logTxRecord } from "@/lib/txLedger";
 
 const ADMIN_WALLET = getAdminWallet();
 const ADMIN_API_KEY = process.env.ADMIN_API_KEY;
@@ -204,6 +205,21 @@ export async function POST(req: NextRequest) {
 
     const results = await sendBfTransfers(transfers);
     const failed = results.filter((r) => !r.ok);
+
+    for (const r of results) {
+      await logTxRecord({
+        kind: "weekly_payout_out",
+        status: r.ok ? "ok" : "failed",
+        weekId: meta.weekId,
+        playerUsername: r.playerUsername,
+        playerAddress: r.to,
+        to: r.to,
+        amountBf: r.amountBf,
+        txHash: r.txHash,
+        stage: r.group,
+        reason: r.error,
+      });
+    }
 
     if (failed.length > 0) {
       await setWeeklySnapshot({

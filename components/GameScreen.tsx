@@ -85,6 +85,7 @@ export default function GameScreen({ user, difficulty, onGameEnd }: Props) {
   const beeIdRef = useRef(0);
   const scoreRef = useRef(0);
   const effectIdRef = useRef(0);
+  const feeTxHashRef = useRef<string | null>(null);
   const bonusRef = useRef(0);
   const superSpawnedRef = useRef(false);
   const fuchsiaCountRef = useRef(0);
@@ -204,6 +205,7 @@ export default function GameScreen({ user, difficulty, onGameEnd }: Props) {
     setFeeStatus("paying");
     const result = await payGameFee(cfg.fee);
     if (result.success) {
+      feeTxHashRef.current = result.txHash || null;
       setFeeStatus("paid");
     } else {
       setFeeStatus("failed");
@@ -279,6 +281,7 @@ export default function GameScreen({ user, difficulty, onGameEnd }: Props) {
           fee,
           address,
           difficulty,
+          feeTxHash: feeTxHashRef.current,
         }),
       });
     } catch (e) {

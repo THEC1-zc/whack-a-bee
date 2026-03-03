@@ -4,7 +4,8 @@ import { base } from "viem/chains";
 import { privateKeyToAccount } from "viem/accounts";
 import { BF_ADDRESS, ERC20_ABI, fromBFUnits, toBFUnits, PRIZE_WALLET } from "@/lib/contracts";
 import { bfToUsdc, usdcToBf } from "@/lib/pricing";
-import { addWeeklyPot } from "@/lib/weekly";
+import { addWeeklyPot, getWeeklyMeta } from "@/lib/weekly";
+import { logTxRecord } from "@/lib/txLedger";
 
 // Prize pool wallet private key — set in Vercel env vars, NEVER in code
 const PRIZE_PRIVATE_KEY = process.env.PRIZE_WALLET_PRIVATE_KEY;
@@ -187,8 +188,19 @@ export async function POST(req: NextRequest) {
       throw lastError;
     };
 
+    const { weekId } = getWeeklyMeta();
+
     // Send BF to winner (critical path)
     const txHash = await sendTransfer(recipientAddress, playerAmount, "winner");
+    await logTxRecord({
+      kind: "game_prize_out",
+      status: "ok",
+      weekId,
+      to: recipientAddress,
+      amountBf: playerAmount,
+      txHash,
+      stage: "winner_transfer",
+    });
 
     // Pot transfer is best-effort; winner payout should not fail because of pot wallet issues
     let potTxHash: `0x${string}` | null = null;
@@ -203,9 +215,27 @@ export async function POST(req: NextRequest) {
       });
       potTxHash = await sendTransfer(POT_WALLET, potAmount, "pot");
       await addWeeklyPot(potAmount);
+      await logTxRecord({
+        kind: "game_pot_in",
+        status: "ok",
+        weekId,
+        to: POT_WALLET,
+        amountBf: potAmount,
+        txHash: potTxHash,
+        stage: "pot_transfer",
+      });
     } catch (potError: unknown) {
       potWarning = extractErrorMessage(potError);
       console.error("Pot transfer warning:", potWarning);
+      await logTxRecord({
+        kind: "payout_error",
+        status: "failed",
+        weekId,
+        to: POT_WALLET,
+        amountBf: potAmount,
+        stage: "pot_transfer",
+        reason: potWarning,
+      });
     }
 
     return jsonWithCors({
@@ -218,6 +248,12 @@ export async function POST(req: NextRequest) {
   } catch (e: unknown) {
     console.error("Payout error:", e);
     const message = extractErrorMessage(e);
+    await logTxRecord({
+      kind: "payout_error",
+      status: "failed",
+      stage: "winner_transfer",
+      reason: message,
+    });
     return jsonWithCors({ error: message }, 500);
   }
 }
