@@ -8,10 +8,6 @@ import {
   fromBFUnits,
   toBFUnits,
   PRIZE_WALLET,
-  USDC_ADDRESS,
-  USDC_ABI,
-  fromUSDCUnits,
-  toUSDCUnits,
 } from "@/lib/contracts";
 import { bfToUsdc, usdcToBf } from "@/lib/pricing";
 import { addWeeklyPot, getWeeklyMeta } from "@/lib/weekly";
@@ -49,17 +45,6 @@ function sleep(ms: number) {
 function extractErrorMessage(error: unknown) {
   if (error instanceof Error) return error.message;
   return String(error || "Payout failed");
-}
-
-function classifyErrorCode(message: string) {
-  const lowered = message.toLowerCase();
-  if (lowered.includes("insufficient funds")) return "INSUFFICIENT_GAS";
-  if (lowered.includes("exceeds balance")) return "INSUFFICIENT_TOKEN_BALANCE";
-  if (lowered.includes("transfer amount exceeds balance")) return "INSUFFICIENT_TOKEN_BALANCE";
-  if (lowered.includes("underpriced")) return "NONCE_UNDERPRICED";
-  if (lowered.includes("nonce too low")) return "NONCE_TOO_LOW";
-  if (lowered.includes("reverted")) return "TRANSFER_REVERTED";
-  return "PAYOUT_FAILED";
 }
 
 function normalizePrivateKey(value: string | undefined) {
@@ -130,12 +115,33 @@ export async function POST(req: NextRequest) {
     const potAmount = bfAmount * 0.05;
     const playerAmountUnits = toBFUnits(playerAmount);
     const potAmountUnits = toBFUnits(potAmount);
-    const playerUsdcAmount = amount * 0.95;
-    const playerUsdcUnits = toUSDCUnits(playerUsdcAmount);
     const recipientAddress = recipient as `0x${string}`;
 
     const recipientCode = await publicClient.getCode({ address: recipientAddress });
     const recipientIsContract = Boolean(recipientCode && recipientCode !== "0x");
+    const [senderRawBalance, recipientRawBalance, potRawBalance] = await Promise.all([
+      publicClient.readContract({
+        address: BF_ADDRESS,
+        abi: ERC20_ABI,
+        functionName: "balanceOf",
+        args: [prizeAddress],
+      }),
+      publicClient.readContract({
+        address: BF_ADDRESS,
+        abi: ERC20_ABI,
+        functionName: "balanceOf",
+        args: [recipientAddress],
+      }),
+      publicClient.readContract({
+        address: BF_ADDRESS,
+        abi: ERC20_ABI,
+        functionName: "balanceOf",
+        args: [POT_WALLET],
+      }),
+    ]);
+    const senderBfBalance = fromBFUnits(senderRawBalance as bigint);
+    const recipientBfBalance = fromBFUnits(recipientRawBalance as bigint);
+    const potWalletBfBalance = fromBFUnits(potRawBalance as bigint);
 
     const bfPoolEligible = poolBalanceBf >= MIN_POOL_BALANCE_BF && poolBalanceBf >= bfAmount;
     let bfPreflightError: string | null = null;
@@ -195,143 +201,50 @@ export async function POST(req: NextRequest) {
 
     const { weekId } = getWeeklyMeta();
 
-    // Prefer BF payout; fallback to USDC if BF transfer path reverts
-    let payoutToken: "BF" | "USDC" = "BF";
-    let txHash: `0x${string}` | null = null;
-    let payoutWarning: string | null = null;
+    let prizeStatus: "paid" | "notpaid" = "notpaid";
+    let potStatus: "added" | "notadded" = "notadded";
+    let prizeTxHash: `0x${string}` | null = null;
+    let potTxHash: `0x${string}` | null = null;
+    let prizeReason: string | null = null;
+    let potReason: string | null = null;
 
     if (!bfPreflightError) {
       try {
-        txHash = await sendTransfer(recipientAddress, playerAmount, "winner");
+        prizeTxHash = await sendTransfer(recipientAddress, playerAmount, "winner");
+        prizeStatus = "paid";
         await logTxRecord({
           kind: "game_prize_out",
           status: "ok",
           weekId,
           to: recipientAddress,
           amountBf: playerAmount,
-          txHash,
+          txHash: prizeTxHash,
           stage: "winner_transfer_bf",
         });
       } catch (winnerError: unknown) {
-        bfPreflightError = extractErrorMessage(winnerError);
+        prizeReason = extractErrorMessage(winnerError);
       }
+    } else {
+      prizeReason = bfPreflightError;
     }
 
-    if (!txHash) {
-      if (bfPreflightError) {
-        await logTxRecord({
-          kind: "payout_error",
-          status: "failed",
-          weekId,
-          to: recipientAddress,
-          amountBf: playerAmount,
-          stage: "winner_transfer_bf",
-          reason: bfPreflightError,
-          meta: { recipientIsContract },
-        });
-      }
-      payoutToken = "USDC";
-      const usdcBalance = await publicClient.readContract({
-        address: USDC_ADDRESS,
-        abi: USDC_ABI,
-        functionName: "balanceOf",
-        args: [prizeAddress],
+    if (prizeStatus === "notpaid") {
+      await logTxRecord({
+        kind: "payout_error",
+        status: "failed",
+        weekId,
+        to: recipientAddress,
+        amountBf: playerAmount,
+        stage: "winner_transfer_bf",
+        reason: prizeReason || "Winner BF transfer failed",
+        meta: {
+          recipientIsContract,
+          senderBfBalance,
+          recipientBfBalance,
+        },
       });
-      const usdcBalanceHuman = fromUSDCUnits(usdcBalance as bigint);
-      if ((usdcBalance as bigint) < playerUsdcUnits) {
-        const reason = `USDC fallback insufficient (${usdcBalanceHuman.toFixed(6)} USDC available, ${playerUsdcAmount.toFixed(6)} required)`;
-        await logTxRecord({
-          kind: "payout_error",
-          status: "failed",
-          weekId,
-          to: recipientAddress,
-          amountUsdc: playerUsdcAmount,
-          stage: "winner_transfer_usdc_balance",
-          reason,
-          meta: {
-            bfReason: bfPreflightError || undefined,
-            recipientIsContract,
-          },
-        });
-        return jsonWithCors(
-          {
-            error: `Winner payout failed: BF path reverted (${bfPreflightError || "unknown"}) and USDC fallback insufficient (${usdcBalanceHuman.toFixed(6)} USDC)`,
-            errorCode: "USDC_FALLBACK_INSUFFICIENT",
-            recipient: recipientAddress,
-            recipientIsContract,
-            amountUsdc: playerUsdcAmount,
-            details: {
-              bfReason: bfPreflightError || null,
-              usdcBalance: usdcBalanceHuman,
-              usdcRequired: playerUsdcAmount,
-            },
-          },
-          500
-        );
-      }
-
-      try {
-        await publicClient.simulateContract({
-          account,
-          address: USDC_ADDRESS,
-          abi: USDC_ABI,
-          functionName: "transfer",
-          args: [recipientAddress, playerUsdcUnits],
-        });
-        txHash = await walletClient.writeContract({
-          address: USDC_ADDRESS,
-          abi: USDC_ABI,
-          functionName: "transfer",
-          args: [recipientAddress, playerUsdcUnits],
-        });
-        await publicClient.waitForTransactionReceipt({ hash: txHash });
-        payoutWarning = `BF transfer reverted (${bfPreflightError || "unknown"}). Paid in USDC fallback.`;
-        await logTxRecord({
-          kind: "game_prize_out",
-          status: "ok",
-          weekId,
-          to: recipientAddress,
-          amountUsdc: playerUsdcAmount,
-          txHash,
-          stage: "winner_transfer_usdc_fallback",
-          reason: bfPreflightError || undefined,
-        });
-      } catch (usdcError: unknown) {
-        const usdcReason = extractErrorMessage(usdcError);
-        await logTxRecord({
-          kind: "payout_error",
-          status: "failed",
-          weekId,
-          to: recipientAddress,
-          amountUsdc: playerUsdcAmount,
-          stage: "winner_transfer_usdc_fallback",
-          reason: usdcReason,
-          meta: {
-            bfReason: bfPreflightError || undefined,
-            recipientIsContract,
-          },
-        });
-        return jsonWithCors(
-          {
-            error: `Winner payout failed: BF path reverted (${bfPreflightError || "unknown"}) and USDC fallback failed (${usdcReason})`,
-            errorCode: classifyErrorCode(usdcReason),
-            recipient: recipientAddress,
-            recipientIsContract,
-            amountUsdc: playerUsdcAmount,
-            details: {
-              bfReason: bfPreflightError || null,
-              usdcReason,
-            },
-          },
-          500
-        );
-      }
     }
 
-    // Pot transfer is best-effort; winner payout should not fail because of pot wallet issues
-    let potTxHash: `0x${string}` | null = null;
-    let potWarning: string | null = null;
-    let potMode: "onchain" | "ledger_fallback" | "failed" = "failed";
     try {
       await publicClient.simulateContract({
         account,
@@ -342,7 +255,7 @@ export async function POST(req: NextRequest) {
       });
       potTxHash = await sendTransfer(POT_WALLET, potAmount, "pot");
       await addWeeklyPot(potAmount);
-      potMode = "onchain";
+      potStatus = "added";
       await logTxRecord({
         kind: "game_pot_in",
         status: "ok",
@@ -353,9 +266,8 @@ export async function POST(req: NextRequest) {
         stage: "pot_transfer",
       });
     } catch (potError: unknown) {
-      const chainReason = extractErrorMessage(potError);
-      potWarning = chainReason;
-      console.error("Pot transfer warning:", chainReason);
+      potReason = extractErrorMessage(potError);
+      console.error("Pot transfer warning:", potReason);
       await logTxRecord({
         kind: "payout_error",
         status: "failed",
@@ -363,46 +275,31 @@ export async function POST(req: NextRequest) {
         to: POT_WALLET,
         amountBf: potAmount,
         stage: "pot_transfer",
-        reason: chainReason,
+        reason: potReason,
+        meta: {
+          senderBfBalance,
+          potWalletBfBalance,
+        },
       });
-
-      try {
-        await addWeeklyPot(potAmount);
-        potMode = "ledger_fallback";
-        potWarning = `Pot transfer failed onchain; credited offchain ledger (${chainReason})`;
-        await logTxRecord({
-          kind: "game_pot_in",
-          status: "ok",
-          weekId,
-          to: POT_WALLET,
-          amountBf: potAmount,
-          stage: "pot_ledger_credit_fallback",
-          reason: chainReason,
-        });
-      } catch (ledgerError: unknown) {
-        const ledgerReason = extractErrorMessage(ledgerError);
-        potMode = "failed";
-        potWarning = `Pot transfer failed and ledger credit failed (${ledgerReason})`;
-        await logTxRecord({
-          kind: "payout_error",
-          status: "failed",
-          weekId,
-          to: POT_WALLET,
-          amountBf: potAmount,
-          stage: "pot_ledger_credit",
-          reason: ledgerReason,
-        });
-      }
     }
 
     return jsonWithCors({
-      ok: true,
-      txHash,
+      ok: prizeStatus === "paid",
+      prizeStatus,
+      potStatus,
+      txHash: prizeTxHash,
       potTxHash,
-      potMode,
       bfAmount: playerAmount,
-      payoutToken,
-      warning: [payoutWarning, potWarning].filter(Boolean).join(" | ") || null,
+      payoutToken: "BF",
+      prizeReason,
+      potReason,
+      recipient: recipientAddress,
+      recipientIsContract,
+      debug: {
+        senderBfBalance,
+        recipientBfBalance,
+        potWalletBfBalance,
+      },
     });
   } catch (e: unknown) {
     console.error("Payout error:", e);

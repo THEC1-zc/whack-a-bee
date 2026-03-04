@@ -180,8 +180,10 @@ export async function claimPrize(
   error?: string;
   bfAmount?: number;
   payoutToken?: "BF" | "USDC";
-  warning?: string | null;
-  potMode?: "onchain" | "ledger_fallback" | "failed";
+  prizeStatus?: "paid" | "notpaid";
+  potStatus?: "added" | "notadded";
+  prizeReason?: string | null;
+  potReason?: string | null;
   errorCode?: string;
   details?: unknown;
 }> {
@@ -210,16 +212,25 @@ export async function claimPrize(
             error: data?.error || `Payout failed (${response.status})`,
             errorCode: typeof data?.errorCode === "string" ? data.errorCode : undefined,
             details: data?.details,
+            prizeStatus: data?.prizeStatus,
+            potStatus: data?.potStatus,
+            prizeReason: data?.prizeReason || null,
+            potReason: data?.potReason || null,
           };
         }
 
+        const prizeStatus: "paid" | "notpaid" =
+          data?.prizeStatus === "paid" ? "paid" : "notpaid";
         return {
-          success: true,
+          success: prizeStatus === "paid",
           txHash: data.txHash,
           bfAmount: data.bfAmount,
           payoutToken: data.payoutToken,
-          warning: data.warning || null,
-          potMode: data.potMode,
+          prizeStatus,
+          potStatus: data?.potStatus === "added" ? "added" : "notadded",
+          prizeReason: data?.prizeReason || null,
+          potReason: data?.potReason || null,
+          error: prizeStatus === "paid" ? undefined : (data?.prizeReason || "Prize not paid"),
         };
       } catch (e: unknown) {
         lastError = getErrorMessage(e, "Payout request failed");

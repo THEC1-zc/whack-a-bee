@@ -314,16 +314,15 @@ export default function GameScreen({ user, difficulty, onGameEnd }: Props) {
           setPaymentStatus("paid");
           setPaymentError(null);
           setPaymentErrorCode(null);
-          if (result.payoutToken === "USDC") {
-            setPaymentNote("Paid via USDC fallback");
-          } else {
-            setPaymentNote("Paid");
-          }
+          const potLabel = result.potStatus === "added" ? "added" : "not added";
+          setPaymentNote(`Prize: paid · Pot: ${potLabel}`);
         } else {
           setPaymentStatus("failed");
-          setPaymentError(result.error || "Payment error");
+          const fallbackError = `Prize: ${result.prizeStatus === "paid" ? "paid" : "not paid"} · Pot: ${result.potStatus === "added" ? "added" : "not added"}`;
+          setPaymentError(result.error || fallbackError);
           setPaymentErrorCode(result.errorCode || null);
-          setPaymentNote(null);
+          const potLabel = result.potStatus === "added" ? "added" : "not added";
+          setPaymentNote(`Prize: not paid · Pot: ${potLabel}`);
         }
       } else {
         setPaymentStatus("failed");
@@ -470,6 +469,9 @@ export default function GameScreen({ user, difficulty, onGameEnd }: Props) {
             <div className="mt-2 text-[11px] text-red-300 whitespace-pre-wrap break-words">
               {paymentErrorCode ? `[${paymentErrorCode}] ` : ""}{shortPaymentError}
             </div>
+          )}
+          {paymentStatus === "failed" && paymentNote && (
+            <div className="mt-1 text-[11px] text-amber-300">{paymentNote}</div>
           )}
         </div>
 
