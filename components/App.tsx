@@ -1,5 +1,6 @@
 "use client";
 import { useState } from "react";
+import Link from "next/link";
 import { useFarcaster } from "@/hooks/useFarcaster";
 import { sdk } from "@farcaster/miniapp-sdk";
 import GameScreen from "./GameScreen";
@@ -179,11 +180,13 @@ export default function App() {
               Connect wallet
             </button>
           )}
-          {user.address && user.address.toLowerCase() === ADMIN_WALLET && (
-            <a href="/admin" className="text-[10px] text-amber-400 underline mt-1 block">Admin</a>
-          )}
         </div>
-        <div className="ml-auto flex gap-3">
+        <div className="ml-auto flex items-start gap-3">
+          {user.address && user.address.toLowerCase() === ADMIN_WALLET && (
+            <Link href="/admin" className="text-3xl leading-none" title="Admin">
+              ⚙️
+            </Link>
+          )}
           <button onClick={() => setScreen("rules")} className="text-2xl" title="Rules">📖</button>
           <button onClick={() => setScreen("leaderboard")} className="text-2xl" title="Leaderboard">🏆</button>
         </div>
