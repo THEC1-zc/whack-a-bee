@@ -44,6 +44,34 @@ export default function AdminPayoutsPage() {
   const [weekFilter, setWeekFilter] = useState<string>("");
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [copyInfo, setCopyInfo] = useState<string | null>(null);
+
+  function rowToText(r: PayoutRow) {
+    return [
+      `week=${r.weekId}`,
+      `date_cet=${new Date(r.at).toLocaleString("en-GB", { timeZone: "Europe/Rome" })}`,
+      `status=${r.status}`,
+      `player=${r.playerUsername ? `@${r.playerUsername}` : (r.player || "-")}`,
+      `wallet=${r.wallet || "-"}`,
+      `group=${r.group || "-"}`,
+      `amount_bf=${r.amountBf}`,
+      `pot_bf=${r.potBf}`,
+      `tx=${r.txHash || "-"}`,
+      `mode=${r.mode}${r.force ? "_force" : ""}`,
+      `error=${r.error || "-"}`,
+    ].join(" | ");
+  }
+
+  async function copyText(text: string, okMessage: string) {
+    try {
+      await navigator.clipboard.writeText(text);
+      setCopyInfo(okMessage);
+      setTimeout(() => setCopyInfo(null), 2000);
+    } catch {
+      setCopyInfo("Copy failed");
+      setTimeout(() => setCopyInfo(null), 2000);
+    }
+  }
 
   useEffect(() => {
     if (!authorized) return;
@@ -120,7 +148,55 @@ export default function AdminPayoutsPage() {
           {uniqueWeeks.length > 0 && <span className="ml-3">Weeks: {uniqueWeeks.join(", ")}</span>}
         </div>
 
-        <div className="rounded-xl border border-amber-900 overflow-auto" style={{ background: "#140a00" }}>
+        <div className="flex items-center gap-2 flex-wrap">
+          <button
+            type="button"
+            onClick={() => copyText(rows.map(rowToText).join("\n"), `Copied ${rows.length} rows`)}
+            className="px-3 py-1 rounded-lg text-xs font-black text-black"
+            style={{ background: "linear-gradient(135deg, #fbbf24, #f59e0b)" }}
+          >
+            Copy All
+          </button>
+          {copyInfo && <span className="text-green-400 text-xs">{copyInfo}</span>}
+        </div>
+
+        <div className="md:hidden space-y-2">
+          {loading ? (
+            <div className="text-amber-500 text-sm">Loading...</div>
+          ) : rows.length === 0 ? (
+            <div className="text-amber-500 text-sm">No payout rows</div>
+          ) : rows.map((r, idx) => (
+            <div key={`${r.weekId}-${r.txHash || idx}`} className="rounded-xl border border-amber-900 p-3 text-xs" style={{ background: "#140a00" }}>
+              <div className="text-amber-400">{r.weekId} · {new Date(r.at).toLocaleString("en-GB", { timeZone: "Europe/Rome" })}</div>
+              <div className={`mt-1 ${r.ok ? "text-green-400" : "text-red-400"}`}>{r.status}</div>
+              <div className="text-amber-200 mt-1">Player: {r.playerUsername ? `@${r.playerUsername}` : (r.player || "-")}</div>
+              <div className="text-amber-200">Wallet: {r.wallet || "-"}</div>
+              <div className="text-amber-200">Group: {r.group || "-"}</div>
+              <div className="text-amber-200">Amount BF: {Math.round(r.amountBf).toLocaleString()}</div>
+              <div className="text-amber-200">Pot BF: {Math.round(r.potBf).toLocaleString()}</div>
+              <div className="text-amber-200">Mode: {r.mode}{r.force ? " (force)" : ""}</div>
+              <div className="mt-1 flex items-center gap-2 flex-wrap">
+                {r.txHash ? (
+                  <a className="text-amber-400 underline" href={r.basescanUrl} target="_blank" rel="noreferrer">
+                    {shortTx(r.txHash)}
+                  </a>
+                ) : (
+                  <span className="text-red-400">{r.error || "failed"}</span>
+                )}
+                <button
+                  type="button"
+                  onClick={() => copyText(rowToText(r), "Row copied")}
+                  className="px-2 py-1 rounded text-[11px] font-bold text-black"
+                  style={{ background: "#fbbf24" }}
+                >
+                  Copy Row
+                </button>
+              </div>
+            </div>
+          ))}
+        </div>
+
+        <div className="hidden md:block rounded-xl border border-amber-900 overflow-auto" style={{ background: "#140a00" }}>
           <table className="min-w-full text-xs">
             <thead>
               <tr className="text-amber-400 border-b border-amber-900">
@@ -153,13 +229,23 @@ export default function AdminPayoutsPage() {
                   <td className="p-2">{r.group}</td>
                   <td className="p-2">{Math.round(r.amountBf).toLocaleString()}</td>
                   <td className="p-2" title={r.txHash || r.error || ""}>
-                    {r.txHash ? (
-                      <a className="text-amber-400 underline" href={r.basescanUrl} target="_blank" rel="noreferrer">
-                        {shortTx(r.txHash)}
-                      </a>
-                    ) : (
-                      <span className="text-red-400">{r.error || "failed"}</span>
-                    )}
+                    <div className="flex items-center gap-2">
+                      {r.txHash ? (
+                        <a className="text-amber-400 underline" href={r.basescanUrl} target="_blank" rel="noreferrer">
+                          {shortTx(r.txHash)}
+                        </a>
+                      ) : (
+                        <span className="text-red-400">{r.error || "failed"}</span>
+                      )}
+                      <button
+                        type="button"
+                        onClick={() => copyText(rowToText(r), "Row copied")}
+                        className="px-2 py-0.5 rounded text-[10px] font-bold text-black"
+                        style={{ background: "#fbbf24" }}
+                      >
+                        Copy
+                      </button>
+                    </div>
                   </td>
                   <td className="p-2">{r.mode}{r.force ? " (force)" : ""}</td>
                   <td className="p-2">{Math.round(r.potBf).toLocaleString()}</td>

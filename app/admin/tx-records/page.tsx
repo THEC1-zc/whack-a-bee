@@ -41,6 +41,33 @@ export default function AdminTxRecordsPage() {
   const [records, setRecords] = useState<TxRecord[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [copyInfo, setCopyInfo] = useState<string | null>(null);
+
+  function toRowText(r: TxRecord) {
+    return [
+      `date_cet=${new Date(r.at).toLocaleString("en-GB", { timeZone: "Europe/Rome" })}`,
+      `kind=${r.kind}`,
+      `status=${r.status}`,
+      `player=${r.playerUsername ? `@${r.playerUsername}` : (r.playerAddress || "-")}`,
+      `to=${r.to || "-"}`,
+      `usdc=${typeof r.amountUsdc === "number" ? r.amountUsdc.toFixed(6) : "-"}`,
+      `bf=${typeof r.amountBf === "number" ? String(r.amountBf) : "-"}`,
+      `tx=${r.txHash || "-"}`,
+      `stage=${r.stage || "-"}`,
+      `reason=${r.reason || "-"}`,
+    ].join(" | ");
+  }
+
+  async function copyText(text: string, okMessage: string) {
+    try {
+      await navigator.clipboard.writeText(text);
+      setCopyInfo(okMessage);
+      setTimeout(() => setCopyInfo(null), 2000);
+    } catch {
+      setCopyInfo("Copy failed");
+      setTimeout(() => setCopyInfo(null), 2000);
+    }
+  }
 
   useEffect(() => {
     if (!authorized) return;
@@ -82,6 +109,18 @@ export default function AdminTxRecordsPage() {
           <h1 className="text-2xl font-black text-white">Transaction Records</h1>
         </div>
 
+        <div className="flex items-center gap-2 flex-wrap">
+          <button
+            type="button"
+            onClick={() => copyText(records.map(toRowText).join("\n"), `Copied ${records.length} rows`)}
+            className="px-3 py-1 rounded-lg text-xs font-black text-black"
+            style={{ background: "linear-gradient(135deg, #fbbf24, #f59e0b)" }}
+          >
+            Copy All
+          </button>
+          {copyInfo && <span className="text-green-400 text-xs">{copyInfo}</span>}
+        </div>
+
         {error && <div className="text-red-400 text-sm">{error}</div>}
 
         <div className="md:hidden space-y-2">
@@ -99,10 +138,18 @@ export default function AdminTxRecordsPage() {
               <div className="text-amber-200">BF: {typeof r.amountBf === "number" ? Math.round(r.amountBf).toLocaleString() : "-"}</div>
               <div className="text-amber-200">Stage: {r.stage || "-"}</div>
               <div className="text-red-300 whitespace-pre-wrap break-words">Reason: {r.reason || "-"}</div>
-              <div className="mt-1">
+              <div className="mt-1 flex items-center gap-2 flex-wrap">
                 {r.txHash ? (
                   <a href={r.basescanUrl} target="_blank" rel="noreferrer" className="text-amber-400 underline">{shortTx(r.txHash)}</a>
                 ) : <span className="text-amber-700">Tx: -</span>}
+                <button
+                  type="button"
+                  onClick={() => copyText(toRowText(r), "Row copied")}
+                  className="px-2 py-1 rounded text-[11px] font-bold text-black"
+                  style={{ background: "#fbbf24" }}
+                >
+                  Copy Row
+                </button>
               </div>
             </div>
           ))}
@@ -139,9 +186,19 @@ export default function AdminTxRecordsPage() {
                   <td className="p-2">{typeof r.amountUsdc === "number" ? r.amountUsdc.toFixed(4) : "-"}</td>
                   <td className="p-2">{typeof r.amountBf === "number" ? Math.round(r.amountBf).toLocaleString() : "-"}</td>
                   <td className="p-2">
-                    {r.txHash ? (
-                      <a href={r.basescanUrl} target="_blank" rel="noreferrer" className="text-amber-400 underline">{shortTx(r.txHash)}</a>
-                    ) : "-"}
+                    <div className="flex items-center gap-2">
+                      {r.txHash ? (
+                        <a href={r.basescanUrl} target="_blank" rel="noreferrer" className="text-amber-400 underline">{shortTx(r.txHash)}</a>
+                      ) : "-"}
+                      <button
+                        type="button"
+                        onClick={() => copyText(toRowText(r), "Row copied")}
+                        className="px-2 py-0.5 rounded text-[10px] font-bold text-black"
+                        style={{ background: "#fbbf24" }}
+                      >
+                        Copy
+                      </button>
+                    </div>
                   </td>
                   <td className="p-2">{r.stage || "-"}</td>
                   <td className="p-2 max-w-[360px] whitespace-pre-wrap break-words">{r.reason || "-"}</td>
