@@ -51,6 +51,17 @@ function extractErrorMessage(error: unknown) {
   return String(error || "Payout failed");
 }
 
+function classifyErrorCode(message: string) {
+  const lowered = message.toLowerCase();
+  if (lowered.includes("insufficient funds")) return "INSUFFICIENT_GAS";
+  if (lowered.includes("exceeds balance")) return "INSUFFICIENT_TOKEN_BALANCE";
+  if (lowered.includes("transfer amount exceeds balance")) return "INSUFFICIENT_TOKEN_BALANCE";
+  if (lowered.includes("underpriced")) return "NONCE_UNDERPRICED";
+  if (lowered.includes("nonce too low")) return "NONCE_TOO_LOW";
+  if (lowered.includes("reverted")) return "TRANSFER_REVERTED";
+  return "PAYOUT_FAILED";
+}
+
 function normalizePrivateKey(value: string | undefined) {
   const raw = (value || "").trim().replace(/^['"]|['"]$/g, "");
   const compact = raw.replace(/\s+/g, "");
@@ -207,6 +218,18 @@ export async function POST(req: NextRequest) {
     }
 
     if (!txHash) {
+      if (bfPreflightError) {
+        await logTxRecord({
+          kind: "payout_error",
+          status: "failed",
+          weekId,
+          to: recipientAddress,
+          amountBf: playerAmount,
+          stage: "winner_transfer_bf",
+          reason: bfPreflightError,
+          meta: { recipientIsContract },
+        });
+      }
       payoutToken = "USDC";
       const usdcBalance = await publicClient.readContract({
         address: USDC_ADDRESS,
@@ -216,18 +239,45 @@ export async function POST(req: NextRequest) {
       });
       const usdcBalanceHuman = fromUSDCUnits(usdcBalance as bigint);
       if ((usdcBalance as bigint) < playerUsdcUnits) {
+        const reason = `USDC fallback insufficient (${usdcBalanceHuman.toFixed(6)} USDC available, ${playerUsdcAmount.toFixed(6)} required)`;
+        await logTxRecord({
+          kind: "payout_error",
+          status: "failed",
+          weekId,
+          to: recipientAddress,
+          amountUsdc: playerUsdcAmount,
+          stage: "winner_transfer_usdc_balance",
+          reason,
+          meta: {
+            bfReason: bfPreflightError || undefined,
+            recipientIsContract,
+          },
+        });
         return jsonWithCors(
           {
             error: `Winner payout failed: BF path reverted (${bfPreflightError || "unknown"}) and USDC fallback insufficient (${usdcBalanceHuman.toFixed(6)} USDC)`,
+            errorCode: "USDC_FALLBACK_INSUFFICIENT",
             recipient: recipientAddress,
             recipientIsContract,
             amountUsdc: playerUsdcAmount,
+            details: {
+              bfReason: bfPreflightError || null,
+              usdcBalance: usdcBalanceHuman,
+              usdcRequired: playerUsdcAmount,
+            },
           },
           500
         );
       }
 
       try {
+        await publicClient.simulateContract({
+          account,
+          address: USDC_ADDRESS,
+          abi: USDC_ABI,
+          functionName: "transfer",
+          args: [recipientAddress, playerUsdcUnits],
+        });
         txHash = await walletClient.writeContract({
           address: USDC_ADDRESS,
           abi: USDC_ABI,
@@ -256,13 +306,22 @@ export async function POST(req: NextRequest) {
           amountUsdc: playerUsdcAmount,
           stage: "winner_transfer_usdc_fallback",
           reason: usdcReason,
+          meta: {
+            bfReason: bfPreflightError || undefined,
+            recipientIsContract,
+          },
         });
         return jsonWithCors(
           {
             error: `Winner payout failed: BF path reverted (${bfPreflightError || "unknown"}) and USDC fallback failed (${usdcReason})`,
+            errorCode: classifyErrorCode(usdcReason),
             recipient: recipientAddress,
             recipientIsContract,
             amountUsdc: playerUsdcAmount,
+            details: {
+              bfReason: bfPreflightError || null,
+              usdcReason,
+            },
           },
           500
         );

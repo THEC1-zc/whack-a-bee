@@ -12,6 +12,11 @@ import {
 
 const DEFAULT_APP_URL = "https://whack-a-bee.vercel.app";
 
+function getErrorMessage(error: unknown, fallback: string) {
+  if (error instanceof Error && error.message) return error.message;
+  return fallback;
+}
+
 // Public client for read-only calls (balance check)
 export function getPublicClient() {
   return createPublicClient({
@@ -50,8 +55,9 @@ async function ensureBaseChain(): Promise<{ ok: boolean; error?: string }> {
         params: [{ chainId: baseChainHex() }],
       });
       return { ok: true };
-    } catch (e: any) {
-      if (e?.code === 4902) {
+    } catch (e: unknown) {
+      const code = typeof e === "object" && e && "code" in e ? (e as { code?: unknown }).code : undefined;
+      if (code === 4902) {
         const blockExplorerUrl = base.blockExplorers?.default?.url;
         const blockExplorerUrls = blockExplorerUrl ? [blockExplorerUrl] : [];
 
@@ -152,9 +158,9 @@ export async function payGameFee(
     await publicClient.waitForTransactionReceipt({ hash: txHash });
 
     return { success: true, txHash };
-  } catch (e: any) {
+  } catch (e: unknown) {
     console.error("payGameFee error:", e);
-    const msg = e?.message || "Transaction failed";
+    const msg = getErrorMessage(e, "Transaction failed");
     // User rejected
     if (msg.includes("rejected") || msg.includes("denied") || msg.includes("cancel")) {
       return { success: false, error: "Transaction cancelled" };
@@ -168,7 +174,14 @@ export async function payGameFee(
 export async function claimPrize(
   recipientAddress: `0x${string}`,
   prizeAmount: number
-): Promise<{ success: boolean; txHash?: string; error?: string; bfAmount?: number }> {
+): Promise<{
+  success: boolean;
+  txHash?: string;
+  error?: string;
+  bfAmount?: number;
+  errorCode?: string;
+  details?: unknown;
+}> {
   const configuredAppUrl =
     process.env.NEXT_PUBLIC_APP_URL || DEFAULT_APP_URL;
   const absolutePayoutUrl = `${configuredAppUrl.replace(/\/$/, "")}/api/payout`;
@@ -192,17 +205,19 @@ export async function claimPrize(
           return {
             success: false,
             error: data?.error || `Payout failed (${response.status})`,
+            errorCode: typeof data?.errorCode === "string" ? data.errorCode : undefined,
+            details: data?.details,
           };
         }
 
         return { success: true, txHash: data.txHash, bfAmount: data.bfAmount };
-      } catch (e: any) {
-        lastError = e?.message || "Payout request failed";
+      } catch (e: unknown) {
+        lastError = getErrorMessage(e, "Payout request failed");
       }
     }
 
     return { success: false, error: lastError };
-  } catch (e: any) {
-    return { success: false, error: e?.message || "Payout request failed" };
+  } catch (e: unknown) {
+    return { success: false, error: getErrorMessage(e, "Payout request failed") };
   }
 }

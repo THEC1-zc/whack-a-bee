@@ -84,7 +84,31 @@ export default function AdminTxRecordsPage() {
 
         {error && <div className="text-red-400 text-sm">{error}</div>}
 
-        <div className="rounded-xl border border-amber-900 overflow-auto" style={{ background: "#140a00" }}>
+        <div className="md:hidden space-y-2">
+          {loading ? (
+            <div className="text-amber-500 text-sm">Loading...</div>
+          ) : records.length === 0 ? (
+            <div className="text-amber-500 text-sm">No records</div>
+          ) : records.map((r) => (
+            <div key={r.id} className="rounded-xl border border-amber-900 p-3 text-xs" style={{ background: "#140a00" }}>
+              <div className="text-amber-400">{new Date(r.at).toLocaleString("en-GB", { timeZone: "Europe/Rome" })}</div>
+              <div className="text-amber-200 mt-1">{r.kind} · <span className={r.status === "ok" ? "text-green-400" : "text-red-400"}>{r.status}</span></div>
+              <div className="text-amber-200 mt-1">Player: {r.playerUsername ? `@${r.playerUsername}` : short(r.playerAddress)}</div>
+              <div className="text-amber-200">To: {short(r.to)}</div>
+              <div className="text-amber-200">USDC: {typeof r.amountUsdc === "number" ? r.amountUsdc.toFixed(4) : "-"}</div>
+              <div className="text-amber-200">BF: {typeof r.amountBf === "number" ? Math.round(r.amountBf).toLocaleString() : "-"}</div>
+              <div className="text-amber-200">Stage: {r.stage || "-"}</div>
+              <div className="text-red-300 whitespace-pre-wrap break-words">Reason: {r.reason || "-"}</div>
+              <div className="mt-1">
+                {r.txHash ? (
+                  <a href={r.basescanUrl} target="_blank" rel="noreferrer" className="text-amber-400 underline">{shortTx(r.txHash)}</a>
+                ) : <span className="text-amber-700">Tx: -</span>}
+              </div>
+            </div>
+          ))}
+        </div>
+
+        <div className="hidden md:block rounded-xl border border-amber-900 overflow-auto" style={{ background: "#140a00" }}>
           <table className="min-w-full text-xs">
             <thead>
               <tr className="text-amber-400 border-b border-amber-900">
@@ -120,7 +144,7 @@ export default function AdminTxRecordsPage() {
                     ) : "-"}
                   </td>
                   <td className="p-2">{r.stage || "-"}</td>
-                  <td className="p-2 max-w-[280px] truncate" title={r.reason || ""}>{r.reason || "-"}</td>
+                  <td className="p-2 max-w-[360px] whitespace-pre-wrap break-words">{r.reason || "-"}</td>
                 </tr>
               ))}
             </tbody>

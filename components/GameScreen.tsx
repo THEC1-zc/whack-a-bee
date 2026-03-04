@@ -84,6 +84,7 @@ export default function GameScreen({ user, difficulty, onGameEnd }: Props) {
   const [hitEffects, setHitEffects] = useState<{ id: number; slot: number; text: string }[]>([]);
   const [paymentStatus, setPaymentStatus] = useState<"pending" | "paid" | "failed">("pending");
   const [paymentError, setPaymentError] = useState<string | null>(null);
+  const [paymentErrorCode, setPaymentErrorCode] = useState<string | null>(null);
   const [feeStatus, setFeeStatus] = useState<"waiting" | "paying" | "paid" | "failed">("waiting");
   const [feeError, setFeeError] = useState<string | null>(null);
   const [gameStarted, setGameStarted] = useState(false);
@@ -311,17 +312,21 @@ export default function GameScreen({ user, difficulty, onGameEnd }: Props) {
         if (result.success) {
           setPaymentStatus("paid");
           setPaymentError(null);
+          setPaymentErrorCode(null);
         } else {
           setPaymentStatus("failed");
           setPaymentError(result.error || "Payment error");
+          setPaymentErrorCode(result.errorCode || null);
         }
       } else {
         setPaymentStatus("failed");
         setPaymentError("No wallet connected");
+        setPaymentErrorCode("NO_WALLET");
       }
     } else {
       setPaymentStatus("paid");
       setPaymentError(null);
+      setPaymentErrorCode(null);
     }
 
   }
@@ -391,7 +396,7 @@ export default function GameScreen({ user, difficulty, onGameEnd }: Props) {
     const shortPaymentError = paymentError
       ? (paymentError.includes("replacement transaction underpriced")
         ? "Network busy. Please try again later."
-        : paymentError.split("\n")[0].slice(0, 140))
+        : paymentError.split("\n")[0].slice(0, 220))
       : null;
     const ticketEstimate = Math.max(
       1,
@@ -453,7 +458,9 @@ export default function GameScreen({ user, difficulty, onGameEnd }: Props) {
             </div>
           )}
           {paymentStatus === "failed" && paymentError && (
-            <div className="mt-2 text-[11px] text-red-300">{shortPaymentError}</div>
+            <div className="mt-2 text-[11px] text-red-300 whitespace-pre-wrap break-words">
+              {paymentErrorCode ? `[${paymentErrorCode}] ` : ""}{shortPaymentError}
+            </div>
           )}
         </div>
 
