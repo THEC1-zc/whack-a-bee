@@ -49,6 +49,35 @@ type TxDiagnostic = {
   playerUsername?: string;
 };
 
+type BfDiagnostics = {
+  token: string;
+  chainId: number;
+  prizeAddress: string;
+  recipient: string;
+  potWallet: string;
+  amountUsdc: number;
+  amountBf: number;
+  playerAmountBf: number;
+  potAmountBf: number;
+  balances: {
+    prize: number;
+    recipient: number;
+    potWallet: number;
+  };
+  recipients: {
+    recipientIsContract: boolean;
+    potIsContract: boolean;
+  };
+  simulate: {
+    winnerTransfer: { ok: boolean; reason?: string };
+    potTransfer: { ok: boolean; reason?: string };
+  };
+  probes: {
+    noArgFlags: Array<{ name: string; value?: string | boolean | number; error?: string }>;
+    addressFlags: Array<{ name: string; value?: string | boolean | number; error?: string }>;
+  };
+};
+
 export default function AdminPage() {
   const { user, connectWallet } = useFarcaster();
   const [stats, setStats] = useState<AdminStats | null>(null);
@@ -64,6 +93,8 @@ export default function AdminPage() {
   const [resetting, setResetting] = useState(false);
   const [savingWeeklyConfig, setSavingWeeklyConfig] = useState(false);
   const [txDiagnostics, setTxDiagnostics] = useState<TxDiagnostic[]>([]);
+  const [bfDiagnostics, setBfDiagnostics] = useState<BfDiagnostics | null>(null);
+  const [runningBfDiagnostics, setRunningBfDiagnostics] = useState(false);
 
   const address = user?.address?.toLowerCase() || "";
   const authorized = address === ADMIN_WALLET;
@@ -286,6 +317,64 @@ export default function AdminPage() {
     }
   }
 
+  function toDiagnosticsText(d: BfDiagnostics) {
+    const lines: string[] = [];
+    lines.push(`token=${d.token}`);
+    lines.push(`chainId=${d.chainId}`);
+    lines.push(`prizeAddress=${d.prizeAddress}`);
+    lines.push(`recipient=${d.recipient} (contract=${String(d.recipients.recipientIsContract)})`);
+    lines.push(`potWallet=${d.potWallet} (contract=${String(d.recipients.potIsContract)})`);
+    lines.push(`amountUsdc=${d.amountUsdc}`);
+    lines.push(`amountBf=${d.amountBf}`);
+    lines.push(`playerAmountBf=${d.playerAmountBf}`);
+    lines.push(`potAmountBf=${d.potAmountBf}`);
+    lines.push(`balance.prize=${d.balances.prize}`);
+    lines.push(`balance.recipient=${d.balances.recipient}`);
+    lines.push(`balance.potWallet=${d.balances.potWallet}`);
+    lines.push(`simulate.winner.ok=${String(d.simulate.winnerTransfer.ok)}`);
+    lines.push(`simulate.winner.reason=${d.simulate.winnerTransfer.reason || "-"}`);
+    lines.push(`simulate.pot.ok=${String(d.simulate.potTransfer.ok)}`);
+    lines.push(`simulate.pot.reason=${d.simulate.potTransfer.reason || "-"}`);
+    for (const p of d.probes.noArgFlags) lines.push(`probe.${p.name}=${p.value ?? p.error ?? "-"}`);
+    for (const p of d.probes.addressFlags) lines.push(`probe.${p.name}=${p.value ?? p.error ?? "-"}`);
+    return lines.join("\n");
+  }
+
+  async function handleRunBfDiagnostics() {
+    if (!authorized || runningBfDiagnostics) return;
+    setRunningBfDiagnostics(true);
+    setInfo("Running BF diagnostics...");
+    setError(null);
+    try {
+      const res = await fetch(`/api/admin/bf-diagnostics?recipient=${encodeURIComponent(address)}&amountUsdc=0.03`, {
+        headers: { "x-admin-wallet": address },
+      });
+      const data = await res.json().catch(() => ({}));
+      if (!res.ok) {
+        setError(data?.error || "BF diagnostics failed");
+        setInfo(null);
+        return;
+      }
+      setBfDiagnostics(data as BfDiagnostics);
+      setInfo("BF diagnostics loaded");
+    } catch {
+      setError("BF diagnostics failed");
+      setInfo(null);
+    } finally {
+      setRunningBfDiagnostics(false);
+    }
+  }
+
+  async function handleCopyBfDiagnostics() {
+    if (!bfDiagnostics) return;
+    try {
+      await navigator.clipboard.writeText(toDiagnosticsText(bfDiagnostics));
+      setInfo("BF diagnostics copied");
+    } catch {
+      setError("Copy failed");
+    }
+  }
+
   if (!user?.address) {
     return (
       <div className="min-h-dvh flex flex-col items-center justify-center p-6 text-center" style={{ background: "#1a0a00" }}>
@@ -370,6 +459,15 @@ export default function AdminPage() {
                     style={{ background: "linear-gradient(135deg, #60a5fa, #3b82f6)" }}
                   >
                     {sharingWinners ? "Sharing..." : "Share Winners"}
+                  </button>
+                  <button
+                    type="button"
+                    onClick={handleRunBfDiagnostics}
+                    disabled={runningBfDiagnostics}
+                    className="px-3 py-1 rounded-md text-xs font-black text-black disabled:opacity-50"
+                    style={{ background: "linear-gradient(135deg, #93c5fd, #60a5fa)" }}
+                  >
+                    {runningBfDiagnostics ? "Running..." : "BF Diagnostics"}
                   </button>
                   <button
                     type="button"
@@ -469,6 +567,33 @@ export default function AdminPage() {
                       {new Date(e.at).toLocaleString("en-GB", { timeZone: "Europe/Rome" })} · {e.stage || "unknown"} · {e.reason || "error"}
                     </div>
                   ))}
+                </div>
+              )}
+              {bfDiagnostics && (
+                <div className="mt-3 pt-2 border-t border-amber-900">
+                  <div className="flex items-center justify-between gap-2 mb-1">
+                    <div className="text-sky-300 text-xs uppercase tracking-widest">BF Diagnostics</div>
+                    <button
+                      type="button"
+                      onClick={handleCopyBfDiagnostics}
+                      className="px-2 py-1 rounded text-[10px] font-black text-black"
+                      style={{ background: "#fbbf24" }}
+                    >
+                      Copy
+                    </button>
+                  </div>
+                  <div className="text-sky-200 text-xs">
+                    winner: {bfDiagnostics.simulate.winnerTransfer.ok ? "ok" : "revert"} · pot: {bfDiagnostics.simulate.potTransfer.ok ? "ok" : "revert"}
+                  </div>
+                  {!bfDiagnostics.simulate.winnerTransfer.ok && (
+                    <div className="text-red-300 text-xs mt-1 break-words">winner reason: {bfDiagnostics.simulate.winnerTransfer.reason}</div>
+                  )}
+                  {!bfDiagnostics.simulate.potTransfer.ok && (
+                    <div className="text-red-300 text-xs mt-1 break-words">pot reason: {bfDiagnostics.simulate.potTransfer.reason}</div>
+                  )}
+                  <div className="text-amber-200 text-xs mt-1">
+                    balance prize: {Math.round(bfDiagnostics.balances.prize).toLocaleString()} BF · recipient: {Math.round(bfDiagnostics.balances.recipient).toLocaleString()} BF
+                  </div>
                 </div>
               )}
             </div>
