@@ -331,6 +331,7 @@ export async function POST(req: NextRequest) {
     // Pot transfer is best-effort; winner payout should not fail because of pot wallet issues
     let potTxHash: `0x${string}` | null = null;
     let potWarning: string | null = null;
+    let potMode: "onchain" | "ledger_fallback" | "failed" = "failed";
     try {
       await publicClient.simulateContract({
         account,
@@ -341,6 +342,7 @@ export async function POST(req: NextRequest) {
       });
       potTxHash = await sendTransfer(POT_WALLET, potAmount, "pot");
       await addWeeklyPot(potAmount);
+      potMode = "onchain";
       await logTxRecord({
         kind: "game_pot_in",
         status: "ok",
@@ -351,8 +353,9 @@ export async function POST(req: NextRequest) {
         stage: "pot_transfer",
       });
     } catch (potError: unknown) {
-      potWarning = extractErrorMessage(potError);
-      console.error("Pot transfer warning:", potWarning);
+      const chainReason = extractErrorMessage(potError);
+      potWarning = chainReason;
+      console.error("Pot transfer warning:", chainReason);
       await logTxRecord({
         kind: "payout_error",
         status: "failed",
@@ -360,14 +363,43 @@ export async function POST(req: NextRequest) {
         to: POT_WALLET,
         amountBf: potAmount,
         stage: "pot_transfer",
-        reason: potWarning,
+        reason: chainReason,
       });
+
+      try {
+        await addWeeklyPot(potAmount);
+        potMode = "ledger_fallback";
+        potWarning = `Pot transfer failed onchain; credited offchain ledger (${chainReason})`;
+        await logTxRecord({
+          kind: "game_pot_in",
+          status: "ok",
+          weekId,
+          to: POT_WALLET,
+          amountBf: potAmount,
+          stage: "pot_ledger_credit_fallback",
+          reason: chainReason,
+        });
+      } catch (ledgerError: unknown) {
+        const ledgerReason = extractErrorMessage(ledgerError);
+        potMode = "failed";
+        potWarning = `Pot transfer failed and ledger credit failed (${ledgerReason})`;
+        await logTxRecord({
+          kind: "payout_error",
+          status: "failed",
+          weekId,
+          to: POT_WALLET,
+          amountBf: potAmount,
+          stage: "pot_ledger_credit",
+          reason: ledgerReason,
+        });
+      }
     }
 
     return jsonWithCors({
       ok: true,
       txHash,
       potTxHash,
+      potMode,
       bfAmount: playerAmount,
       payoutToken,
       warning: [payoutWarning, potWarning].filter(Boolean).join(" | ") || null,

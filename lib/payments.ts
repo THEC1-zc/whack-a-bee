@@ -179,6 +179,9 @@ export async function claimPrize(
   txHash?: string;
   error?: string;
   bfAmount?: number;
+  payoutToken?: "BF" | "USDC";
+  warning?: string | null;
+  potMode?: "onchain" | "ledger_fallback" | "failed";
   errorCode?: string;
   details?: unknown;
 }> {
@@ -210,7 +213,14 @@ export async function claimPrize(
           };
         }
 
-        return { success: true, txHash: data.txHash, bfAmount: data.bfAmount };
+        return {
+          success: true,
+          txHash: data.txHash,
+          bfAmount: data.bfAmount,
+          payoutToken: data.payoutToken,
+          warning: data.warning || null,
+          potMode: data.potMode,
+        };
       } catch (e: unknown) {
         lastError = getErrorMessage(e, "Payout request failed");
       }

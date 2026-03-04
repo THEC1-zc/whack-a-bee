@@ -85,6 +85,7 @@ export default function GameScreen({ user, difficulty, onGameEnd }: Props) {
   const [paymentStatus, setPaymentStatus] = useState<"pending" | "paid" | "failed">("pending");
   const [paymentError, setPaymentError] = useState<string | null>(null);
   const [paymentErrorCode, setPaymentErrorCode] = useState<string | null>(null);
+  const [paymentNote, setPaymentNote] = useState<string | null>(null);
   const [feeStatus, setFeeStatus] = useState<"waiting" | "paying" | "paid" | "failed">("waiting");
   const [feeError, setFeeError] = useState<string | null>(null);
   const [gameStarted, setGameStarted] = useState(false);
@@ -313,20 +314,28 @@ export default function GameScreen({ user, difficulty, onGameEnd }: Props) {
           setPaymentStatus("paid");
           setPaymentError(null);
           setPaymentErrorCode(null);
+          if (result.payoutToken === "USDC") {
+            setPaymentNote("Paid via USDC fallback");
+          } else {
+            setPaymentNote("Paid");
+          }
         } else {
           setPaymentStatus("failed");
           setPaymentError(result.error || "Payment error");
           setPaymentErrorCode(result.errorCode || null);
+          setPaymentNote(null);
         }
       } else {
         setPaymentStatus("failed");
         setPaymentError("No wallet connected");
         setPaymentErrorCode("NO_WALLET");
+        setPaymentNote(null);
       }
     } else {
       setPaymentStatus("paid");
       setPaymentError(null);
       setPaymentErrorCode(null);
+      setPaymentNote("No payout required");
     }
 
   }
@@ -452,7 +461,7 @@ export default function GameScreen({ user, difficulty, onGameEnd }: Props) {
               paymentStatus === "failed" ? "bg-red-900 text-red-300" :
               "bg-amber-900 text-amber-300"
             }`}>
-              {paymentStatus === "paid" ? "✅ Payment processing..." :
+              {paymentStatus === "paid" ? `✅ ${paymentNote || "Payment sent"}` :
                paymentStatus === "failed" ? "❌ Payment error" :
                "⏳ Processing..."}
             </div>
