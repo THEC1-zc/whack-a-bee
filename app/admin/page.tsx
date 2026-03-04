@@ -75,6 +75,7 @@ type BfDiagnostics = {
   probes: {
     noArgFlags: Array<{ name: string; value?: string | boolean | number; error?: string }>;
     addressFlags: Array<{ name: string; value?: string | boolean | number; error?: string }>;
+    uintFlags?: Array<{ name: string; value?: string | boolean | number; error?: string }>;
   };
 };
 
@@ -337,6 +338,7 @@ export default function AdminPage() {
     lines.push(`simulate.pot.reason=${d.simulate.potTransfer.reason || "-"}`);
     for (const p of d.probes.noArgFlags) lines.push(`probe.${p.name}=${p.value ?? p.error ?? "-"}`);
     for (const p of d.probes.addressFlags) lines.push(`probe.${p.name}=${p.value ?? p.error ?? "-"}`);
+    for (const p of d.probes.uintFlags || []) lines.push(`probe.${p.name}=${p.value ?? p.error ?? "-"}`);
     return lines.join("\n");
   }
 

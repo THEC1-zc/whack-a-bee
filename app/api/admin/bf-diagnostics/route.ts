@@ -142,6 +142,28 @@ export async function GET(req: NextRequest) {
     }
   }
 
+  async function tryReadNoArgsUint(fnName: string): Promise<ProbeResult> {
+    try {
+      const value = await withRpcRetry(() => publicClient.readContract({
+        address: BF_ADDRESS,
+        abi: [
+          {
+            name: fnName,
+            type: "function",
+            stateMutability: "view",
+            inputs: [],
+            outputs: [{ name: "", type: "uint256" }],
+          },
+        ] as const,
+        functionName: fnName,
+        args: [],
+      }));
+      return { name: fnName, value: String(value) };
+    } catch (e: unknown) {
+      return { name: fnName, error: extractErrorMessage(e) };
+    }
+  }
+
   const [senderBalanceRaw, recipientBalanceRaw, potBalanceRaw, recipientCode, potCode] = await Promise.all([
     withRpcRetry(() => publicClient.readContract({
       address: BF_ADDRESS,
@@ -206,6 +228,15 @@ export async function GET(req: NextRequest) {
     tryReadAddressBool("blacklist", POT_WALLET),
   ]);
 
+  const uintFlags = await Promise.all([
+    tryReadNoArgsUint("maxWallet"),
+    tryReadNoArgsUint("_maxWalletSize"),
+    tryReadNoArgsUint("maxWalletAmount"),
+    tryReadNoArgsUint("maxTxAmount"),
+    tryReadNoArgsUint("_maxTxAmount"),
+    tryReadNoArgsUint("numTokensSellToAddToLiquidity"),
+  ]);
+
   return NextResponse.json({
     token: BF_ADDRESS,
     chainId: base.id,
@@ -232,6 +263,7 @@ export async function GET(req: NextRequest) {
     probes: {
       noArgFlags,
       addressFlags,
+      uintFlags,
     },
   });
 }
