@@ -111,10 +111,11 @@ export async function POST(req: NextRequest) {
       transport: http("https://mainnet.base.org"),
     });
 
-    const playerAmount = bfAmount * 0.95;
-    const potAmount = bfAmount * 0.05;
-    const playerAmountUnits = toBFUnits(playerAmount);
-    const potAmountUnits = toBFUnits(potAmount);
+    const bfAmountUnits = toBFUnits(bfAmount);
+    const playerAmountUnits = (bfAmountUnits * BigInt(95)) / BigInt(100);
+    const potAmountUnits = bfAmountUnits - playerAmountUnits;
+    const playerAmount = fromBFUnits(playerAmountUnits);
+    const potAmount = fromBFUnits(potAmountUnits);
     const recipientAddress = recipient as `0x${string}`;
 
     const recipientCode = await publicClient.getCode({ address: recipientAddress });

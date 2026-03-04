@@ -72,18 +72,19 @@ export const ERC20_ABI = [
 
 // Convert USDC amount (human) to contract units (6 decimals)
 export function toUSDCUnits(amount: number): bigint {
-  return BigInt(Math.round(amount * 10 ** USDC_DECIMALS));
+  return parseUnits(amount.toFixed(USDC_DECIMALS), USDC_DECIMALS);
 }
 
 // Convert contract units to human readable
 export function fromUSDCUnits(units: bigint): number {
-  return Number(units) / 10 ** USDC_DECIMALS;
+  return Number(formatUnits(units, USDC_DECIMALS));
 }
 
 export function toBFUnits(amount: number): bigint {
-  return BigInt(Math.round(amount * 10 ** BF_DECIMALS));
+  return parseUnits(amount.toFixed(BF_DECIMALS), BF_DECIMALS);
 }
 
 export function fromBFUnits(units: bigint): number {
-  return Number(units) / 10 ** BF_DECIMALS;
+  return Number(formatUnits(units, BF_DECIMALS));
 }
+import { formatUnits, parseUnits } from "viem";
