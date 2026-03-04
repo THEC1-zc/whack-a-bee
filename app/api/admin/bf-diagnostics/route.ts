@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import { createPublicClient, http } from "viem";
+import { createPublicClient, fallback, http } from "viem";
 import { privateKeyToAccount } from "viem/accounts";
 import { base } from "viem/chains";
 import { BF_ADDRESS, ERC20_ABI, fromBFUnits, toBFUnits } from "@/lib/contracts";
@@ -11,6 +11,15 @@ const ADMIN_API_KEY = process.env.ADMIN_API_KEY;
 const PRIZE_PRIVATE_KEY = process.env.PRIZE_WALLET_PRIVATE_KEY;
 const PRIZE_WALLET_ADDRESS = process.env.PRIZE_WALLET_ADDRESS as `0x${string}` | undefined;
 const POT_WALLET = (process.env.POT_WALLET_ADDRESS || "0x468d066995A4C09209c9c165F30Bd76A4FDB88e0") as `0x${string}`;
+const RPC_URLS = (process.env.BASE_RPC_URLS || "")
+  .split(",")
+  .map((s) => s.trim())
+  .filter(Boolean);
+const DEFAULT_RPC_URLS = [
+  "https://mainnet.base.org",
+  "https://base.llamarpc.com",
+  "https://base-rpc.publicnode.com",
+];
 
 type ProbeResult = {
   name: string;
@@ -35,6 +44,16 @@ function normalizePrivateKey(value: string | undefined) {
 function extractErrorMessage(error: unknown) {
   if (error instanceof Error) return error.message;
   return String(error || "unknown error");
+}
+
+function isRetryableRpcError(message: string) {
+  const lowered = message.toLowerCase();
+  return lowered.includes("over rate limit") || lowered.includes("status: 429") || lowered.includes("http request failed");
+}
+
+function baseTransport() {
+  const urls = RPC_URLS.length > 0 ? RPC_URLS : DEFAULT_RPC_URLS;
+  return fallback(urls.map((u) => http(u)));
 }
 
 export async function GET(req: NextRequest) {
@@ -62,12 +81,26 @@ export async function GET(req: NextRequest) {
 
   const publicClient = createPublicClient({
     chain: base,
-    transport: http("https://mainnet.base.org"),
+    transport: baseTransport(),
   });
+
+  async function withRpcRetry<T>(fn: () => Promise<T>) {
+    let lastError: unknown;
+    for (let i = 0; i < 3; i += 1) {
+      try {
+        return await fn();
+      } catch (e: unknown) {
+        lastError = e;
+        const msg = extractErrorMessage(e);
+        if (!isRetryableRpcError(msg) || i === 2) throw e;
+      }
+    }
+    throw lastError;
+  }
 
   async function tryReadNoArgs(fnName: string): Promise<ProbeResult> {
     try {
-      const value = await publicClient.readContract({
+      const value = await withRpcRetry(() => publicClient.readContract({
         address: BF_ADDRESS,
         abi: [
           {
@@ -80,7 +113,7 @@ export async function GET(req: NextRequest) {
         ] as const,
         functionName: fnName,
         args: [],
-      });
+      }));
       return { name: fnName, value: Boolean(value) };
     } catch (e: unknown) {
       return { name: fnName, error: extractErrorMessage(e) };
@@ -89,7 +122,7 @@ export async function GET(req: NextRequest) {
 
   async function tryReadAddressBool(fnName: string, addr: `0x${string}`): Promise<ProbeResult> {
     try {
-      const value = await publicClient.readContract({
+      const value = await withRpcRetry(() => publicClient.readContract({
         address: BF_ADDRESS,
         abi: [
           {
@@ -102,7 +135,7 @@ export async function GET(req: NextRequest) {
         ] as const,
         functionName: fnName,
         args: [addr],
-      });
+      }));
       return { name: `${fnName}(${addr})`, value: Boolean(value) };
     } catch (e: unknown) {
       return { name: `${fnName}(${addr})`, error: extractErrorMessage(e) };
@@ -110,50 +143,50 @@ export async function GET(req: NextRequest) {
   }
 
   const [senderBalanceRaw, recipientBalanceRaw, potBalanceRaw, recipientCode, potCode] = await Promise.all([
-    publicClient.readContract({
+    withRpcRetry(() => publicClient.readContract({
       address: BF_ADDRESS,
       abi: ERC20_ABI,
       functionName: "balanceOf",
       args: [prizeAddress],
-    }),
-    publicClient.readContract({
+    })),
+    withRpcRetry(() => publicClient.readContract({
       address: BF_ADDRESS,
       abi: ERC20_ABI,
       functionName: "balanceOf",
       args: [recipient],
-    }),
-    publicClient.readContract({
+    })),
+    withRpcRetry(() => publicClient.readContract({
       address: BF_ADDRESS,
       abi: ERC20_ABI,
       functionName: "balanceOf",
       args: [POT_WALLET],
-    }),
-    publicClient.getCode({ address: recipient }),
-    publicClient.getCode({ address: POT_WALLET }),
+    })),
+    withRpcRetry(() => publicClient.getCode({ address: recipient })),
+    withRpcRetry(() => publicClient.getCode({ address: POT_WALLET })),
   ]);
 
   let winnerSim: { ok: boolean; reason?: string } = { ok: true };
   try {
-    await publicClient.simulateContract({
+    await withRpcRetry(() => publicClient.simulateContract({
       account,
       address: BF_ADDRESS,
       abi: ERC20_ABI,
       functionName: "transfer",
       args: [recipient, playerAmountUnits],
-    });
+    }));
   } catch (e: unknown) {
     winnerSim = { ok: false, reason: extractErrorMessage(e) };
   }
 
   let potSim: { ok: boolean; reason?: string } = { ok: true };
   try {
-    await publicClient.simulateContract({
+    await withRpcRetry(() => publicClient.simulateContract({
       account,
       address: BF_ADDRESS,
       abi: ERC20_ABI,
       functionName: "transfer",
       args: [POT_WALLET, potAmountUnits],
-    });
+    }));
   } catch (e: unknown) {
     potSim = { ok: false, reason: extractErrorMessage(e) };
   }
