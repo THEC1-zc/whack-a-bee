@@ -242,18 +242,29 @@ export async function POST(req: NextRequest) {
             address: account.address,
             blockTag: "pending",
           });
-          const simulated = await publicClient.simulateContract({
-            account,
-            address: BF_ADDRESS,
+
+          // BF is a Superfluid SuperToken (UUPSProxy) — simulateContract fails because
+          // the ERC20 transfer() lives in the implementation, not the proxy ABI.
+          // We send the tx directly using encodeFunctionData to avoid simulation revert.
+          const { encodeFunctionData } = await import("viem");
+          const data = encodeFunctionData({
             abi: ERC20_ABI,
             functionName: "transfer",
             args: [to, amountUnits],
-            nonce,
           });
 
-          const txHash = await walletClient.writeContract(simulated.request);
+          const txHash = await walletClient.sendTransaction({
+            to: BF_ADDRESS,
+            data,
+            nonce,
+            account,
+            chain: base,
+          });
 
-          await publicClient.waitForTransactionReceipt({ hash: txHash });
+          const receipt = await publicClient.waitForTransactionReceipt({ hash: txHash });
+          if (receipt.status === "reverted") {
+            throw new Error(`Transfer reverted on-chain (${label}). txHash: ${txHash}`);
+          }
           return txHash;
         } catch (error: unknown) {
           lastError = error;
