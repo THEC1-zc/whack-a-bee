@@ -67,6 +67,40 @@ function extractErrorMessage(error: unknown) {
   return String(error || "Payout failed");
 }
 
+function findHexCandidate(value: unknown): string | null {
+  if (typeof value === "string") {
+    const trimmed = value.trim();
+    if (/^0x[0-9a-fA-F]+$/.test(trimmed) && trimmed.length >= 10 && trimmed.length % 2 === 0) {
+      return trimmed;
+    }
+    return null;
+  }
+  if (!value || typeof value !== "object") return null;
+
+  const obj = value as Record<string, unknown>;
+  const keys = ["data", "revertData", "error", "cause", "details", "meta", "shortMessage", "message"];
+  for (const key of keys) {
+    const found = findHexCandidate(obj[key]);
+    if (found) return found;
+  }
+  for (const v of Object.values(obj)) {
+    const found = findHexCandidate(v);
+    if (found) return found;
+  }
+  return null;
+}
+
+function extractErrorDetails(error: unknown) {
+  const message = extractErrorMessage(error);
+  const revertData = findHexCandidate(error);
+  const selector = revertData && revertData.length >= 10 ? revertData.slice(0, 10) : null;
+  return { message, revertData, selector };
+}
+
+function formatReasonWithSelector(message: string, selector?: string | null) {
+  return selector ? `${message} [selector=${selector}]` : message;
+}
+
 function normalizePrivateKey(value: string | undefined) {
   const raw = (value || "").trim().replace(/^['"]|['"]$/g, "");
   const compact = raw.replace(/\s+/g, "");
@@ -195,7 +229,7 @@ export async function POST(req: NextRequest) {
           return txHash;
         } catch (error: unknown) {
           lastError = error;
-          const message = error instanceof Error ? error.message : String(error || "");
+          const { message } = extractErrorDetails(error);
           if (!(isRetryableNonceError(message) || isRetryableRpcError(message)) || attempt === 2) {
             throw error;
           }
@@ -231,7 +265,21 @@ export async function POST(req: NextRequest) {
           stage: "winner_transfer_bf",
         });
       } catch (winnerError: unknown) {
-        prizeReason = extractErrorMessage(winnerError);
+        const details = extractErrorDetails(winnerError);
+        prizeReason = details.message;
+        await logTxRecord({
+          kind: "payout_error",
+          status: "failed",
+          weekId,
+          to: recipientAddress,
+          amountBf: playerAmount,
+          stage: "winner_transfer_bf_revert_meta",
+          reason: formatReasonWithSelector(details.message, details.selector),
+          meta: {
+            revertData: details.revertData || undefined,
+            errorSelector: details.selector || undefined,
+          },
+        });
       }
     } else {
       prizeReason =
@@ -271,7 +319,8 @@ export async function POST(req: NextRequest) {
         stage: "pot_transfer",
       });
     } catch (potError: unknown) {
-      potReason = extractErrorMessage(potError);
+      const details = extractErrorDetails(potError);
+      potReason = details.message;
       console.error("Pot transfer warning:", potReason);
       await logTxRecord({
         kind: "payout_error",
@@ -280,10 +329,12 @@ export async function POST(req: NextRequest) {
         to: POT_WALLET,
         amountBf: potAmount,
         stage: "pot_transfer",
-        reason: potReason,
+        reason: formatReasonWithSelector(potReason, details.selector),
         meta: {
           senderBfBalance,
           potWalletBfBalance,
+          revertData: details.revertData || undefined,
+          errorSelector: details.selector || undefined,
         },
       });
     }
@@ -308,14 +359,18 @@ export async function POST(req: NextRequest) {
     });
   } catch (e: unknown) {
     console.error("Payout error:", e);
-    const message = extractErrorMessage(e);
+    const details = extractErrorDetails(e);
     await logTxRecord({
       kind: "payout_error",
       status: "failed",
       stage: "winner_transfer",
-      reason: message,
+      reason: details.message,
+      meta: {
+        revertData: details.revertData || undefined,
+        errorSelector: details.selector || undefined,
+      },
     });
-    return jsonWithCors({ error: message }, 500);
+    return jsonWithCors({ error: details.message, errorSelector: details.selector, revertData: details.revertData }, 500);
   }
 }
 
