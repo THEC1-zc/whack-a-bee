@@ -67,32 +67,60 @@ function extractErrorMessage(error: unknown) {
   return String(error || "Payout failed");
 }
 
-function findHexCandidate(value: unknown): string | null {
-  if (typeof value === "string") {
-    const trimmed = value.trim();
-    if (/^0x[0-9a-fA-F]+$/.test(trimmed) && trimmed.length >= 10 && trimmed.length % 2 === 0) {
-      return trimmed;
+function parseHex(value: unknown) {
+  if (typeof value !== "string") return null;
+  const trimmed = value.trim();
+  if (!/^0x[0-9a-fA-F]+$/.test(trimmed) || trimmed.length % 2 !== 0) return null;
+  return trimmed;
+}
+
+function extractHexFromMessage(message: string) {
+  const m = message.match(/data:\s*(0x[0-9a-fA-F]+)/i);
+  if (!m?.[1]) return null;
+  const parsed = parseHex(m[1]);
+  return parsed && parsed.length >= 10 ? parsed : null;
+}
+
+function findRevertData(value: unknown, path = ""): string | null {
+  const parsed = parseHex(value);
+  if (parsed) {
+    const key = path.toLowerCase();
+    const looksLikeAddress = parsed.length === 42;
+    const likelyDataField =
+      key.endsWith(".data") ||
+      key.endsWith(".revertdata") ||
+      key.endsWith(".errordata") ||
+      key.endsWith(".raw");
+    if (likelyDataField && parsed.length >= 10 && !looksLikeAddress) {
+      return parsed;
     }
     return null;
   }
-  if (!value || typeof value !== "object") return null;
 
+  if (!value || typeof value !== "object") return null;
   const obj = value as Record<string, unknown>;
-  const keys = ["data", "revertData", "error", "cause", "details", "meta", "shortMessage", "message"];
-  for (const key of keys) {
-    const found = findHexCandidate(obj[key]);
-    if (found) return found;
+
+  const preferredKeys = ["data", "revertData", "errorData", "raw"];
+  for (const key of preferredKeys) {
+    if (key in obj) {
+      const found = findRevertData(obj[key], `${path}.${key}`);
+      if (found) return found;
+    }
   }
-  for (const v of Object.values(obj)) {
-    const found = findHexCandidate(v);
-    if (found) return found;
+
+  const nestedKeys = ["cause", "error", "details", "meta"];
+  for (const key of nestedKeys) {
+    if (key in obj) {
+      const found = findRevertData(obj[key], `${path}.${key}`);
+      if (found) return found;
+    }
   }
   return null;
 }
 
 function extractErrorDetails(error: unknown) {
   const message = extractErrorMessage(error);
-  const revertData = findHexCandidate(error);
+  const revertData = findRevertData(error) || extractHexFromMessage(message);
   const selector = revertData && revertData.length >= 10 ? revertData.slice(0, 10) : null;
   return { message, revertData, selector };
 }
