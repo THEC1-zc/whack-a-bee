@@ -184,7 +184,7 @@ export async function POST(req: NextRequest) {
     // Check BF pool balance using realtimeBalanceOf — for Superfluid SuperTokens
     // balanceOf is static and does NOT account for stream deposits that are frozen.
     // realtimeBalanceOf returns the truly spendable availableBalance.
-    const nowTs = BigInt(Math.floor(Date.now() / 1000));
+    const nowTs = BigInt(Math.floor(Date.now() / 1000)); // BigInt() constructor ok for all ES targets
     const realtimeResult = await publicClient.readContract({
       address: BF_ADDRESS,
       abi: SUPERTOKEN_ABI,
@@ -192,7 +192,7 @@ export async function POST(req: NextRequest) {
       args: [prizeAddress, nowTs],
     }) as [bigint, bigint, bigint];
     const availableBalanceRaw = realtimeResult[0]; // int256, can be negative
-    const poolBalanceBf = availableBalanceRaw > 0n ? fromBFUnits(availableBalanceRaw) : 0;
+    const poolBalanceBf = availableBalanceRaw > BigInt(0) ? fromBFUnits(availableBalanceRaw) : 0;
 
     const bfAmount = await usdcToBf(amount);
 
