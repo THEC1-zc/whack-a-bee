@@ -358,6 +358,23 @@ export default function GameScreen({ user, difficulty, onGameEnd }: Props) {
             <div className="text-amber-700 text-xs mt-1">{cfg.emoji} {cfg.label} Mode · {cfg.time}s</div>
           </div>
         </div>
+        {/* Cap reveal — shown before game starts */}
+        <div className={`w-full max-w-xs rounded-2xl p-4 border text-center ${
+          isMegaJackpot ? "border-purple-600 bg-purple-950/60" : "border-amber-800 bg-amber-950/40"
+        }`}>
+          <div className="text-xs uppercase tracking-widest mb-1" style={{ color: isMegaJackpot ? "#c084fc" : "#f59e0b" }}>
+            This round’s prize cap
+          </div>
+          <div className="text-2xl font-black" style={{ color: isMegaJackpot ? "#e879f9" : "#fbbf24" }}>
+            {capInfo.icon} {capInfo.label} — {capMultiplierRef.current}x
+          </div>
+          <div className="text-xs mt-1" style={{ color: isMegaJackpot ? "#a78bfa" : "#92400e" }}>
+            Max prize: {Math.round(Math.max(1, Math.floor(cfg.maxPts * capMultiplierRef.current)) * PRIZE_PER_POINT * 0.95 * 1000) / 1000} USDC
+          </div>
+          {isMegaJackpot && (
+            <div className="text-purple-300 text-xs font-black mt-1 animate-pulse">💥 MEGA JACKPOT — 3× CAP + Super Bee 7.5%!</div>
+          )}
+        </div>
         <div className="text-amber-400 text-sm animate-pulse">
           {feeStatus === "paying" ? "⏳ Waiting for wallet confirmation..." : "⏳ Initializing..."}
         </div>

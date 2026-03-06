@@ -14,12 +14,12 @@ type Screen = "home" | "game" | "leaderboard" | "rules";
 export type Difficulty = "easy" | "medium" | "hard";
 
 export const DIFFICULTY_CONFIG = {
-  easy:   { label: "Easy",   emoji: "🟢", time: 30, maxPts: 48, fee: 0.015, color: "#16a34a" },
-  medium: { label: "Medium", emoji: "🟡", time: 25, maxPts: 64, fee: 0.03, color: "#ca8a04" },
-  hard:   { label: "Hard",   emoji: "🔴", time: 20, maxPts: 80, fee: 0.045, color: "#dc2626" },
+  easy:   { label: "Easy",   emoji: "🟢", time: 30, maxPts: 40, fee: 0.015, color: "#16a34a" },
+  medium: { label: "Medium", emoji: "🟡", time: 25, maxPts: 60, fee: 0.025, color: "#ca8a04" },
+  hard:   { label: "Hard",   emoji: "🔴", time: 20, maxPts: 80, fee: 0.035, color: "#dc2626" },
 };
 
-export const PRIZE_PER_POINT = 0.001; // USDC
+export const PRIZE_PER_POINT = 0.0008; // USDC
 export const PRIZE_WALLET = "0xFd144C774582a450a3F578ae742502ff11Ff92Df";
 export const MIN_POOL_BALANCE_BF = 100000;
 
