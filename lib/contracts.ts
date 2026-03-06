@@ -43,6 +43,49 @@ export const USDC_ABI = [
   },
 ] as const;
 
+// Superfluid SuperToken ABI — realtimeBalanceOf returns the true spendable balance
+// accounting for stream deposits that are frozen and cannot be transferred
+export const SUPERTOKEN_ABI = [
+  {
+    name: "transfer",
+    type: "function",
+    stateMutability: "nonpayable",
+    inputs: [
+      { name: "to", type: "address" },
+      { name: "amount", type: "uint256" },
+    ],
+    outputs: [{ name: "", type: "bool" }],
+  },
+  {
+    name: "balanceOf",
+    type: "function",
+    stateMutability: "view",
+    inputs: [{ name: "account", type: "address" }],
+    outputs: [{ name: "", type: "uint256" }],
+  },
+  {
+    name: "realtimeBalanceOf",
+    type: "function",
+    stateMutability: "view",
+    inputs: [
+      { name: "account", type: "address" },
+      { name: "timestamp", type: "uint256" },
+    ],
+    outputs: [
+      { name: "availableBalance", type: "int256" },
+      { name: "deposit", type: "uint256" },
+      { name: "owedDeposit", type: "uint256" },
+    ],
+  },
+  {
+    name: "decimals",
+    type: "function",
+    stateMutability: "view",
+    inputs: [],
+    outputs: [{ name: "", type: "uint8" }],
+  },
+] as const;
+
 export const ERC20_ABI = [
   {
     name: "transfer",

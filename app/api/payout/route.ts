@@ -5,6 +5,7 @@ import { privateKeyToAccount } from "viem/accounts";
 import {
   BF_ADDRESS,
   ERC20_ABI,
+  SUPERTOKEN_ABI,
   fromBFUnits,
   toBFUnits,
   PRIZE_WALLET,
@@ -180,15 +181,18 @@ export async function POST(req: NextRequest) {
       transport: baseTransport(),
     });
 
-    // Check BF pool balance before queueing
-    const poolBalance = await publicClient.readContract({
+    // Check BF pool balance using realtimeBalanceOf — for Superfluid SuperTokens
+    // balanceOf is static and does NOT account for stream deposits that are frozen.
+    // realtimeBalanceOf returns the truly spendable availableBalance.
+    const nowTs = BigInt(Math.floor(Date.now() / 1000));
+    const realtimeResult = await publicClient.readContract({
       address: BF_ADDRESS,
-      abi: ERC20_ABI,
-      functionName: "balanceOf",
-      args: [prizeAddress],
-    });
-
-    const poolBalanceBf = fromBFUnits(poolBalance as bigint);
+      abi: SUPERTOKEN_ABI,
+      functionName: "realtimeBalanceOf",
+      args: [prizeAddress, nowTs],
+    }) as [bigint, bigint, bigint];
+    const availableBalanceRaw = realtimeResult[0]; // int256, can be negative
+    const poolBalanceBf = availableBalanceRaw > 0n ? fromBFUnits(availableBalanceRaw) : 0;
 
     const bfAmount = await usdcToBf(amount);
 
@@ -230,6 +234,8 @@ export async function POST(req: NextRequest) {
     const senderBfBalance = fromBFUnits(senderRawBalance as bigint);
     const recipientBfBalance = fromBFUnits(recipientRawBalance as bigint);
     const potWalletBfBalance = fromBFUnits(potRawBalance as bigint);
+    // availableBalance from realtimeBalanceOf (already computed above)
+    const senderAvailableBf = poolBalanceBf;
 
     const bfPoolEligible = poolBalanceBf >= MIN_POOL_BALANCE_BF && poolBalanceBf >= bfAmount;
 
@@ -391,7 +397,8 @@ export async function POST(req: NextRequest) {
       recipient: recipientAddress,
       recipientIsContract,
       debug: {
-        senderBfBalance,
+        senderBfBalance,          // static balanceOf
+        senderAvailableBf,        // realtimeBalanceOf availableBalance (actual spendable)
         recipientBfBalance,
         potWalletBfBalance,
       },
