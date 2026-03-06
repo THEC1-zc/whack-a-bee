@@ -239,20 +239,23 @@ export async function POST(req: NextRequest) {
 
     const bfPoolEligible = poolBalanceBf >= MIN_POOL_BALANCE_BF && poolBalanceBf >= bfAmount;
 
+    // Read nonce once upfront, then increment manually for sequential txs.
+    // This avoids both txs reading the same nonce when sent back-to-back.
+    let currentNonce = await publicClient.getTransactionCount({
+      address: account.address,
+      blockTag: "pending",
+    });
+
+    const { encodeFunctionData } = await import("viem");
+
     const sendTransfer = async (to: `0x${string}`, amountUnits: bigint, label: string) => {
       let lastError: unknown;
+      const nonce = currentNonce;
 
       for (let attempt = 0; attempt < 3; attempt++) {
         try {
-          const nonce = await publicClient.getTransactionCount({
-            address: account.address,
-            blockTag: "pending",
-          });
-
-          // BF is a Superfluid SuperToken (UUPSProxy) — simulateContract fails because
-          // the ERC20 transfer() lives in the implementation, not the proxy ABI.
-          // We send the tx directly using encodeFunctionData to avoid simulation revert.
-          const { encodeFunctionData } = await import("viem");
+          // BF is a Superfluid SuperToken (UUPSProxy) — use encodeFunctionData + sendTransaction
+          // directly to avoid simulateContract failing on the proxy.
           const data = encodeFunctionData({
             abi: ERC20_ABI,
             functionName: "transfer",
@@ -271,6 +274,8 @@ export async function POST(req: NextRequest) {
           if (receipt.status === "reverted") {
             throw new Error(`Transfer reverted on-chain (${label}). txHash: ${txHash}`);
           }
+          // Only advance nonce after confirmed success
+          currentNonce++;
           return txHash;
         } catch (error: unknown) {
           lastError = error;
@@ -278,7 +283,6 @@ export async function POST(req: NextRequest) {
           if (!(isRetryableNonceError(message) || isRetryableRpcError(message)) || attempt === 2) {
             throw error;
           }
-
           console.warn(`[payout] retrying ${label} transfer (attempt ${attempt + 2}/3):`, message);
           await sleep(1000 * (attempt + 1));
         }
