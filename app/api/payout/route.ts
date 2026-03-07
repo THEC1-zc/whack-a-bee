@@ -5,7 +5,6 @@ import { privateKeyToAccount } from "viem/accounts";
 import {
   BF_ADDRESS,
   ERC20_ABI,
-  SUPERTOKEN_ABI,
   fromBFUnits,
   toBFUnits,
   PRIZE_WALLET,
@@ -14,7 +13,6 @@ import { bfToUsdc, usdcToBf } from "@/lib/pricing";
 import { addWeeklyPot, getWeeklyMeta } from "@/lib/weekly";
 import { logTxRecord } from "@/lib/txLedger";
 
-// Prize pool wallet private key — set in Vercel env vars, NEVER in code
 const PRIZE_PRIVATE_KEY = process.env.PRIZE_WALLET_PRIVATE_KEY;
 const POT_WALLET = (process.env.POT_WALLET_ADDRESS || "0x468d066995A4C09209c9c165F30Bd76A4FDB88e0") as `0x${string}`;
 const PRIZE_WALLET_ADDRESS = process.env.PRIZE_WALLET_ADDRESS as `0x${string}` | undefined;
@@ -28,6 +26,7 @@ const DEFAULT_RPC_URLS = [
   "https://base.llamarpc.com",
   "https://base-rpc.publicnode.com",
 ];
+
 const CORS_HEADERS = {
   "Access-Control-Allow-Origin": "*",
   "Access-Control-Allow-Methods": "GET, POST, OPTIONS",
@@ -68,68 +67,6 @@ function extractErrorMessage(error: unknown) {
   return String(error || "Payout failed");
 }
 
-function parseHex(value: unknown) {
-  if (typeof value !== "string") return null;
-  const trimmed = value.trim();
-  if (!/^0x[0-9a-fA-F]+$/.test(trimmed) || trimmed.length % 2 !== 0) return null;
-  return trimmed;
-}
-
-function extractHexFromMessage(message: string) {
-  const m = message.match(/data:\s*(0x[0-9a-fA-F]+)/i);
-  if (!m?.[1]) return null;
-  const parsed = parseHex(m[1]);
-  return parsed && parsed.length >= 10 ? parsed : null;
-}
-
-function findRevertData(value: unknown, path = ""): string | null {
-  const parsed = parseHex(value);
-  if (parsed) {
-    const key = path.toLowerCase();
-    const looksLikeAddress = parsed.length === 42;
-    const likelyDataField =
-      key.endsWith(".data") ||
-      key.endsWith(".revertdata") ||
-      key.endsWith(".errordata") ||
-      key.endsWith(".raw");
-    if (likelyDataField && parsed.length >= 10 && !looksLikeAddress) {
-      return parsed;
-    }
-    return null;
-  }
-
-  if (!value || typeof value !== "object") return null;
-  const obj = value as Record<string, unknown>;
-
-  const preferredKeys = ["data", "revertData", "errorData", "raw"];
-  for (const key of preferredKeys) {
-    if (key in obj) {
-      const found = findRevertData(obj[key], `${path}.${key}`);
-      if (found) return found;
-    }
-  }
-
-  const nestedKeys = ["cause", "error", "details", "meta"];
-  for (const key of nestedKeys) {
-    if (key in obj) {
-      const found = findRevertData(obj[key], `${path}.${key}`);
-      if (found) return found;
-    }
-  }
-  return null;
-}
-
-function extractErrorDetails(error: unknown) {
-  const message = extractErrorMessage(error);
-  const revertData = findRevertData(error) || extractHexFromMessage(message);
-  const selector = revertData && revertData.length >= 10 ? revertData.slice(0, 10) : null;
-  return { message, revertData, selector };
-}
-
-function formatReasonWithSelector(message: string, selector?: string | null) {
-  return selector ? `${message} [selector=${selector}]` : message;
-}
-
 function normalizePrivateKey(value: string | undefined) {
   const raw = (value || "").trim().replace(/^['"]|['"]$/g, "");
   const compact = raw.replace(/\s+/g, "");
@@ -153,6 +90,7 @@ export async function POST(req: NextRequest) {
     if (!PRIZE_PRIVATE_KEY) {
       return jsonWithCors({ error: "Payout not configured" }, 503);
     }
+
     const normalizedPrizeKey = normalizePrivateKey(PRIZE_PRIVATE_KEY);
     if (!/^0x[0-9a-fA-F]{64}$/.test(normalizedPrizeKey)) {
       return jsonWithCors(
@@ -169,10 +107,7 @@ export async function POST(req: NextRequest) {
 
     const account = privateKeyToAccount(normalizedPrizeKey as `0x${string}`);
     if (PRIZE_WALLET_ADDRESS && PRIZE_WALLET_ADDRESS !== account.address) {
-      return jsonWithCors(
-        { error: "Prize wallet mismatch", configured: false },
-        503
-      );
+      return jsonWithCors({ error: "Prize wallet mismatch", configured: false }, 503);
     }
     const prizeAddress = PRIZE_WALLET_ADDRESS || account.address;
 
@@ -181,36 +116,31 @@ export async function POST(req: NextRequest) {
       transport: baseTransport(),
     });
 
-    // Check BF pool balance using realtimeBalanceOf — for Superfluid SuperTokens
-    // balanceOf is static and does NOT account for stream deposits that are frozen.
-    // realtimeBalanceOf returns the truly spendable availableBalance.
-    const nowTs = BigInt(Math.floor(Date.now() / 1000)); // BigInt() constructor ok for all ES targets
-    const realtimeResult = await publicClient.readContract({
-      address: BF_ADDRESS,
-      abi: SUPERTOKEN_ABI,
-      functionName: "realtimeBalanceOf",
-      args: [prizeAddress, nowTs],
-    }) as [bigint, bigint, bigint];
-    const availableBalanceRaw = realtimeResult[0]; // int256, can be negative
-    const poolBalanceBf = availableBalanceRaw > BigInt(0) ? fromBFUnits(availableBalanceRaw) : 0;
-
-    const bfAmount = await usdcToBf(amount);
-
     const walletClient = createWalletClient({
       account,
       chain: base,
       transport: baseTransport(),
     });
 
+    const poolBalance = await publicClient.readContract({
+      address: BF_ADDRESS,
+      abi: ERC20_ABI,
+      functionName: "balanceOf",
+      args: [prizeAddress],
+    });
+
+    const poolBalanceBf = fromBFUnits(poolBalance as bigint);
+    const bfAmount = await usdcToBf(amount);
     const bfAmountUnits = toBFUnits(bfAmount);
     const playerAmountUnits = (bfAmountUnits * BigInt(95)) / BigInt(100);
     const potAmountUnits = bfAmountUnits - playerAmountUnits;
     const playerAmount = fromBFUnits(playerAmountUnits);
     const potAmount = fromBFUnits(potAmountUnits);
-    const recipientAddress = recipient as `0x${string}`;
 
+    const recipientAddress = recipient as `0x${string}`;
     const recipientCode = await publicClient.getCode({ address: recipientAddress });
     const recipientIsContract = Boolean(recipientCode && recipientCode !== "0x");
+
     const [senderRawBalance, recipientRawBalance, potRawBalance] = await Promise.all([
       publicClient.readContract({
         address: BF_ADDRESS,
@@ -234,55 +164,40 @@ export async function POST(req: NextRequest) {
     const senderBfBalance = fromBFUnits(senderRawBalance as bigint);
     const recipientBfBalance = fromBFUnits(recipientRawBalance as bigint);
     const potWalletBfBalance = fromBFUnits(potRawBalance as bigint);
-    // availableBalance from realtimeBalanceOf (already computed above)
-    const senderAvailableBf = poolBalanceBf;
 
     const bfPoolEligible = poolBalanceBf >= MIN_POOL_BALANCE_BF && poolBalanceBf >= bfAmount;
 
-    // Read nonce once upfront, then increment manually for sequential txs.
-    // This avoids both txs reading the same nonce when sent back-to-back.
-    let currentNonce = await publicClient.getTransactionCount({
-      address: account.address,
-      blockTag: "pending",
-    });
-
-    const { encodeFunctionData } = await import("viem");
-
     const sendTransfer = async (to: `0x${string}`, amountUnits: bigint, label: string) => {
       let lastError: unknown;
-      const nonce = currentNonce;
 
       for (let attempt = 0; attempt < 3; attempt++) {
         try {
-          // BF is a Superfluid SuperToken (UUPSProxy) — use encodeFunctionData + sendTransaction
-          // directly to avoid simulateContract failing on the proxy.
-          const data = encodeFunctionData({
+          const nonce = await publicClient.getTransactionCount({
+            address: account.address,
+            blockTag: "pending",
+          });
+
+          const txHash = await walletClient.writeContract({
+            address: BF_ADDRESS,
             abi: ERC20_ABI,
             functionName: "transfer",
             args: [to, amountUnits],
-          });
-
-          const txHash = await walletClient.sendTransaction({
-            to: BF_ADDRESS,
-            data,
             nonce,
-            account,
-            chain: base,
           });
 
           const receipt = await publicClient.waitForTransactionReceipt({ hash: txHash });
           if (receipt.status === "reverted") {
             throw new Error(`Transfer reverted on-chain (${label}). txHash: ${txHash}`);
           }
-          // Only advance nonce after confirmed success
-          currentNonce++;
+
           return txHash;
         } catch (error: unknown) {
           lastError = error;
-          const { message } = extractErrorDetails(error);
+          const message = extractErrorMessage(error);
           if (!(isRetryableNonceError(message) || isRetryableRpcError(message)) || attempt === 2) {
             throw error;
           }
+
           console.warn(`[payout] retrying ${label} transfer (attempt ${attempt + 2}/3):`, message);
           await sleep(1000 * (attempt + 1));
         }
@@ -314,20 +229,15 @@ export async function POST(req: NextRequest) {
           stage: "winner_transfer_bf",
         });
       } catch (winnerError: unknown) {
-        const details = extractErrorDetails(winnerError);
-        prizeReason = details.message;
+        prizeReason = extractErrorMessage(winnerError);
         await logTxRecord({
           kind: "payout_error",
           status: "failed",
           weekId,
           to: recipientAddress,
           amountBf: playerAmount,
-          stage: "winner_transfer_bf_revert_meta",
-          reason: formatReasonWithSelector(details.message, details.selector),
-          meta: {
-            revertData: details.revertData || undefined,
-            errorSelector: details.selector || undefined,
-          },
+          stage: "winner_transfer_bf",
+          reason: prizeReason,
         });
       }
     } else {
@@ -368,9 +278,7 @@ export async function POST(req: NextRequest) {
         stage: "pot_transfer",
       });
     } catch (potError: unknown) {
-      const details = extractErrorDetails(potError);
-      potReason = details.message;
-      console.error("Pot transfer warning:", potReason);
+      potReason = extractErrorMessage(potError);
       await logTxRecord({
         kind: "payout_error",
         status: "failed",
@@ -378,12 +286,10 @@ export async function POST(req: NextRequest) {
         to: POT_WALLET,
         amountBf: potAmount,
         stage: "pot_transfer",
-        reason: formatReasonWithSelector(potReason, details.selector),
+        reason: potReason,
         meta: {
           senderBfBalance,
           potWalletBfBalance,
-          revertData: details.revertData || undefined,
-          errorSelector: details.selector || undefined,
         },
       });
     }
@@ -401,30 +307,24 @@ export async function POST(req: NextRequest) {
       recipient: recipientAddress,
       recipientIsContract,
       debug: {
-        senderBfBalance,          // static balanceOf
-        senderAvailableBf,        // realtimeBalanceOf availableBalance (actual spendable)
+        senderBfBalance,
         recipientBfBalance,
         potWalletBfBalance,
       },
     });
   } catch (e: unknown) {
     console.error("Payout error:", e);
-    const details = extractErrorDetails(e);
+    const message = extractErrorMessage(e);
     await logTxRecord({
       kind: "payout_error",
       status: "failed",
       stage: "winner_transfer",
-      reason: details.message,
-      meta: {
-        revertData: details.revertData || undefined,
-        errorSelector: details.selector || undefined,
-      },
+      reason: message,
     });
-    return jsonWithCors({ error: details.message, errorSelector: details.selector, revertData: details.revertData }, 500);
+    return jsonWithCors({ error: message }, 500);
   }
 }
 
-// GET: check current pool balance (public)
 export async function GET() {
   try {
     const prizeAddress = PRIZE_WALLET_ADDRESS || PRIZE_WALLET;
