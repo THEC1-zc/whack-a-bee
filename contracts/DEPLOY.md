@@ -207,8 +207,8 @@ export async function signClaim(
 
 ## TODO deploy checklist
 
-- [ ] Deploy BFPayout su Base (Remix) con i 5 parametri costruttore
-- [ ] Salva l'indirizzo del contratto deployato
+- [x] Deploy BFPayout su Base (Remix) con i 5 parametri costruttore
+- [x] Contratto deployato: `0xCdfdbB8B93d8a02319434abA5CC69b31a746ef1D`
 - [ ] Chiama `BF.approve(BFPayout, MaxUint256)` dal PRIZE_WALLET (0x...92Df)
 - [ ] Genera nuova chiave `PAYOUT_SIGNER_PRIVATE_KEY` (wallet vuoto, zero fondi)
 - [ ] Aggiungi env vars su Vercel: `PAYOUT_SIGNER_PRIVATE_KEY`, `NEXT_PUBLIC_BFPAYOUT_CONTRACT`

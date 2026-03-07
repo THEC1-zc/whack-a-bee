@@ -59,6 +59,13 @@ DIFFICULTY_CONFIG:
 | `lib/txLedger.ts` | Log transazioni (Redis/memory) |
 | `app/api/weekly/` | Weekly pot: my tickets, claim, payout |
 
+## Contratto BFPayout
+- Indirizzo: `0xCdfdbB8B93d8a02319434abA5CC69b31a746ef1D`
+- Split: 94.5% player / 4.5% pot / 1% burn
+- Vault deve fare `BF.approve(contratto, MaxUint256)` — ancora da fare
+- Serve env var `PAYOUT_SIGNER_PRIVATE_KEY` (nuova chiave vuota) su Vercel
+- Serve env var `NEXT_PUBLIC_BFPAYOUT_CONTRACT=0xCdfdbB8B93d8a02319434abA5CC69b31a746ef1D` su Vercel
+
 ## Bug noti / In lavorazione
 - **Payout BF che reversa**: nonce stuck a 353. Fix applicato (encodeFunctionData + sendTransaction diretto, realtimeBalanceOf, nonce sequenziale). Causa root ancora da confermare — in attesa di tx hash fallita per analisi su BaseScan.
 - Nota in home screen: "Currently fixing some txs issues, updated version is coming soon"
