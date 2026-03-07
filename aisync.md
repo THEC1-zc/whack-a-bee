@@ -77,8 +77,8 @@ DIFFICULTY_CONFIG:
 6. Zero ETH necessario nel PRIZE_WALLET o POT_WALLET
 
 ## Bug noti / In lavorazione
-- **Payout BF che reversa**: nonce stuck a 353. Fix applicato (encodeFunctionData + sendTransaction diretto, realtimeBalanceOf, nonce sequenziale). Causa root ancora da confermare — in attesa di tx hash fallita per analisi su BaseScan.
-- Nota in home screen: "Currently fixing some txs issues, updated version is coming soon"
+- Nessun bug noto al momento
+- Banner "fixing txs issues" rimosso dalla home ✅
 
 ## Ultimi cambiamenti (sessione corrente)
 - Ribilanciamento economia: fee medium 0.03→0.025, fee hard 0.045→0.035, maxPts easy 48→40, maxPts medium 64→60, PRIZE_PER_POINT 0.001→0.0008
