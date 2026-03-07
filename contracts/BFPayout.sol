@@ -7,19 +7,26 @@ pragma solidity ^0.8.20;
  *
  * Flow:
  *   1. Game server signs a claim: (player, bfGross, nonce, expiry)
- *      where bfGross = full prize BEFORE the 5% pot split
  *   2. Player calls claimPrize() on-chain — pays their own gas
  *   3. Contract splits automatically:
- *        95% → player
- *         5% → potWallet
+ *        94.5% → player
+ *         4.5% → potWallet  (weekly pot, 0x...88e0)
+ *         1.0% → burnWallet (burn address, currently 0x5c29...530F → future: dead address)
  *
- * The vault (PRIZE_WALLET / 0xFd...92Df) must approve this contract:
- *   BF.approve(address(BFPayout), type(uint256).max)  ← one-time setup
+ * The vault (PRIZE_WALLET / 0x...92Df) must approve this contract once:
+ *   BF.approve(address(BFPayout), type(uint256).max)
  *
  * Wallets:
- *   player  (0x...1cDe) — receives 95% of prize
- *   prize   (0x...92Df) — vault holding BF tokens
- *   pot     (0x...88e0) — receives 5%, paid out weekly
+ *   player     (0x...1cDe) — receives 94.5%
+ *   prize/vault (0x...92Df) — holds BF tokens, source of all transfers
+ *   pot        (0x...88e0) — receives 4.5%, paid out weekly
+ *   burn       (0x5c29...530F) — receives 1%, future burn address
+ *
+ * Split in basis points (BPS = 10000):
+ *   PLAYER_BPS = 9450  (94.5%)
+ *   POT_BPS    =  450  ( 4.5%)
+ *   BURN_BPS   =  100  ( 1.0%)
+ *   Total      = 10000 (100%)
  */
 
 interface IERC20 {
@@ -32,18 +39,21 @@ contract BFPayout {
 
     // ── Constants ────────────────────────────────────────────────────────────
 
-    uint256 public constant POT_BPS = 500;   // 5% in basis points
-    uint256 public constant BPS     = 10000;
+    uint256 public constant BPS        = 10000;
+    uint256 public constant PLAYER_BPS = 9450;  // 94.5%
+    uint256 public constant POT_BPS    =  450;  //  4.5%
+    uint256 public constant BURN_BPS   =  100;  //  1.0%
 
     // ── State ────────────────────────────────────────────────────────────────
 
     address public owner;
-    address public signer;      // server-side signing key (PAYOUT_SIGNER_KEY)
-    address public vault;       // PRIZE_WALLET (0x...92Df) — holds BF
-    address public potWallet;   // POT_WALLET   (0x...88e0) — receives 5%
-    IERC20  public bfToken;
+    address public signer;      // server-side signing key (PAYOUT_SIGNER_KEY) — no funds needed
+    address public vault;       // PRIZE_WALLET (0x...92Df) — holds BF, must approve this contract
+    address public potWallet;   // POT_WALLET   (0x...88e0) — receives 4.5%, weekly payout
+    address public burnWallet;  // BURN_WALLET  (0x5c29...530F) — receives 1%, future burn
 
-    bool public paused;
+    IERC20 public bfToken;
+    bool   public paused;
 
     mapping(bytes32 => bool) public usedNonces;
 
@@ -53,11 +63,13 @@ contract BFPayout {
         address indexed player,
         uint256 playerAmount,
         uint256 potAmount,
+        uint256 burnAmount,
         bytes32 nonce
     );
-    event SignerUpdated(address indexed oldSigner, address indexed newSigner);
-    event VaultUpdated(address indexed oldVault, address indexed newVault);
-    event PotWalletUpdated(address indexed oldPot, address indexed newPot);
+    event SignerUpdated(address indexed oldSigner,  address indexed newSigner);
+    event VaultUpdated(address indexed oldVault,    address indexed newVault);
+    event PotWalletUpdated(address indexed oldPot,  address indexed newPot);
+    event BurnWalletUpdated(address indexed oldBurn, address indexed newBurn);
     event Paused(bool paused);
     event EmergencyWithdraw(address indexed to, uint256 amount);
 
@@ -74,17 +86,26 @@ contract BFPayout {
 
     // ── Constructor ──────────────────────────────────────────────────────────
 
+    /**
+     * @param _bfToken    BF token address
+     * @param _vault      PRIZE_WALLET (0x...92Df) — source of BF
+     * @param _potWallet  POT_WALLET   (0x...88e0) — weekly pot
+     * @param _burnWallet BURN_WALLET  (0x5c29...530F) — burn destination
+     * @param _signer     Server-side signing key public address
+     */
     constructor(
         address _bfToken,
         address _vault,
         address _potWallet,
+        address _burnWallet,
         address _signer
     ) {
-        owner     = msg.sender;
-        bfToken   = IERC20(_bfToken);
-        vault     = _vault;
-        potWallet = _potWallet;
-        signer    = _signer;
+        owner      = msg.sender;
+        bfToken    = IERC20(_bfToken);
+        vault      = _vault;
+        potWallet  = _potWallet;
+        burnWallet = _burnWallet;
+        signer     = _signer;
     }
 
     // ── Modifiers ────────────────────────────────────────────────────────────
@@ -102,11 +123,11 @@ contract BFPayout {
     // ── Core: claim prize ────────────────────────────────────────────────────
 
     /**
-     * @notice Claim a BF prize. Splits 95% to player, 5% to pot automatically.
-     * @param player     Recipient address (must be msg.sender)
-     * @param bfGross    Total BF amount BEFORE split (18 decimals)
-     * @param nonce      Unique claim ID (keccak of gameId, server-generated)
-     * @param expiry     Unix timestamp — claim invalid after this
+     * @notice Claim a BF prize. Splits 94.5% / 4.5% / 1% automatically.
+     * @param player     Recipient — must be msg.sender
+     * @param bfGross    Total BF before split (18 decimals)
+     * @param nonce      Unique claim ID (server-generated, e.g. keccak of gameId)
+     * @param expiry     Unix timestamp — claim invalid after this (suggest: now + 10 min)
      * @param signature  ECDSA signature from the trusted signer
      */
     function claimPrize(
@@ -116,38 +137,38 @@ contract BFPayout {
         uint256 expiry,
         bytes calldata signature
     ) external whenNotPaused {
-        if (bfGross == 0)                      revert ZeroAmount();
-        if (block.timestamp > expiry)          revert ClaimExpired();
-        if (usedNonces[nonce])                 revert NonceUsed();
-        if (msg.sender != player)              revert InvalidSignature();
+        if (bfGross == 0)             revert ZeroAmount();
+        if (block.timestamp > expiry) revert ClaimExpired();
+        if (usedNonces[nonce])        revert NonceUsed();
+        if (msg.sender != player)     revert InvalidSignature();
 
         // Verify server signature
-        bytes32 messageHash = _buildHash(player, bfGross, nonce, expiry);
-        address recovered   = _recover(messageHash, signature);
-        if (recovered != signer)               revert InvalidSignature();
+        bytes32 hash      = _buildHash(player, bfGross, nonce, expiry);
+        address recovered = _recover(hash, signature);
+        if (recovered != signer)      revert InvalidSignature();
 
         // Calculate split
-        uint256 potAmount    = (bfGross * POT_BPS) / BPS;   // 5%
-        uint256 playerAmount = bfGross - potAmount;           // 95%
+        uint256 potAmount    = (bfGross * POT_BPS)  / BPS;  //  4.5%
+        uint256 burnAmount   = (bfGross * BURN_BPS) / BPS;  //  1.0%
+        uint256 playerAmount = bfGross - potAmount - burnAmount; // 94.5%
 
-        // Check vault has enough for the full gross amount
+        // Check vault balance covers full gross
         if (bfToken.balanceOf(vault) < bfGross) revert InsufficientVaultBalance();
 
         // Mark nonce used BEFORE transfers (re-entrancy safety)
         usedNonces[nonce] = true;
 
-        // Transfer 95% → player
-        bool ok1 = bfToken.transferFrom(vault, player, playerAmount);
-        if (!ok1) revert TransferFailed();
+        // Transfer 94.5% → player
+        if (!bfToken.transferFrom(vault, player, playerAmount))    revert TransferFailed();
+        // Transfer  4.5% → pot
+        if (!bfToken.transferFrom(vault, potWallet, potAmount))    revert TransferFailed();
+        // Transfer  1.0% → burn
+        if (!bfToken.transferFrom(vault, burnWallet, burnAmount))  revert TransferFailed();
 
-        // Transfer 5% → pot
-        bool ok2 = bfToken.transferFrom(vault, potWallet, potAmount);
-        if (!ok2) revert TransferFailed();
-
-        emit PrizeClaimed(player, playerAmount, potAmount, nonce);
+        emit PrizeClaimed(player, playerAmount, potAmount, burnAmount, nonce);
     }
 
-    // ── View: validate a claim before submitting ─────────────────────────────
+    // ── View: validate before submitting ────────────────────────────────────
 
     function isClaimValid(
         address player,
@@ -156,17 +177,27 @@ contract BFPayout {
         uint256 expiry,
         bytes calldata signature
     ) external view returns (bool valid, string memory reason) {
-        if (paused)                                    return (false, "paused");
-        if (bfGross == 0)                              return (false, "zero amount");
-        if (block.timestamp > expiry)                  return (false, "expired");
-        if (usedNonces[nonce])                         return (false, "nonce used");
-        if (bfToken.balanceOf(vault) < bfGross)        return (false, "insufficient vault balance");
-
-        bytes32 messageHash = _buildHash(player, bfGross, nonce, expiry);
-        address recovered   = _recover(messageHash, signature);
-        if (recovered != signer)                       return (false, "invalid signature");
-
+        if (paused)                                  return (false, "paused");
+        if (bfGross == 0)                            return (false, "zero amount");
+        if (block.timestamp > expiry)                return (false, "expired");
+        if (usedNonces[nonce])                       return (false, "nonce used");
+        if (bfToken.balanceOf(vault) < bfGross)      return (false, "insufficient vault balance");
+        bytes32 hash      = _buildHash(player, bfGross, nonce, expiry);
+        address recovered = _recover(hash, signature);
+        if (recovered != signer)                     return (false, "invalid signature");
         return (true, "ok");
+    }
+
+    // ── View: split preview ──────────────────────────────────────────────────
+
+    function previewSplit(uint256 bfGross) external pure returns (
+        uint256 playerAmount,
+        uint256 potAmount,
+        uint256 burnAmount
+    ) {
+        potAmount    = (bfGross * POT_BPS)  / BPS;
+        burnAmount   = (bfGross * BURN_BPS) / BPS;
+        playerAmount = bfGross - potAmount - burnAmount;
     }
 
     // ── Admin ────────────────────────────────────────────────────────────────
@@ -186,6 +217,12 @@ contract BFPayout {
         potWallet = _pot;
     }
 
+    /// @notice Update burn address — use when switching to actual burn address
+    function setBurnWallet(address _burn) external onlyOwner {
+        emit BurnWalletUpdated(burnWallet, _burn);
+        burnWallet = _burn;
+    }
+
     function setPaused(bool _paused) external onlyOwner {
         paused = _paused;
         emit Paused(_paused);
@@ -197,8 +234,7 @@ contract BFPayout {
 
     /// @notice Emergency: pull BF held directly by this contract (not the vault)
     function emergencyWithdraw(address to, uint256 amount) external onlyOwner {
-        bool ok = bfToken.transfer(to, amount);
-        if (!ok) revert TransferFailed();
+        if (!bfToken.transfer(to, amount)) revert TransferFailed();
         emit EmergencyWithdraw(to, amount);
     }
 
@@ -211,8 +247,8 @@ contract BFPayout {
         uint256 expiry
     ) internal view returns (bytes32) {
         bytes32 raw = keccak256(abi.encodePacked(
-            block.chainid,   // anti cross-chain replay
-            address(this),   // anti cross-contract replay
+            block.chainid,  // anti cross-chain replay
+            address(this),  // anti cross-contract replay
             player,
             bfGross,
             nonce,
