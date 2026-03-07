@@ -3,7 +3,7 @@ import { useState, useEffect, useRef, useCallback } from "react";
 import { FarcasterUser } from "@/hooks/useFarcaster";
 import { DIFFICULTY_CONFIG, PRIZE_PER_POINT, type Difficulty } from "./App";
 import { BF_PER_USDC_FALLBACK } from "@/lib/pricing";
-import { payGameFee, claimPrize, getAddress } from "@/lib/payments";
+import { payGameFee, getAddress } from "@/lib/payments";
 import { sdk } from "@farcaster/miniapp-sdk";
 
 interface Bee {
@@ -82,10 +82,6 @@ export default function GameScreen({ user, difficulty, onGameEnd }: Props) {
   const [gameState, setGameState] = useState<"countdown" | "playing" | "ended">("countdown");
   const [countdown, setCountdown] = useState(3);
   const [hitEffects, setHitEffects] = useState<{ id: number; slot: number; text: string }[]>([]);
-  const [paymentStatus, setPaymentStatus] = useState<"pending" | "paid" | "failed">("pending");
-  const [paymentError, setPaymentError] = useState<string | null>(null);
-  const [paymentErrorCode, setPaymentErrorCode] = useState<string | null>(null);
-  const [paymentNote, setPaymentNote] = useState<string | null>(null);
   const [feeStatus, setFeeStatus] = useState<"waiting" | "paying" | "paid" | "failed">("waiting");
   const [feeError, setFeeError] = useState<string | null>(null);
   const [gameStarted, setGameStarted] = useState(false);
@@ -306,36 +302,8 @@ export default function GameScreen({ user, difficulty, onGameEnd }: Props) {
       console.error("Submit score error:", e);
     }
 
-    // Pay prize if player scored
-    if (prize > 0) {
-      if (address) {
-        const result = await claimPrize(address, prize);
-        if (result.success) {
-          setPaymentStatus("paid");
-          setPaymentError(null);
-          setPaymentErrorCode(null);
-          const potLabel = result.potStatus === "added" ? "added" : "not added";
-          setPaymentNote(`Prize: paid · Pot: ${potLabel}`);
-        } else {
-          setPaymentStatus("failed");
-          const fallbackError = `Prize: ${result.prizeStatus === "paid" ? "paid" : "not paid"} · Pot: ${result.potStatus === "added" ? "added" : "not added"}`;
-          setPaymentError(result.error || fallbackError);
-          setPaymentErrorCode(result.errorCode || null);
-          const potLabel = result.potStatus === "added" ? "added" : "not added";
-          setPaymentNote(`Prize: not paid · Pot: ${potLabel}`);
-        }
-      } else {
-        setPaymentStatus("failed");
-        setPaymentError("No wallet connected");
-        setPaymentErrorCode("NO_WALLET");
-        setPaymentNote(null);
-      }
-    } else {
-      setPaymentStatus("paid");
-      setPaymentError(null);
-      setPaymentErrorCode(null);
-      setPaymentNote("No payout required");
-    }
+    // End-game payout disabled temporarily: score is recorded only.
+    void prize;
 
   }
 
@@ -418,11 +386,6 @@ export default function GameScreen({ user, difficulty, onGameEnd }: Props) {
     const finalPrizeBfNet = Math.round(finalPrizeBfGross * 0.95);
     const capMaxPts = capScoreRef.current;
     const pct = Math.round((shownScore / capMaxPts) * 100);
-    const shortPaymentError = paymentError
-      ? (paymentError.includes("replacement transaction underpriced")
-        ? "Network busy. Please try again later."
-        : paymentError.split("\n")[0].slice(0, 220))
-      : null;
     const ticketEstimate = Math.max(
       1,
       1 + Math.floor(shownScore / 1000) + Math.floor(cfg.fee / 0.25)
@@ -471,25 +434,7 @@ export default function GameScreen({ user, difficulty, onGameEnd }: Props) {
             <div className="text-xs text-purple-300 mt-1">Super bonus +{Math.round(bonusRef.current * bfPerUsdc)} BF</div>
           )}
 
-          {finalPrizeBfNet > 0 && (
-            <div className={`mt-3 text-xs font-bold rounded-lg p-2 ${
-              paymentStatus === "paid" ? "bg-green-900 text-green-300" :
-              paymentStatus === "failed" ? "bg-red-900 text-red-300" :
-              "bg-amber-900 text-amber-300"
-            }`}>
-              {paymentStatus === "paid" ? `✅ ${paymentNote || "Payment sent"}` :
-               paymentStatus === "failed" ? "❌ Payment error" :
-               "⏳ Processing..."}
-            </div>
-          )}
-          {paymentStatus === "failed" && paymentError && (
-            <div className="mt-2 text-[11px] text-red-300 whitespace-pre-wrap break-words">
-              {paymentErrorCode ? `[${paymentErrorCode}] ` : ""}{shortPaymentError}
-            </div>
-          )}
-          {paymentStatus === "failed" && paymentNote && (
-            <div className="mt-1 text-[11px] text-amber-300">{paymentNote}</div>
-          )}
+          <div className="mt-3 text-[11px] text-amber-500">End-game payout disabled temporarily</div>
         </div>
 
         <button

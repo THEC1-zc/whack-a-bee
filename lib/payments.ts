@@ -10,7 +10,6 @@ import {
   fromUSDCUnits,
 } from "./contracts";
 
-const DEFAULT_APP_URL = "https://whack-a-bee.vercel.app";
 
 function getErrorMessage(error: unknown, fallback: string) {
   if (error instanceof Error && error.message) return error.message;
@@ -187,58 +186,16 @@ export async function claimPrize(
   errorCode?: string;
   details?: unknown;
 }> {
-  const configuredAppUrl =
-    process.env.NEXT_PUBLIC_APP_URL || DEFAULT_APP_URL;
-  const absolutePayoutUrl = `${configuredAppUrl.replace(/\/$/, "")}/api/payout`;
-  const endpoints = ["/api/payout", absolutePayoutUrl];
-  let lastError = "Payout request failed";
-
-  try {
-    for (const endpoint of endpoints) {
-      try {
-        const response = await fetch(endpoint, {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({
-            recipient: recipientAddress,
-            amount: prizeAmount,
-          }),
-        });
-
-        const data = await response.json().catch(() => ({}));
-        if (!response.ok) {
-          return {
-            success: false,
-            error: data?.error || `Payout failed (${response.status})`,
-            errorCode: typeof data?.errorCode === "string" ? data.errorCode : undefined,
-            details: data?.details,
-            prizeStatus: data?.prizeStatus,
-            potStatus: data?.potStatus,
-            prizeReason: data?.prizeReason || null,
-            potReason: data?.potReason || null,
-          };
-        }
-
-        const prizeStatus: "paid" | "notpaid" =
-          data?.prizeStatus === "paid" ? "paid" : "notpaid";
-        return {
-          success: prizeStatus === "paid",
-          txHash: data.txHash,
-          bfAmount: data.bfAmount,
-          payoutToken: data.payoutToken,
-          prizeStatus,
-          potStatus: data?.potStatus === "added" ? "added" : "notadded",
-          prizeReason: data?.prizeReason || null,
-          potReason: data?.potReason || null,
-          error: prizeStatus === "paid" ? undefined : (data?.prizeReason || "Prize not paid"),
-        };
-      } catch (e: unknown) {
-        lastError = getErrorMessage(e, "Payout request failed");
-      }
-    }
-
-    return { success: false, error: lastError };
-  } catch (e: unknown) {
-    return { success: false, error: getErrorMessage(e, "Payout request failed") };
-  }
+  void recipientAddress;
+  void prizeAmount;
+  return {
+    success: false,
+    error: "End-game payout is disabled",
+    errorCode: "PAYOUT_DISABLED",
+    payoutToken: "BF",
+    prizeStatus: "notpaid",
+    potStatus: "notadded",
+    prizeReason: "winner payout disabled",
+    potReason: "pot payout disabled",
+  };
 }

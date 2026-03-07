@@ -81,3 +81,5 @@ Original prompt: end game: aggiungiamo pulsante share to farcaster, che pubblich
   - Winner payout now prefers BF but automatically falls back to USDC when BF path reverts or BF pool is not eligible.
   - Added clearer structured failure message when both BF and USDC fallback fail.
   - Added payout token indicator (`payoutToken`) in API response and richer warning aggregation.
+
+- Disabled end-game payout completely: frontend no longer attempts winner/pot payout, `claimPrize` short-circuits as disabled, and `/api/payout` returns 410 `PAYOUT_DISABLED`. Rebuild payout flow from zero in a later push.
