@@ -150,7 +150,6 @@ export default function App() {
   const cfg = DIFFICULTY_CONFIG[difficulty];
   const poolEmpty = !poolLoading && poolConfigured && poolBalanceBf < MIN_POOL_BALANCE_BF;
   const poolUnavailable = !poolLoading && !poolConfigured;
-  const poolDisabled = poolEmpty || poolUnavailable;
   const liveBfPerUsdc = bfPerUsdc ?? BF_PER_USDC_FALLBACK;
   const bfPerPoint = PRIZE_PER_POINT * liveBfPerUsdc;
 
@@ -232,7 +231,7 @@ export default function App() {
           {poolLoading ? "..." : poolUnavailable ? "—" : `${Math.round(poolBalanceBf).toLocaleString()} BF`}
         </div>
         {poolEmpty && (
-          <div className="text-red-400 text-xs text-center mt-1">Game temporarily suspended</div>
+          <div className="text-red-400 text-xs text-center mt-1">Displayed for info only while end-game payout is disabled</div>
         )}
         {poolUnavailable && (
           <div className="text-red-400 text-xs text-center mt-1">Pool not configured</div>
@@ -331,15 +330,14 @@ export default function App() {
       {/* Play button */}
       <button
         type="button"
-        disabled={poolDisabled}
         onClick={() => setScreen("game")}
         className="w-full max-w-sm py-5 rounded-2xl text-xl font-black text-black transition-all active:scale-95 disabled:opacity-40"
         style={{
-          background: poolDisabled ? "#555" : `linear-gradient(135deg, #fbbf24, #f59e0b)`,
-          boxShadow: poolDisabled ? "none" : "0 8px 30px rgba(251,191,36,0.4)"
+          background: `linear-gradient(135deg, #fbbf24, #f59e0b)`,
+          boxShadow: "0 8px 30px rgba(251,191,36,0.4)"
         }}
       >
-        {poolUnavailable ? "Pool Unavailable" : poolEmpty ? "Pool Empty 😔" : `PLAY — ${cfg.fee} USDC 🦋`}
+        {`PLAY — ${cfg.fee} USDC 🦋`}
       </button>
 
       {/* Quick rules */}
@@ -414,7 +412,7 @@ export default function App() {
 
       {/* Disclaimer */}
       <div className="w-full max-w-sm text-[11px] text-amber-700 text-center leading-relaxed">
-        This game is for pure fun only. It is playable as long as there is prize pool available.
+        This game is playable even while end-game payout is disabled.
         It could end anytime or be paused. Under construction — it may change without notice.
       </div>
     </div>
@@ -427,7 +425,7 @@ function NotConnected() {
       <div className="text-6xl mb-4">🦋</div>
       <h1 className="text-2xl font-black text-white mb-2">Whack-a-Butterfly</h1>
       <p className="text-amber-400 text-sm mb-6">Open this app from Warpcast to play!</p>
-      <div className="text-xs text-amber-800 max-w-xs">Search "Whack-a-Butterfly" on Warpcast or open it via a cast.</div>
+      <div className="text-xs text-amber-800 max-w-xs">Search &quot;Whack-a-Butterfly&quot; on Warpcast or open it via a cast.</div>
     </div>
   );
 }
