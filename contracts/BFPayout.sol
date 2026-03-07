@@ -6,18 +6,20 @@ pragma solidity ^0.8.20;
  * @notice Whack-a-Butterfly prize claim contract.
  *
  * Flow:
- *   1. Game server signs a claim: (player, bfAmount, nonce, expiry)
+ *   1. Game server signs a claim: (player, bfGross, nonce, expiry)
+ *      where bfGross = full prize BEFORE the 5% pot split
  *   2. Player calls claimPrize() on-chain — pays their own gas
- *   3. Contract verifies the signature, then transfers BF from the vault
+ *   3. Contract splits automatically:
+ *        95% → player
+ *         5% → potWallet
  *
- * The vault (PRIZE_WALLET) must approve this contract to spend its BF:
+ * The vault (PRIZE_WALLET / 0xFd...92Df) must approve this contract:
  *   BF.approve(address(BFPayout), type(uint256).max)  ← one-time setup
  *
- * Security:
- *   - Each claim has a unique nonce → no replay
- *   - Claims expire after `expiry` timestamp → no stale claims
- *   - Only the designated signer (server key) can authorize claims
- *   - Owner can rotate signer, pause, or emergency-withdraw
+ * Wallets:
+ *   player  (0x...1cDe) — receives 95% of prize
+ *   prize   (0x...92Df) — vault holding BF tokens
+ *   pot     (0x...88e0) — receives 5%, paid out weekly
  */
 
 interface IERC20 {
@@ -28,30 +30,40 @@ interface IERC20 {
 
 contract BFPayout {
 
+    // ── Constants ────────────────────────────────────────────────────────────
+
+    uint256 public constant POT_BPS = 500;   // 5% in basis points
+    uint256 public constant BPS     = 10000;
+
     // ── State ────────────────────────────────────────────────────────────────
 
     address public owner;
-    address public signer;       // server-side signing key
-    address public vault;        // PRIZE_WALLET — holds the BF tokens
+    address public signer;      // server-side signing key (PAYOUT_SIGNER_KEY)
+    address public vault;       // PRIZE_WALLET (0x...92Df) — holds BF
+    address public potWallet;   // POT_WALLET   (0x...88e0) — receives 5%
     IERC20  public bfToken;
 
     bool public paused;
 
-    // nonce → claimed
     mapping(bytes32 => bool) public usedNonces;
 
     // ── Events ───────────────────────────────────────────────────────────────
 
-    event PrizeClaimed(address indexed player, uint256 bfAmount, bytes32 nonce);
+    event PrizeClaimed(
+        address indexed player,
+        uint256 playerAmount,
+        uint256 potAmount,
+        bytes32 nonce
+    );
     event SignerUpdated(address indexed oldSigner, address indexed newSigner);
     event VaultUpdated(address indexed oldVault, address indexed newVault);
+    event PotWalletUpdated(address indexed oldPot, address indexed newPot);
     event Paused(bool paused);
     event EmergencyWithdraw(address indexed to, uint256 amount);
 
     // ── Errors ───────────────────────────────────────────────────────────────
 
     error NotOwner();
-    error NotSigner();
     error InvalidSignature();
     error NonceUsed();
     error ClaimExpired();
@@ -62,11 +74,17 @@ contract BFPayout {
 
     // ── Constructor ──────────────────────────────────────────────────────────
 
-    constructor(address _bfToken, address _vault, address _signer) {
-        owner   = msg.sender;
-        bfToken = IERC20(_bfToken);
-        vault   = _vault;
-        signer  = _signer;
+    constructor(
+        address _bfToken,
+        address _vault,
+        address _potWallet,
+        address _signer
+    ) {
+        owner     = msg.sender;
+        bfToken   = IERC20(_bfToken);
+        vault     = _vault;
+        potWallet = _potWallet;
+        signer    = _signer;
     }
 
     // ── Modifiers ────────────────────────────────────────────────────────────
@@ -84,62 +102,69 @@ contract BFPayout {
     // ── Core: claim prize ────────────────────────────────────────────────────
 
     /**
-     * @notice Claim a BF prize.
-     * @param player     Recipient address (must match msg.sender)
-     * @param bfAmount   Amount of BF tokens (18 decimals)
-     * @param nonce      Unique claim ID (generated server-side, e.g. keccak of gameId)
-     * @param expiry     Unix timestamp after which the claim is invalid
+     * @notice Claim a BF prize. Splits 95% to player, 5% to pot automatically.
+     * @param player     Recipient address (must be msg.sender)
+     * @param bfGross    Total BF amount BEFORE split (18 decimals)
+     * @param nonce      Unique claim ID (keccak of gameId, server-generated)
+     * @param expiry     Unix timestamp — claim invalid after this
      * @param signature  ECDSA signature from the trusted signer
      */
     function claimPrize(
         address player,
-        uint256 bfAmount,
+        uint256 bfGross,
         bytes32 nonce,
         uint256 expiry,
         bytes calldata signature
     ) external whenNotPaused {
-        // Basic checks
-        if (bfAmount == 0)                    revert ZeroAmount();
-        if (block.timestamp > expiry)         revert ClaimExpired();
-        if (usedNonces[nonce])                revert NonceUsed();
-        if (msg.sender != player)             revert InvalidSignature(); // player must self-claim
+        if (bfGross == 0)                      revert ZeroAmount();
+        if (block.timestamp > expiry)          revert ClaimExpired();
+        if (usedNonces[nonce])                 revert NonceUsed();
+        if (msg.sender != player)              revert InvalidSignature();
 
-        // Verify signature
-        bytes32 messageHash = _buildHash(player, bfAmount, nonce, expiry);
+        // Verify server signature
+        bytes32 messageHash = _buildHash(player, bfGross, nonce, expiry);
         address recovered   = _recover(messageHash, signature);
-        if (recovered != signer)              revert InvalidSignature();
+        if (recovered != signer)               revert InvalidSignature();
 
-        // Check vault has enough
-        if (bfToken.balanceOf(vault) < bfAmount) revert InsufficientVaultBalance();
+        // Calculate split
+        uint256 potAmount    = (bfGross * POT_BPS) / BPS;   // 5%
+        uint256 playerAmount = bfGross - potAmount;           // 95%
 
-        // Mark nonce used before transfer (re-entrancy safety)
+        // Check vault has enough for the full gross amount
+        if (bfToken.balanceOf(vault) < bfGross) revert InsufficientVaultBalance();
+
+        // Mark nonce used BEFORE transfers (re-entrancy safety)
         usedNonces[nonce] = true;
 
-        // Transfer BF from vault → player
-        bool ok = bfToken.transferFrom(vault, player, bfAmount);
-        if (!ok) revert TransferFailed();
+        // Transfer 95% → player
+        bool ok1 = bfToken.transferFrom(vault, player, playerAmount);
+        if (!ok1) revert TransferFailed();
 
-        emit PrizeClaimed(player, bfAmount, nonce);
+        // Transfer 5% → pot
+        bool ok2 = bfToken.transferFrom(vault, potWallet, potAmount);
+        if (!ok2) revert TransferFailed();
+
+        emit PrizeClaimed(player, playerAmount, potAmount, nonce);
     }
 
-    // ── View: check if a claim is still valid ────────────────────────────────
+    // ── View: validate a claim before submitting ─────────────────────────────
 
     function isClaimValid(
         address player,
-        uint256 bfAmount,
+        uint256 bfGross,
         bytes32 nonce,
         uint256 expiry,
         bytes calldata signature
     ) external view returns (bool valid, string memory reason) {
-        if (paused)                              return (false, "paused");
-        if (bfAmount == 0)                       return (false, "zero amount");
-        if (block.timestamp > expiry)            return (false, "expired");
-        if (usedNonces[nonce])                   return (false, "nonce used");
-        if (bfToken.balanceOf(vault) < bfAmount) return (false, "insufficient vault balance");
+        if (paused)                                    return (false, "paused");
+        if (bfGross == 0)                              return (false, "zero amount");
+        if (block.timestamp > expiry)                  return (false, "expired");
+        if (usedNonces[nonce])                         return (false, "nonce used");
+        if (bfToken.balanceOf(vault) < bfGross)        return (false, "insufficient vault balance");
 
-        bytes32 messageHash = _buildHash(player, bfAmount, nonce, expiry);
+        bytes32 messageHash = _buildHash(player, bfGross, nonce, expiry);
         address recovered   = _recover(messageHash, signature);
-        if (recovered != signer)                 return (false, "invalid signature");
+        if (recovered != signer)                       return (false, "invalid signature");
 
         return (true, "ok");
     }
@@ -156,6 +181,11 @@ contract BFPayout {
         vault = _vault;
     }
 
+    function setPotWallet(address _pot) external onlyOwner {
+        emit PotWalletUpdated(potWallet, _pot);
+        potWallet = _pot;
+    }
+
     function setPaused(bool _paused) external onlyOwner {
         paused = _paused;
         emit Paused(_paused);
@@ -165,32 +195,29 @@ contract BFPayout {
         owner = newOwner;
     }
 
-    /// @notice Emergency: pull BF directly out of the contract (not the vault)
+    /// @notice Emergency: pull BF held directly by this contract (not the vault)
     function emergencyWithdraw(address to, uint256 amount) external onlyOwner {
         bool ok = bfToken.transfer(to, amount);
         if (!ok) revert TransferFailed();
         emit EmergencyWithdraw(to, amount);
     }
 
-    // ── Internal: EIP-191 signing ────────────────────────────────────────────
+    // ── Internal: EIP-191 hash ───────────────────────────────────────────────
 
     function _buildHash(
         address player,
-        uint256 bfAmount,
+        uint256 bfGross,
         bytes32 nonce,
         uint256 expiry
     ) internal view returns (bytes32) {
-        // EIP-191: "\x19Ethereum Signed Message:\n32" prefix
-        bytes32 raw = keccak256(
-            abi.encodePacked(
-                block.chainid,   // replay protection across chains
-                address(this),   // replay protection across contract instances
-                player,
-                bfAmount,
-                nonce,
-                expiry
-            )
-        );
+        bytes32 raw = keccak256(abi.encodePacked(
+            block.chainid,   // anti cross-chain replay
+            address(this),   // anti cross-contract replay
+            player,
+            bfGross,
+            nonce,
+            expiry
+        ));
         return keccak256(abi.encodePacked("\x19Ethereum Signed Message:\n32", raw));
     }
 
