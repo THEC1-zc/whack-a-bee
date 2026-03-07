@@ -169,8 +169,28 @@ export async function payGameFee(
   }
 }
 
-// Pay prize to winner: called from backend API (server-side)
-// This is a placeholder - real payout needs a backend wallet with USDC
+// ABI minimo per BFPayout.claimPrize
+const BFPAYOUT_ABI = [
+  {
+    name: "claimPrize",
+    type: "function",
+    stateMutability: "nonpayable",
+    inputs: [
+      { name: "player",    type: "address" },
+      { name: "bfGross",   type: "uint256" },
+      { name: "nonce",     type: "bytes32" },
+      { name: "expiry",    type: "uint256" },
+      { name: "signature", type: "bytes"   },
+    ],
+    outputs: [],
+  },
+] as const;
+
+/**
+ * Step 1: chiama /api/payout per ottenere la firma server-side
+ * Step 2: chiama claimPrize() sul contratto BFPayout — player paga gas
+ * Il contratto splitta automaticamente: 94.5% player / 4.5% pot / 1% burn
+ */
 export async function claimPrize(
   recipientAddress: `0x${string}`,
   prizeAmount: number
@@ -187,58 +207,100 @@ export async function claimPrize(
   errorCode?: string;
   details?: unknown;
 }> {
-  const configuredAppUrl =
-    process.env.NEXT_PUBLIC_APP_URL || DEFAULT_APP_URL;
-  const absolutePayoutUrl = `${configuredAppUrl.replace(/\/$/, "")}/api/payout`;
-  const endpoints = ["/api/payout", absolutePayoutUrl];
-  let lastError = "Payout request failed";
-
   try {
-    for (const endpoint of endpoints) {
-      try {
-        const response = await fetch(endpoint, {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({
-            recipient: recipientAddress,
-            amount: prizeAmount,
-          }),
-        });
+    // Step 1 — chiedi firma al backend
+    const response = await fetch("/api/payout", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ recipient: recipientAddress, amount: prizeAmount }),
+    });
 
-        const data = await response.json().catch(() => ({}));
-        if (!response.ok) {
-          return {
-            success: false,
-            error: data?.error || `Payout failed (${response.status})`,
-            errorCode: typeof data?.errorCode === "string" ? data.errorCode : undefined,
-            details: data?.details,
-            prizeStatus: data?.prizeStatus,
-            potStatus: data?.potStatus,
-            prizeReason: data?.prizeReason || null,
-            potReason: data?.potReason || null,
-          };
-        }
+    const data = await response.json().catch(() => ({}));
 
-        const prizeStatus: "paid" | "notpaid" =
-          data?.prizeStatus === "paid" ? "paid" : "notpaid";
-        return {
-          success: prizeStatus === "paid",
-          txHash: data.txHash,
-          bfAmount: data.bfAmount,
-          payoutToken: data.payoutToken,
-          prizeStatus,
-          potStatus: data?.potStatus === "added" ? "added" : "notadded",
-          prizeReason: data?.prizeReason || null,
-          potReason: data?.potReason || null,
-          error: prizeStatus === "paid" ? undefined : (data?.prizeReason || "Prize not paid"),
-        };
-      } catch (e: unknown) {
-        lastError = getErrorMessage(e, "Payout request failed");
-      }
+    if (!response.ok || !data.ok) {
+      return {
+        success: false,
+        error: data?.error || `Payout signing failed (${response.status})`,
+        errorCode: data?.errorCode || "SIGN_FAILED",
+        payoutToken: "BF",
+        prizeStatus: "notpaid",
+        potStatus: "notadded",
+        prizeReason: data?.error || null,
+        potReason: null,
+      };
     }
 
-    return { success: false, error: lastError };
+    const { bfGross, nonce, expiry, signature, contractAddress } = data;
+
+    // Step 2 — chiama claimPrize() on-chain (player paga gas)
+    const chainCheck = await ensureBaseChain();
+    if (!chainCheck.ok) {
+      return { success: false, error: chainCheck.error, errorCode: "WRONG_CHAIN", prizeStatus: "notpaid", potStatus: "notadded" };
+    }
+
+    const walletClient = getWalletClient();
+    const [address] = await walletClient.requestAddresses();
+    if (!address) {
+      return { success: false, error: "No wallet connected", errorCode: "NO_WALLET", prizeStatus: "notpaid", potStatus: "notadded" };
+    }
+
+    const txHash = await walletClient.writeContract({
+      address: contractAddress as `0x${string}`,
+      abi: BFPAYOUT_ABI,
+      functionName: "claimPrize",
+      args: [
+        recipientAddress,
+        BigInt(bfGross),
+        nonce as `0x${string}`,
+        BigInt(expiry),
+        signature as `0x${string}`,
+      ],
+      account: address,
+    });
+
+    // Step 3 — aspetta conferma on-chain
+    const publicClient = getPublicClient();
+    const receipt = await publicClient.waitForTransactionReceipt({ hash: txHash });
+
+    if (receipt.status === "reverted") {
+      return {
+        success: false,
+        txHash,
+        error: "Transaction reverted on-chain",
+        errorCode: "TX_REVERTED",
+        prizeStatus: "notpaid",
+        potStatus: "notadded",
+      };
+    }
+
+    return {
+      success: true,
+      txHash,
+      payoutToken: "BF",
+      prizeStatus: "paid",
+      potStatus: "added",
+      bfAmount: data.split?.playerBf,
+      prizeReason: null,
+      potReason: null,
+    };
+
   } catch (e: unknown) {
-    return { success: false, error: getErrorMessage(e, "Payout request failed") };
+    const msg = getErrorMessage(e, "Claim failed");
+    if (msg.includes("rejected") || msg.includes("denied") || msg.includes("cancel")) {
+      return {
+        success: false,
+        error: "Transaction cancelled",
+        errorCode: "USER_REJECTED",
+        prizeStatus: "notpaid",
+        potStatus: "notadded",
+      };
+    }
+    return {
+      success: false,
+      error: msg,
+      errorCode: "CLAIM_ERROR",
+      prizeStatus: "notpaid",
+      potStatus: "notadded",
+    };
   }
 }
