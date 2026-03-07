@@ -10,7 +10,7 @@ import {
   PRIZE_WALLET,
 } from "@/lib/contracts";
 import { bfToUsdc, usdcToBf } from "@/lib/pricing";
-import { addWeeklyPot, getWeeklyMeta } from "@/lib/weekly";
+import { getWeeklyMeta } from "@/lib/weekly";
 import { logTxRecord } from "@/lib/txLedger";
 
 const PRIZE_PRIVATE_KEY = process.env.PRIZE_WALLET_PRIVATE_KEY;
@@ -132,10 +132,8 @@ export async function POST(req: NextRequest) {
     const poolBalanceBf = fromBFUnits(poolBalance as bigint);
     const bfAmount = await usdcToBf(amount);
     const bfAmountUnits = toBFUnits(bfAmount);
-    const playerAmountUnits = (bfAmountUnits * BigInt(95)) / BigInt(100);
-    const potAmountUnits = bfAmountUnits - playerAmountUnits;
+    const playerAmountUnits = bfAmountUnits;
     const playerAmount = fromBFUnits(playerAmountUnits);
-    const potAmount = fromBFUnits(potAmountUnits);
 
     const recipientAddress = recipient as `0x${string}`;
     const recipientCode = await publicClient.getCode({ address: recipientAddress });
@@ -209,11 +207,11 @@ export async function POST(req: NextRequest) {
     const { weekId } = getWeeklyMeta();
 
     let prizeStatus: "paid" | "notpaid" = "notpaid";
-    let potStatus: "added" | "notadded" = "notadded";
+    const potStatus: "added" | "notadded" = "notadded";
     let prizeTxHash: `0x${string}` | null = null;
-    let potTxHash: `0x${string}` | null = null;
+    const potTxHash: `0x${string}` | null = null;
     let prizeReason: string | null = null;
-    let potReason: string | null = null;
+    const potReason: string | null = "pot disabled (temporary 100% payout to player)";
 
     if (bfPoolEligible) {
       try {
@@ -264,35 +262,7 @@ export async function POST(req: NextRequest) {
       });
     }
 
-    try {
-      potTxHash = await sendTransfer(POT_WALLET, potAmountUnits, "pot");
-      await addWeeklyPot(potAmount);
-      potStatus = "added";
-      await logTxRecord({
-        kind: "game_pot_in",
-        status: "ok",
-        weekId,
-        to: POT_WALLET,
-        amountBf: potAmount,
-        txHash: potTxHash,
-        stage: "pot_transfer",
-      });
-    } catch (potError: unknown) {
-      potReason = extractErrorMessage(potError);
-      await logTxRecord({
-        kind: "payout_error",
-        status: "failed",
-        weekId,
-        to: POT_WALLET,
-        amountBf: potAmount,
-        stage: "pot_transfer",
-        reason: potReason,
-        meta: {
-          senderBfBalance,
-          potWalletBfBalance,
-        },
-      });
-    }
+    // Pot transfer disabled temporarily: 100% payout to player.
 
     return jsonWithCors({
       ok: prizeStatus === "paid",
