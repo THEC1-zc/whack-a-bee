@@ -62,9 +62,19 @@ DIFFICULTY_CONFIG:
 ## Contratto BFPayout
 - Indirizzo: `0xCdfdbB8B93d8a02319434abA5CC69b31a746ef1D`
 - Split: 94.5% player / 4.5% pot / 1% burn
-- Vault deve fare `BF.approve(contratto, MaxUint256)` — ancora da fare
-- Serve env var `PAYOUT_SIGNER_PRIVATE_KEY` (nuova chiave vuota) su Vercel
-- Serve env var `NEXT_PUBLIC_BFPAYOUT_CONTRACT=0xCdfdbB8B93d8a02319434abA5CC69b31a746ef1D` su Vercel
+- Signer pubblico: `0xFD3e2D8a185FA610F81b737F57c2fb547E73d2F8`
+- `BF.approve(contratto, MaxUint256)` ✅ fatto dal PRIZE_WALLET
+- `setSigner(0xFD3e...2F8)` ✅ fatto
+- Env var `PAYOUT_SIGNER_PRIVATE_KEY` ✅ su Vercel
+- Env var `NEXT_PUBLIC_BFPAYOUT_CONTRACT` ✅ su Vercel
+
+## Flusso payout (nuovo)
+1. Fine partita → GameScreen chiama `claimPrize(address, prizeUsdc)`
+2. `lib/payments.ts` → POST `/api/payout` con `{recipient, amount}`
+3. Backend firma `(player, bfGross, nonce, expiry)` con `PAYOUT_SIGNER_PRIVATE_KEY`
+4. Frontend riceve firma → chiama `BFPayout.claimPrize()` on-chain
+5. Player paga gas (~0.0001 ETH) → contratto splitta 94.5/4.5/1 in una tx atomica
+6. Zero ETH necessario nel PRIZE_WALLET o POT_WALLET
 
 ## Bug noti / In lavorazione
 - **Payout BF che reversa**: nonce stuck a 353. Fix applicato (encodeFunctionData + sendTransaction diretto, realtimeBalanceOf, nonce sequenziale). Causa root ancora da confermare — in attesa di tx hash fallita per analisi su BaseScan.
