@@ -279,7 +279,7 @@ export default function GameScreen({ user, difficulty, onGameEnd }: Props) {
   async function handleGameEnd() {
     const finalScore = scoreRef.current;
     const adjustedScore = finalScore;
-    const prizeBase = adjustedScore * PRIZE_PER_POINT;
+    const prizeBase = adjustedScore * PRIZE_PER_POINT[difficulty];
     const prize = parseFloat((prizeBase + bonusRef.current).toFixed(4));
     const fee = cfg.fee;
     const address = await getAddress();
@@ -341,7 +341,7 @@ export default function GameScreen({ user, difficulty, onGameEnd }: Props) {
 
   const timerPercent = (timeLeft / cfg.time) * 100;
   const timerColor = timeLeft > 8 ? "#fbbf24" : "#ef4444";
-  const prize = parseFloat(((score * PRIZE_PER_POINT) + bonusRef.current).toFixed(4));
+  const prize = parseFloat(((score * PRIZE_PER_POINT[difficulty]) + bonusRef.current).toFixed(4));
   const prizeBfGross = Math.round(prize * bfPerUsdc);
   const prizeBfNet = Math.round(prizeBfGross * 0.95);
 
@@ -369,7 +369,7 @@ export default function GameScreen({ user, difficulty, onGameEnd }: Props) {
             {capInfo.icon} {capInfo.label} — {capMultiplierRef.current}x
           </div>
           <div className="text-xs mt-1" style={{ color: isMegaJackpot ? "#a78bfa" : "#92400e" }}>
-            Max prize: {Math.round(Math.max(1, Math.floor(cfg.maxPts * capMultiplierRef.current)) * PRIZE_PER_POINT * 0.95 * 1000) / 1000} USDC
+            Max prize: {Math.round(Math.max(1, Math.floor(cfg.maxPts * capMultiplierRef.current)) * PRIZE_PER_POINT[difficulty] * 0.945 * 1000) / 1000} USDC
           </div>
           {isMegaJackpot && (
             <div className="text-purple-300 text-xs font-black mt-1 animate-pulse">💥 MEGA JACKPOT — 3× CAP + Super Bee 7.5%!</div>
@@ -413,7 +413,7 @@ export default function GameScreen({ user, difficulty, onGameEnd }: Props) {
 
   if (gameState === "ended") {
     const shownScore = scoreRef.current;
-    const finalPrizeUsdc = (shownScore * PRIZE_PER_POINT) + bonusRef.current;
+    const finalPrizeUsdc = (shownScore * PRIZE_PER_POINT[difficulty]) + bonusRef.current;
     const finalPrizeBfGross = Math.round(finalPrizeUsdc * bfPerUsdc);
     const finalPrizeBfNet = Math.round(finalPrizeBfGross * 0.95);
     const capMaxPts = capScoreRef.current;

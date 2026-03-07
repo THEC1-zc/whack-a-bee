@@ -47,7 +47,7 @@ export default function RulesScreen({ onBack }: { onBack: () => void }) {
                 <div className="grid grid-cols-3 gap-2 text-center">
                   <Stat label="Duration" value={`${cfg.time}s`} />
                   <Stat label="Max points" value={`${cfg.maxPts} pts`} />
-                  <Stat label="Max prize" value={`${(cfg.maxPts * PRIZE_PER_POINT).toFixed(3)} USDC`} />
+                  <Stat label="Max prize" value={`${(cfg.maxPts * PRIZE_PER_POINT[key as keyof typeof PRIZE_PER_POINT]).toFixed(3)} USDC`} />
                 </div>
               </div>
             ))}
@@ -59,7 +59,7 @@ export default function RulesScreen({ onBack }: { onBack: () => void }) {
           <div className="space-y-3">
             <div className="rounded-xl p-3 border border-green-900" style={{ background: "#0a1f0a" }}>
               <div className="text-green-400 font-bold text-sm mb-1">Reward per point</div>
-              <div className="text-green-300 text-2xl font-black">{(PRIZE_PER_POINT * BF_PER_USDC_FALLBACK).toFixed(0)} BF</div>
+              <div className="text-green-300 text-2xl font-black">{(PRIZE_PER_POINT.medium * BF_PER_USDC_FALLBACK).toFixed(0)} BF</div>
               <div className="text-green-700 text-xs mt-1">per point (approx, based on BF/USDC rate)</div>
             </div>
 
@@ -78,7 +78,7 @@ export default function RulesScreen({ onBack }: { onBack: () => void }) {
                 ].map(ex => (
                   <div key={ex.pts} className="flex justify-between text-sm">
                     <span className="text-amber-700">{ex.pts} pts ({ex.mode})</span>
-                    <span className="text-amber-400 font-bold">{Math.round(ex.pts * PRIZE_PER_POINT * BF_PER_USDC_FALLBACK)} BF</span>
+                    <span className="text-amber-400 font-bold">{Math.round(ex.pts * PRIZE_PER_POINT[ex.diff.toLowerCase() as keyof typeof PRIZE_PER_POINT] * BF_PER_USDC_FALLBACK)} BF</span>
                   </div>
                 ))}
               </div>

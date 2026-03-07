@@ -19,7 +19,14 @@ export const DIFFICULTY_CONFIG = {
   hard:   { label: "Hard",   emoji: "🔴", time: 20, maxPts: 80, fee: 0.035, color: "#dc2626" },
 };
 
-export const PRIZE_PER_POINT = 0.0008; // USDC
+// PPP calibrati per ROI medio +16-20% su giocatore skillato (75-90% del cap)
+// easy=+25% medio | medium=+20% | hard=+15%
+// Distribuzione attesa: ~28% pool vince / ~28% pari / ~44% player vince
+export const PRIZE_PER_POINT: Record<keyof typeof DIFFICULTY_CONFIG, number> = {
+  easy:   0.000522, // USDC per punto
+  medium: 0.000600,
+  hard:   0.000652,
+};
 export const PRIZE_WALLET = "0xFd144C774582a450a3F578ae742502ff11Ff92Df";
 export const MIN_POOL_BALANCE_BF = 100000;
 
@@ -152,7 +159,7 @@ export default function App() {
   const poolUnavailable = !poolLoading && !poolConfigured;
   const poolDisabled = poolEmpty || poolUnavailable;
   const liveBfPerUsdc = bfPerUsdc ?? BF_PER_USDC_FALLBACK;
-  const bfPerPoint = PRIZE_PER_POINT * liveBfPerUsdc;
+  const bfPerPoint = PRIZE_PER_POINT[difficulty] * liveBfPerUsdc;
 
   return (
     <div className="min-h-dvh flex flex-col items-center p-5 gap-4"

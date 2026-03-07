@@ -1,0 +1,120 @@
+{
+	"compiler": {
+		"version": "0.8.30+commit.73712a01"
+	},
+	"language": "Solidity",
+	"output": {
+		"abi": [
+			{
+				"inputs": [
+					{
+						"internalType": "address",
+						"name": "account",
+						"type": "address"
+					}
+				],
+				"name": "balanceOf",
+				"outputs": [
+					{
+						"internalType": "uint256",
+						"name": "",
+						"type": "uint256"
+					}
+				],
+				"stateMutability": "view",
+				"type": "function"
+			},
+			{
+				"inputs": [
+					{
+						"internalType": "address",
+						"name": "to",
+						"type": "address"
+					},
+					{
+						"internalType": "uint256",
+						"name": "amount",
+						"type": "uint256"
+					}
+				],
+				"name": "transfer",
+				"outputs": [
+					{
+						"internalType": "bool",
+						"name": "",
+						"type": "bool"
+					}
+				],
+				"stateMutability": "nonpayable",
+				"type": "function"
+			},
+			{
+				"inputs": [
+					{
+						"internalType": "address",
+						"name": "from",
+						"type": "address"
+					},
+					{
+						"internalType": "address",
+						"name": "to",
+						"type": "address"
+					},
+					{
+						"internalType": "uint256",
+						"name": "amount",
+						"type": "uint256"
+					}
+				],
+				"name": "transferFrom",
+				"outputs": [
+					{
+						"internalType": "bool",
+						"name": "",
+						"type": "bool"
+					}
+				],
+				"stateMutability": "nonpayable",
+				"type": "function"
+			}
+		],
+		"devdoc": {
+			"kind": "dev",
+			"methods": {},
+			"title": "BFPayout",
+			"version": 1
+		},
+		"userdoc": {
+			"kind": "user",
+			"methods": {},
+			"notice": "Whack-a-Butterfly prize claim contract. Flow:   1. Game server signs a claim: (player, bfGross, nonce, expiry)   2. Player calls claimPrize() on-chain — pays their own gas   3. Contract splits automatically:        94.5% → player         4.5% → potWallet  (weekly pot, 0x...88e0)         1.0% → burnWallet (burn address, currently 0x5c29...530F → future: dead address) The vault (PRIZE_WALLET / 0x...92Df) must approve this contract once:   BF.approve(address(BFPayout), type(uint256).max) Wallets:   player     (0x...1cDe) — receives 94.5%   prize/vault (0x...92Df) — holds BF tokens, source of all transfers   pot        (0x...88e0) — receives 4.5%, paid out weekly   burn       (0x5c29...530F) — receives 1%, future burn address Split in basis points (BPS = 10000):   PLAYER_BPS = 9450  (94.5%)   POT_BPS    =  450  ( 4.5%)   BURN_BPS   =  100  ( 1.0%)   Total      = 10000 (100%)",
+			"version": 1
+		}
+	},
+	"settings": {
+		"compilationTarget": {
+			"BFPayout.sol": "IERC20"
+		},
+		"evmVersion": "prague",
+		"libraries": {},
+		"metadata": {
+			"bytecodeHash": "ipfs"
+		},
+		"optimizer": {
+			"enabled": false,
+			"runs": 200
+		},
+		"remappings": []
+	},
+	"sources": {
+		"BFPayout.sol": {
+			"keccak256": "0x839943016270ddd1ec6a68d196dd94855c0adbe6220e89193a94d9fae05d27e2",
+			"license": "MIT",
+			"urls": [
+				"bzz-raw://a96557421d6a8929fcd0f6e6a1064a26ee652472ea91922bc2f7230179dec2b0",
+				"dweb:/ipfs/QmYaEZPCfnEhbMAUZdbwftCzrBXKtQtbnkhUm4GAkFxv5e"
+			]
+		}
+	},
+	"version": 1
+}
