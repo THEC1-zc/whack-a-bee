@@ -26,7 +26,7 @@ export default function WeeklyPage() {
   }, []);
 
   return (
-    <div className="min-h-dvh p-6" style={{ background: "#1a0a00" }}>
+    <div className="user-page-bg min-h-dvh p-6">
       <div className="max-w-xl mx-auto space-y-4">
         <div className="flex items-center gap-3">
           <a href="/" className="text-amber-400 font-bold text-sm">← Back</a>

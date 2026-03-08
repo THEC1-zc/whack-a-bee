@@ -6,7 +6,7 @@ export default function RulesScreen({ onBack }: { onBack: () => void }) {
   const shortWallet = `${PRIZE_WALLET.slice(0, 6)}...${PRIZE_WALLET.slice(-4)}`;
 
   return (
-    <div className="min-h-dvh flex flex-col" style={{ background: "#1a0a00" }}>
+    <div className="user-page-bg min-h-dvh flex flex-col">
 
       {/* Header */}
       <div className="flex items-center gap-3 px-4 pt-5 pb-3 border-b border-amber-950">

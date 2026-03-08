@@ -1,0 +1,104 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1024 1536" preserveAspectRatio="xMidYMid slice">
+  <defs>
+    <radialGradient id="centerGlow" cx="50%" cy="38%" r="55%">
+      <stop offset="0%" stop-color="#fffde8"/>
+      <stop offset="65%" stop-color="#f7ec8b"/>
+      <stop offset="100%" stop-color="#d6c21f"/>
+    </radialGradient>
+    <linearGradient id="sky" x1="0" x2="0" y1="0" y2="1">
+      <stop offset="0%" stop-color="#f6de4b"/>
+      <stop offset="100%" stop-color="#c9b60c"/>
+    </linearGradient>
+    <filter id="soft" x="-20%" y="-20%" width="140%" height="140%">
+      <feGaussianBlur stdDeviation="18"/>
+    </filter>
+    <g id="cloud" fill="#fff8d4" opacity="0.8">
+      <circle cx="0" cy="0" r="22"/>
+      <circle cx="24" cy="-8" r="28"/>
+      <circle cx="54" cy="0" r="22"/>
+      <rect x="-4" y="0" width="66" height="22" rx="11"/>
+    </g>
+    <g id="flowerWhite">
+      <circle cx="0" cy="-18" r="14" fill="#fffbe8"/>
+      <circle cx="17" cy="-7" r="14" fill="#fffbe8"/>
+      <circle cx="10" cy="12" r="14" fill="#fffbe8"/>
+      <circle cx="-10" cy="12" r="14" fill="#fffbe8"/>
+      <circle cx="-17" cy="-7" r="14" fill="#fffbe8"/>
+      <circle cx="0" cy="0" r="11" fill="#f2b400"/>
+    </g>
+    <g id="flowerYellow">
+      <circle cx="0" cy="-20" r="16" fill="#ffe65e"/>
+      <circle cx="19" cy="-8" r="16" fill="#ffe65e"/>
+      <circle cx="12" cy="14" r="16" fill="#ffe65e"/>
+      <circle cx="-12" cy="14" r="16" fill="#ffe65e"/>
+      <circle cx="-19" cy="-8" r="16" fill="#ffe65e"/>
+      <circle cx="0" cy="0" r="12" fill="#bf6e00"/>
+    </g>
+    <g id="flowerOrange">
+      <circle cx="0" cy="-18" r="14" fill="#ffb340"/>
+      <circle cx="17" cy="-7" r="14" fill="#ffb340"/>
+      <circle cx="10" cy="12" r="14" fill="#ffb340"/>
+      <circle cx="-10" cy="12" r="14" fill="#ffb340"/>
+      <circle cx="-17" cy="-7" r="14" fill="#ffb340"/>
+      <circle cx="0" cy="0" r="10" fill="#d56a00"/>
+    </g>
+    <g id="leafPair">
+      <ellipse cx="-14" cy="0" rx="12" ry="28" fill="#8ea80f" transform="rotate(-28 -14 0)"/>
+      <ellipse cx="14" cy="0" rx="12" ry="28" fill="#b7cb22" transform="rotate(28 14 0)"/>
+    </g>
+    <g id="butterfly">
+      <ellipse cx="-24" cy="-8" rx="26" ry="34" fill="#ff9c00" transform="rotate(-22 -24 -8)"/>
+      <ellipse cx="24" cy="-8" rx="26" ry="34" fill="#ffd000" transform="rotate(22 24 -8)"/>
+      <ellipse cx="-18" cy="22" rx="20" ry="24" fill="#ffc23b" transform="rotate(18 -18 22)"/>
+      <ellipse cx="18" cy="22" rx="20" ry="24" fill="#ffe464" transform="rotate(-18 18 22)"/>
+      <rect x="-3" y="-22" width="6" height="64" rx="3" fill="#7b3b00"/>
+      <circle cx="-28" cy="-10" r="4" fill="#fff37b"/>
+      <circle cx="28" cy="-10" r="4" fill="#fff37b"/>
+      <circle cx="-12" cy="18" r="3.5" fill="#fff37b"/>
+      <circle cx="12" cy="18" r="3.5" fill="#fff37b"/>
+      <path d="M-2 -22 C-10 -38 -18 -42 -22 -48" stroke="#7b3b00" stroke-width="3" fill="none" stroke-linecap="round"/>
+      <path d="M2 -22 C10 -38 18 -42 22 -48" stroke="#7b3b00" stroke-width="3" fill="none" stroke-linecap="round"/>
+    </g>
+  </defs>
+  <rect width="1024" height="1536" fill="url(#sky)"/>
+  <rect width="1024" height="1536" fill="url(#centerGlow)" opacity="0.95"/>
+  <g opacity="0.75">
+    <use href="#cloud" x="82" y="88"/>
+    <use href="#cloud" x="760" y="104"/>
+    <use href="#cloud" x="420" y="160"/>
+    <use href="#cloud" x="300" y="260" transform="scale(0.9)"/>
+    <use href="#cloud" x="676" y="296" transform="scale(0.85)"/>
+  </g>
+  <g fill="#fff9d8" opacity="0.65" filter="url(#soft)">
+    <circle cx="200" cy="420" r="8"/>
+    <circle cx="286" cy="930" r="10"/>
+    <circle cx="812" cy="480" r="8"/>
+    <circle cx="746" cy="1048" r="9"/>
+    <circle cx="158" cy="1162" r="8"/>
+    <circle cx="878" cy="820" r="10"/>
+    <circle cx="520" cy="1210" r="12"/>
+  </g>
+  <g opacity="0.9">
+    <use href="#butterfly" x="134" y="250" transform="rotate(-12 134 250) scale(1.05)"/>
+    <use href="#butterfly" x="860" y="274" transform="rotate(14 860 274) scale(1.02)"/>
+    <use href="#butterfly" x="214" y="1128" transform="rotate(8 214 1128) scale(0.78)"/>
+    <use href="#butterfly" x="820" y="1188" transform="rotate(-18 820 1188) scale(1.14)"/>
+    <use href="#butterfly" x="736" y="1320" transform="rotate(6 736 1320) scale(0.72)" opacity="0.82"/>
+  </g>
+  <g>
+    <path d="M0 1180 C130 1040 180 980 238 790" stroke="#6d8b09" stroke-width="10" fill="none"/>
+    <path d="M80 1280 C190 1120 220 980 250 720" stroke="#89a40f" stroke-width="8" fill="none"/>
+    <path d="M50 1436 C180 1260 200 1030 210 650" stroke="#b5c41b" stroke-width="12" fill="none"/>
+    <path d="M1024 1180 C894 1040 844 980 786 790" stroke="#6d8b09" stroke-width="10" fill="none"/>
+    <path d="M944 1280 C834 1120 804 980 774 720" stroke="#89a40f" stroke-width="8" fill="none"/>
+    <path d="M974 1436 C844 1260 824 1030 814 650" stroke="#b5c41b" stroke-width="12" fill="none"/>
+    <g transform="translate(82 1338) scale(1.45)"><use href="#leafPair"/><use href="#flowerOrange" x="-28" y="-64"/><use href="#flowerWhite" x="36" y="-24"/><use href="#flowerYellow" x="-6" y="26"/></g>
+    <g transform="translate(110 1176) scale(1.2)"><use href="#leafPair"/><use href="#flowerWhite" x="-20" y="-54"/><use href="#flowerYellow" x="42" y="-4"/></g>
+    <g transform="translate(164 1016) scale(1.06)"><use href="#leafPair"/><use href="#flowerOrange" x="-28" y="-54"/><use href="#flowerWhite" x="38" y="-16"/></g>
+    <g transform="translate(882 1318) scale(1.4)"><use href="#leafPair"/><use href="#flowerYellow" x="-32" y="-68"/><use href="#flowerWhite" x="34" y="-24"/><use href="#flowerOrange" x="2" y="24"/></g>
+    <g transform="translate(902 1140) scale(1.18)"><use href="#leafPair"/><use href="#flowerOrange" x="-26" y="-58"/><use href="#flowerYellow" x="38" y="-8"/></g>
+    <g transform="translate(856 958) scale(1.02)"><use href="#leafPair"/><use href="#flowerWhite" x="-26" y="-56"/><use href="#flowerOrange" x="34" y="-10"/></g>
+  </g>
+  <path d="M0 1320 C200 1270 420 1240 512 1240 C604 1240 824 1270 1024 1320 L1024 1536 L0 1536 Z" fill="#bfb51d" opacity="0.35"/>
+  <path d="M0 1368 C240 1308 410 1284 512 1284 C614 1284 784 1308 1024 1368 L1024 1536 L0 1536 Z" fill="#8c940f" opacity="0.22"/>
+</svg>

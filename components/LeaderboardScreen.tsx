@@ -39,7 +39,7 @@ export default function LeaderboardScreen({ onBack }: { onBack: () => void }) {
     addr ? `${addr.slice(0, 6)}…${addr.slice(-4)}` : "";
 
   return (
-    <div className="min-h-dvh flex flex-col" style={{ background: "#1a0a00" }}>
+    <div className="user-page-bg min-h-dvh flex flex-col">
 
       <div className="flex items-center gap-3 px-4 pt-5 pb-3">
         <button onClick={onBack} className="text-amber-400 font-bold text-sm">← Back</button>

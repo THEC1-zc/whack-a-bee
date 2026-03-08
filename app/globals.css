@@ -22,3 +22,18 @@ body {
   --bg-card: #2a1500;
   --border: #5d2e00;
 }
+
+
+.user-page-bg {
+  background-color: #d6b81f;
+  background-image:
+    linear-gradient(180deg, rgba(255, 252, 227, 0.12) 0%, rgba(116, 71, 0, 0.18) 100%),
+    url('/user-pages-bg.svg');
+  background-position: center;
+  background-size: cover;
+  background-repeat: no-repeat;
+}
+
+.user-page-overlay {
+  background: linear-gradient(180deg, rgba(20, 10, 0, 0.18) 0%, rgba(20, 10, 0, 0.28) 100%);
+}

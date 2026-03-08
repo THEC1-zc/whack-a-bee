@@ -162,8 +162,7 @@ export default function App() {
   const bfPerPoint = PRIZE_PER_POINT[difficulty] * liveBfPerUsdc;
 
   return (
-    <div className="min-h-dvh flex flex-col items-center p-5 gap-4"
-      style={{ background: "linear-gradient(180deg, #1a0a00 0%, #2a1200 100%)" }}>
+    <div className="user-page-bg min-h-dvh flex flex-col items-center p-5 gap-4">
 
       {/* Header */}
       <div className="w-full flex items-center gap-3 pt-2">
@@ -421,7 +420,7 @@ export default function App() {
 
 function NotConnected() {
   return (
-    <div className="min-h-dvh flex flex-col items-center justify-center p-6 text-center" style={{ background: "#1a0a00" }}>
+    <div className="user-page-bg min-h-dvh flex flex-col items-center justify-center p-6 text-center">
       <div className="text-6xl mb-4">🦋</div>
       <h1 className="text-2xl font-black text-white mb-2">Whack-a-Butterfly</h1>
       <p className="text-amber-400 text-sm mb-6">Open this app from Warpcast to play!</p>
