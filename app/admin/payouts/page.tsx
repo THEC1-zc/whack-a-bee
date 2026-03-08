@@ -124,7 +124,7 @@ export default function AdminPayoutsPage() {
       <div className="max-w-6xl mx-auto space-y-4">
         <div className="flex items-center justify-between gap-3 flex-wrap">
           <div className="flex items-center gap-3">
-            <Link href="/admin" className="text-amber-400 font-bold text-sm">← Back Admin</Link>
+            <Link href="/admin/weekly" className="text-amber-400 font-bold text-sm">← Weekly</Link>
             <h1 className="text-2xl font-black text-white">Weekly Payout History</h1>
           </div>
           <div className="flex items-center gap-2">

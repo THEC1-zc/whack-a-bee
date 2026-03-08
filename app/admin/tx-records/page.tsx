@@ -105,7 +105,7 @@ export default function AdminTxRecordsPage() {
     <div className="min-h-dvh p-5" style={{ background: "#1a0a00" }}>
       <div className="max-w-7xl mx-auto space-y-4">
         <div className="flex items-center gap-3">
-          <Link href="/admin" className="text-amber-400 font-bold text-sm">← Back Admin</Link>
+          <Link href="/admin/transactions" className="text-amber-400 font-bold text-sm">← Transactions</Link>
           <h1 className="text-2xl font-black text-white">Transaction Records</h1>
         </div>
 

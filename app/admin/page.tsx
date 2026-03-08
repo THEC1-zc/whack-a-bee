@@ -1,646 +1,176 @@
 "use client";
-import { useEffect, useMemo, useState } from "react";
 import Link from "next/link";
-import { sdk } from "@farcaster/miniapp-sdk";
-import { stringToHex } from "viem";
+import { useEffect, useState } from "react";
 import { useFarcaster } from "@/hooks/useFarcaster";
 
-const ADMIN_WALLET = (process.env.NEXT_PUBLIC_ADMIN_WALLET || "0xd29c790466675153A50DF7860B9EFDb689A21cDe").toLowerCase();
-const BUILD_STAMP = process.env.NEXT_PUBLIC_BUILD_STAMP || "2026-02-23-c11925e";
+const ADMIN_WALLET = (
+  process.env.NEXT_PUBLIC_ADMIN_WALLET || "0xd29c790466675153A50DF7860B9EFDb689A21cDe"
+).toLowerCase();
+const BUILD_STAMP = process.env.NEXT_PUBLIC_BUILD_STAMP || "dev";
 
-type AdminStats = {
+type QuickStats = {
   totalGames: number;
   uniquePlayers: number;
   totalFees: number;
-  totalPrizes: number;
-  gamesByDifficulty: Record<string, number>;
-  players: Array<{
-    fid: number;
-    username: string;
-    displayName: string;
-    pfpUrl: string;
-    address?: string;
-    games: number;
-    wins: number;
-    losses: number;
-    winRate: number;
-    totalFees: number;
-    totalPrize: number;
-    net: number;
-    gamesByDifficulty: Record<string, number>;
-  }>;
+  potBf: number;
 };
 
-type WeeklyConfig = {
-  autoPayoutEnabled: boolean;
-  forceBypassSchedule: boolean;
-  autoClaimPendingTickets: boolean;
-};
+const SECTIONS = [
+  {
+    href: "/admin/weekly",
+    icon: "🏆",
+    label: "Weekly Pot",
+    desc: "Estrazione, payout, config",
+    grad: "linear-gradient(135deg,#7c3aed,#a855f7)",
+  },
+  {
+    href: "/admin/transactions",
+    icon: "📋",
+    label: "Transactions",
+    desc: "Log tx, leaderboard, errori",
+    grad: "linear-gradient(135deg,#0891b2,#06b6d4)",
+  },
+  {
+    href: "/admin/wallets",
+    icon: "💰",
+    label: "Wallets",
+    desc: "Saldi ETH / USDC / BF live",
+    grad: "linear-gradient(135deg,#059669,#10b981)",
+  },
+  {
+    href: "/admin/payouts",
+    icon: "📊",
+    label: "Payout Report",
+    desc: "Storico pagamenti weekly",
+    grad: "linear-gradient(135deg,#b45309,#f59e0b)",
+  },
+];
 
-type WeeklyState = {
-  potBf?: number;
-};
-
-type TxDiagnostic = {
-  id: string;
-  at: number;
-  stage?: string;
-  reason?: string;
-  playerUsername?: string;
-};
-
-type BfDiagnostics = {
-  token: string;
-  chainId: number;
-  prizeAddress: string;
-  recipient: string;
-  potWallet: string;
-  amountUsdc: number;
-  amountBf: number;
-  playerAmountBf: number;
-  potAmountBf: number;
-  balances: {
-    prize: number;
-    recipient: number;
-    potWallet: number;
-  };
-  recipients: {
-    recipientIsContract: boolean;
-    potIsContract: boolean;
-  };
-  simulate: {
-    winnerTransfer: { ok: boolean; reason?: string };
-    potTransfer: { ok: boolean; reason?: string };
-  };
-  probes: {
-    noArgFlags: Array<{ name: string; value?: string | boolean | number; error?: string }>;
-    addressFlags: Array<{ name: string; value?: string | boolean | number; error?: string }>;
-    uintFlags?: Array<{ name: string; value?: string | boolean | number; error?: string }>;
-  };
-};
-
-export default function AdminPage() {
+export default function AdminHome() {
   const { user, connectWallet } = useFarcaster();
-  const [stats, setStats] = useState<AdminStats | null>(null);
-  const [weekly, setWeekly] = useState<WeeklyState | null>(null);
-  const [weeklyConfig, setWeeklyConfig] = useState<WeeklyConfig | null>(null);
-  const [payoutLogs, setPayoutLogs] = useState<Array<{ at?: number; potBf?: number; force?: boolean; results?: Array<{ txHash: string }> }>>([]);
-  const [payoutRunning, setPayoutRunning] = useState(false);
-  const [sharingWinners, setSharingWinners] = useState(false);
-  const [runningAction, setRunningAction] = useState<"payout" | "force" | "auto" | "resetWeekly" | null>(null);
-  const [error, setError] = useState<string | null>(null);
-  const [info, setInfo] = useState<string | null>(null);
-  const [loading, setLoading] = useState(false);
-  const [resetting, setResetting] = useState(false);
-  const [savingWeeklyConfig, setSavingWeeklyConfig] = useState(false);
-  const [txDiagnostics, setTxDiagnostics] = useState<TxDiagnostic[]>([]);
-  const [bfDiagnostics, setBfDiagnostics] = useState<BfDiagnostics | null>(null);
-  const [runningBfDiagnostics, setRunningBfDiagnostics] = useState(false);
-
+  const [qs, setQs] = useState<QuickStats | null>(null);
   const address = user?.address?.toLowerCase() || "";
   const authorized = address === ADMIN_WALLET;
 
   useEffect(() => {
     if (!authorized) return;
-    setLoading(true);
-    fetch("/api/admin/leaderboard", {
-      headers: { "x-admin-wallet": address },
-    })
-      .then(r => r.json())
-      .then(d => { setStats(d.stats); setWeekly(d.weekly); setError(null); })
-      .catch(() => setError("Failed to load stats"))
-      .finally(() => setLoading(false));
-  }, [authorized, address]);
-
-  useEffect(() => {
-    if (!authorized) return;
-    fetch("/api/admin/weekly-config", {
-      headers: { "x-admin-wallet": address },
-    })
-      .then(r => r.json())
-      .then(d => {
-        setWeeklyConfig(d.config || null);
-        setPayoutLogs(Array.isArray(d.logs) ? d.logs : []);
-      })
-      .catch(() => {});
-  }, [authorized, address]);
-
-  useEffect(() => {
-    if (!authorized) return;
-    fetch("/api/admin/tx-records?limit=8&status=failed&kinds=payout_error,weekly_payout_out", {
-      headers: { "x-admin-wallet": address },
-    })
-      .then(r => r.json())
-      .then(d => setTxDiagnostics(Array.isArray(d.records) ? d.records : []))
-      .catch(() => {});
-  }, [authorized, address]);
-
-  const totals = useMemo(() => {
-    if (!stats) return null;
-    return {
-      totalGames: stats.totalGames,
-      uniquePlayers: stats.uniquePlayers,
-      totalFees: stats.totalFees.toFixed(3),
-      totalPrizes: stats.totalPrizes.toFixed(3),
-    };
-  }, [stats]);
-
-  async function handleReset() {
-    if (!authorized) return;
-    setResetting(true);
-    setInfo("Firma richiesta per autorizzare reset leaderboard...");
-    setError(null);
-
-    let message = "";
-    let challenge = "";
-    try {
-      const challengeRes = await fetch("/api/admin/auth/challenge", {
-        method: "POST",
-        headers: { "Content-Type": "application/json", "x-admin-wallet": address },
-        body: JSON.stringify({ action: "reset_leaderboard", address }),
-      });
-      const challengeData = await challengeRes.json().catch(() => ({}));
-      if (!challengeRes.ok) {
-        setError(challengeData?.error || "Unable to request signature challenge");
-        setResetting(false);
-        return;
-      }
-      message = String(challengeData?.message || "");
-      challenge = String(challengeData?.token || "");
-      if (!message || !challenge) {
-        setError("Invalid challenge payload");
-        setResetting(false);
-        return;
-      }
-    } catch {
-      setError("Challenge request failed");
-      setResetting(false);
-      return;
-    }
-
-    let signature = "";
-    try {
-      const provider = sdk.wallet.ethProvider;
-      const hexMessage = stringToHex(message);
-      const signerAddress = address as `0x${string}`;
-      const sig = await provider.request({
-        method: "personal_sign",
-        params: [hexMessage, signerAddress],
-      });
-      signature = String(sig || "");
-      if (!signature) {
-        setError("Signature cancelled");
-        setResetting(false);
-        return;
-      }
-    } catch {
-      setError("Signature cancelled or not supported");
-      setResetting(false);
-      return;
-    }
-
-    const res = await fetch("/api/admin/leaderboard", {
-      method: "POST",
-      headers: { "Content-Type": "application/json", "x-admin-wallet": address },
-      body: JSON.stringify({ action: "reset", challenge, message, signature }),
-    });
-    if (res.ok) {
-      setStats(null);
-      setInfo("Leaderboard reset completato");
-    } else {
-      const data = await res.json().catch(() => ({}));
-      setError(data?.error || "Reset failed");
-      setInfo(null);
-    }
-    setResetting(false);
-  }
-
-  async function handleWeeklyReset() {
-    if (!authorized) return;
-    setInfo("Reset weekly in corso...");
-    setRunningAction("resetWeekly");
-    const res = await fetch("/api/admin/leaderboard", {
-      method: "POST",
-      headers: { "Content-Type": "application/json", "x-admin-wallet": address },
-      body: JSON.stringify({ action: "weekly_reset" }),
-    });
-    if (res.ok) {
-      setWeekly(null);
-      setError(null);
-      setInfo("Weekly reset completato");
-    } else {
-      setError("Weekly reset failed");
-      setInfo(null);
-    }
-    setRunningAction(null);
-  }
-
-  async function handleWeeklyPayout(force = false, mode: "manual" | "auto" = "manual") {
-    if (!authorized) return;
-    setInfo(`Avvio payout ${force ? "FORCE" : "standard"}...`);
-    setRunningAction(mode === "auto" ? "auto" : force ? "force" : "payout");
-    setPayoutRunning(true);
-    const res = await fetch("/api/admin/weekly-payout", {
-      method: "POST",
-      headers: { "Content-Type": "application/json", "x-admin-wallet": address },
-      body: JSON.stringify({
-        force,
-        mode,
-        autoClaimPendingTickets: weeklyConfig?.autoClaimPendingTickets ?? true,
-      }),
-    });
-    if (!res.ok) {
-      const data = await res.json().catch(() => ({}));
-      setError(data?.error || "Weekly payout failed");
-      setInfo(null);
-    } else {
-      setError(null);
-      const data = await res.json();
-      setWeekly({ potBf: 0, ...data });
-      setInfo(`Payout OK · tx: ${Array.isArray(data?.results) ? data.results.length : 0}`);
-      fetch("/api/admin/weekly-config", {
-        headers: { "x-admin-wallet": address },
-      })
-        .then(r => r.json())
-        .then(d => {
-          setWeeklyConfig(d.config || null);
-          setPayoutLogs(Array.isArray(d.logs) ? d.logs : []);
+    Promise.all([
+      fetch("/api/admin/leaderboard", { headers: { "x-admin-wallet": address } }).then((r) =>
+        r.json()
+      ),
+      fetch("/api/weekly").then((r) => r.json()),
+    ])
+      .then(([lb, w]) =>
+        setQs({
+          totalGames: lb.stats?.totalGames ?? 0,
+          uniquePlayers: lb.stats?.uniquePlayers ?? 0,
+          totalFees: lb.stats?.totalFees ?? 0,
+          potBf: w.potBf ?? 0,
         })
-        .catch(() => {});
-    }
-    setPayoutRunning(false);
-    setRunningAction(null);
-  }
-
-  async function updateWeeklyConfig(next: Partial<WeeklyConfig>) {
-    if (!authorized) return;
-    setSavingWeeklyConfig(true);
-    const res = await fetch("/api/admin/weekly-config", {
-      method: "POST",
-      headers: { "Content-Type": "application/json", "x-admin-wallet": address },
-      body: JSON.stringify(next),
-    });
-    if (!res.ok) {
-      setError("Failed to save weekly config");
-    } else {
-      const data = await res.json();
-      setWeeklyConfig(data.config || null);
-      setError(null);
-    }
-    setSavingWeeklyConfig(false);
-  }
-
-  async function handleShareWeeklyWinners() {
-    if (!authorized || sharingWinners) return;
-    setSharingWinners(true);
-    setInfo("Preparing weekly winners post...");
-    setError(null);
-    try {
-      const res = await fetch("/api/admin/weekly-winners", {
-        headers: { "x-admin-wallet": address },
-      });
-      const data = await res.json().catch(() => ({}));
-      if (!res.ok) {
-        setError(data?.error || "Unable to prepare winners post");
-        setInfo(null);
-        return;
-      }
-      await sdk.actions.composeCast({
-        text: data.castText || "",
-        embeds: Array.isArray(data.embeds) ? data.embeds : [],
-      });
-      setInfo("Winners post ready in Farcaster composer");
-    } catch {
-      setError("Share winners failed");
-      setInfo(null);
-    } finally {
-      setSharingWinners(false);
-    }
-  }
-
-  function toDiagnosticsText(d: BfDiagnostics) {
-    const lines: string[] = [];
-    lines.push(`token=${d.token}`);
-    lines.push(`chainId=${d.chainId}`);
-    lines.push(`prizeAddress=${d.prizeAddress}`);
-    lines.push(`recipient=${d.recipient} (contract=${String(d.recipients.recipientIsContract)})`);
-    lines.push(`potWallet=${d.potWallet} (contract=${String(d.recipients.potIsContract)})`);
-    lines.push(`amountUsdc=${d.amountUsdc}`);
-    lines.push(`amountBf=${d.amountBf}`);
-    lines.push(`playerAmountBf=${d.playerAmountBf}`);
-    lines.push(`potAmountBf=${d.potAmountBf}`);
-    lines.push(`balance.prize=${d.balances.prize}`);
-    lines.push(`balance.recipient=${d.balances.recipient}`);
-    lines.push(`balance.potWallet=${d.balances.potWallet}`);
-    lines.push(`simulate.winner.ok=${String(d.simulate.winnerTransfer.ok)}`);
-    lines.push(`simulate.winner.reason=${d.simulate.winnerTransfer.reason || "-"}`);
-    lines.push(`simulate.pot.ok=${String(d.simulate.potTransfer.ok)}`);
-    lines.push(`simulate.pot.reason=${d.simulate.potTransfer.reason || "-"}`);
-    for (const p of d.probes.noArgFlags) lines.push(`probe.${p.name}=${p.value ?? p.error ?? "-"}`);
-    for (const p of d.probes.addressFlags) lines.push(`probe.${p.name}=${p.value ?? p.error ?? "-"}`);
-    for (const p of d.probes.uintFlags || []) lines.push(`probe.${p.name}=${p.value ?? p.error ?? "-"}`);
-    return lines.join("\n");
-  }
-
-  async function handleRunBfDiagnostics() {
-    if (!authorized || runningBfDiagnostics) return;
-    setRunningBfDiagnostics(true);
-    setInfo("Running BF diagnostics...");
-    setError(null);
-    try {
-      const res = await fetch(`/api/admin/bf-diagnostics?recipient=${encodeURIComponent(address)}&amountUsdc=0.03`, {
-        headers: { "x-admin-wallet": address },
-      });
-      const data = await res.json().catch(() => ({}));
-      if (!res.ok) {
-        setError(data?.error || "BF diagnostics failed");
-        setInfo(null);
-        return;
-      }
-      setBfDiagnostics(data as BfDiagnostics);
-      setInfo("BF diagnostics loaded");
-    } catch {
-      setError("BF diagnostics failed");
-      setInfo(null);
-    } finally {
-      setRunningBfDiagnostics(false);
-    }
-  }
-
-  async function handleCopyBfDiagnostics() {
-    if (!bfDiagnostics) return;
-    try {
-      await navigator.clipboard.writeText(toDiagnosticsText(bfDiagnostics));
-      setInfo("BF diagnostics copied");
-    } catch {
-      setError("Copy failed");
-    }
-  }
+      )
+      .catch(() => {});
+  }, [authorized, address]);
 
   if (!user?.address) {
     return (
-      <div className="min-h-dvh flex flex-col items-center justify-center p-6 text-center" style={{ background: "#1a0a00" }}>
+      <Center>
+        <div className="text-6xl mb-4">⚙️</div>
         <h1 className="text-2xl font-black text-white mb-3">Admin</h1>
-        <p className="text-amber-500 text-sm mb-4">Connect your wallet to continue.</p>
+        <p className="text-amber-500 text-sm mb-6">Connect wallet to continue.</p>
         <button
           onClick={connectWallet}
-          className="px-5 py-3 rounded-xl font-black text-black"
-          style={{ background: "linear-gradient(135deg, #fbbf24, #f59e0b)" }}
+          className="px-8 py-4 rounded-2xl font-black text-black text-lg"
+          style={{ background: "linear-gradient(135deg,#fbbf24,#f59e0b)" }}
         >
           Connect Wallet
         </button>
-      </div>
+      </Center>
     );
   }
 
   if (!authorized) {
     return (
-      <div className="min-h-dvh flex flex-col items-center justify-center p-6 text-center" style={{ background: "#1a0a00" }}>
-        <h1 className="text-2xl font-black text-white mb-2">Admin</h1>
-        <p className="text-red-400 text-sm">Unauthorized wallet.</p>
-      </div>
+      <Center>
+        <div className="text-6xl mb-4">🔒</div>
+        <h1 className="text-2xl font-black text-white mb-2">Unauthorized</h1>
+        <p className="text-red-400 text-sm break-all">{address}</p>
+        <Link href="/" className="mt-6 text-amber-400 underline text-sm">
+          ← Back to game
+        </Link>
+      </Center>
     );
   }
 
   return (
     <div className="min-h-dvh p-5" style={{ background: "#1a0a00" }}>
-      <div className="max-w-3xl mx-auto space-y-4">
-        <div className="flex items-center justify-between">
-          <div className="flex items-center gap-3">
-            <Link href="/" className="text-amber-400 font-bold text-sm">← Back</Link>
-            <h1 className="text-2xl font-black text-white">Admin Stats</h1>
-          </div>
-          <button
-            onClick={handleReset}
-            disabled={resetting}
-            className="px-4 py-2 rounded-lg text-sm font-black text-black disabled:opacity-50"
-            style={{ background: "linear-gradient(135deg, #fbbf24, #f59e0b)" }}
-          >
-            {resetting ? "Resetting..." : "Reset Leaderboard"}
-          </button>
+      <div className="max-w-lg mx-auto space-y-5">
+        {/* Header */}
+        <div className="flex items-center gap-3 pt-2">
+          <Link href="/" className="text-amber-400 font-bold">
+            ← Home
+          </Link>
+          <h1 className="text-2xl font-black text-white flex-1">⚙️ Admin</h1>
+          <span className="text-[10px] text-amber-800">{BUILD_STAMP}</span>
         </div>
-        <div className="text-[11px] text-amber-600">Build: {BUILD_STAMP}</div>
 
-        {error && <div className="text-red-400 text-sm">{error}</div>}
-        {info && <div className="text-green-400 text-sm">{info}</div>}
-
-        {!stats || loading ? (
-          <div className="text-amber-500 text-sm">Loading…</div>
+        {/* Quick stats */}
+        {qs ? (
+          <div className="grid grid-cols-2 gap-3">
+            {[
+              { l: "Partite", v: qs.totalGames.toLocaleString() },
+              { l: "Giocatori", v: qs.uniquePlayers.toLocaleString() },
+              { l: "Fee USDC", v: qs.totalFees.toFixed(2) },
+              { l: "Pot BF", v: Math.round(qs.potBf).toLocaleString() },
+            ].map((s) => (
+              <div
+                key={s.l}
+                className="rounded-2xl border border-amber-900 p-4 text-center"
+                style={{ background: "#140a00" }}
+              >
+                <div className="text-amber-600 text-xs uppercase tracking-widest">{s.l}</div>
+                <div className="text-white text-2xl font-black mt-1">{s.v}</div>
+              </div>
+            ))}
+          </div>
         ) : (
-          <>
-            <div className="grid grid-cols-2 gap-3">
-              <Stat label="Total games" value={String(totals?.totalGames)} />
-              <Stat label="Unique players" value={String(totals?.uniquePlayers)} />
-              <Stat label="Total spent (USDC)" value={totals?.totalFees || "0"} />
-              <Stat label="Total prizes (USDC)" value={totals?.totalPrizes || "0"} />
-            </div>
-
-            <div className="rounded-xl border border-amber-900 p-3" style={{ background: "#140a00" }}>
-              <div className="flex items-center justify-between mb-2">
-                <div className="text-amber-400 text-xs uppercase tracking-widest">Weekly Pot</div>
-                <div className="flex gap-2">
-                  <Link
-                    href="/admin/payouts"
-                    className="px-3 py-1 rounded-md text-xs font-black text-black"
-                    style={{ background: "linear-gradient(135deg, #38bdf8, #22d3ee)" }}
-                  >
-                    Payout Report
-                  </Link>
-                  <Link
-                    href="/admin/tx-records"
-                    className="px-3 py-1 rounded-md text-xs font-black text-black"
-                    style={{ background: "linear-gradient(135deg, #f472b6, #ec4899)" }}
-                  >
-                    Tx Records
-                  </Link>
-                  <button
-                    type="button"
-                    onClick={handleShareWeeklyWinners}
-                    disabled={sharingWinners}
-                    className="px-3 py-1 rounded-md text-xs font-black text-black disabled:opacity-50"
-                    style={{ background: "linear-gradient(135deg, #60a5fa, #3b82f6)" }}
-                  >
-                    {sharingWinners ? "Sharing..." : "Share Winners"}
-                  </button>
-                  <button
-                    type="button"
-                    onClick={handleRunBfDiagnostics}
-                    disabled={runningBfDiagnostics}
-                    className="px-3 py-1 rounded-md text-xs font-black text-black disabled:opacity-50"
-                    style={{ background: "linear-gradient(135deg, #93c5fd, #60a5fa)" }}
-                  >
-                    {runningBfDiagnostics ? "Running..." : "BF Diagnostics"}
-                  </button>
-                  <button
-                    type="button"
-                    onPointerDown={() => setInfo("Run Payout cliccato")}
-                    onClick={() => handleWeeklyPayout(false, "manual")}
-                    disabled={payoutRunning}
-                    className="px-3 py-1 rounded-md text-xs font-black text-black disabled:opacity-50"
-                    style={{ background: "linear-gradient(135deg, #7c3aed, #a855f7)" }}
-                  >
-                    {runningAction === "payout" ? "Paying..." : "Run Payout"}
-                  </button>
-                  <button
-                    type="button"
-                    onPointerDown={() => setInfo("Force Payout cliccato")}
-                    onClick={() => handleWeeklyPayout(true, "manual")}
-                    disabled={payoutRunning}
-                    className="px-3 py-1 rounded-md text-xs font-black text-black disabled:opacity-50"
-                    style={{ background: "linear-gradient(135deg, #ef4444, #f97316)" }}
-                  >
-                    {runningAction === "force" ? "Paying..." : "Force Payout"}
-                  </button>
-                  <button
-                    type="button"
-                    onPointerDown={() => setInfo("Run Auto cliccato")}
-                    onClick={() => handleWeeklyPayout(true, "auto")}
-                    disabled={payoutRunning || !weeklyConfig?.autoPayoutEnabled}
-                    className="px-3 py-1 rounded-md text-xs font-black text-black disabled:opacity-50"
-                    style={{ background: "linear-gradient(135deg, #10b981, #22c55e)" }}
-                  >
-                    {runningAction === "auto" ? "Paying..." : "Run Auto"}
-                  </button>
-                  <button
-                    type="button"
-                    onPointerDown={() => setInfo("Reset Weekly cliccato")}
-                    onClick={handleWeeklyReset}
-                    disabled={runningAction === "resetWeekly"}
-                    className="px-3 py-1 rounded-md text-xs font-black text-black"
-                    style={{ background: "linear-gradient(135deg, #fbbf24, #f59e0b)" }}
-                  >
-                    {runningAction === "resetWeekly" ? "Reset..." : "Reset Weekly"}
-                  </button>
-                </div>
-              </div>
-              <div className="text-amber-200 text-sm">
-                Pot: {weekly ? Math.round(weekly.potBf || 0).toLocaleString() : 0} BF
-              </div>
-              <div className="text-amber-700 text-xs mt-2">
-                Leaderboard entries: {stats?.totalGames ?? 0}
-              </div>
-              <div className="mt-3 space-y-2 text-xs">
-                <label className="flex items-center justify-between gap-3 text-amber-200">
-                  <span>Auto payout enabled</span>
-                  <input
-                    type="checkbox"
-                    checked={weeklyConfig?.autoPayoutEnabled ?? false}
-                    onChange={(e) => updateWeeklyConfig({ autoPayoutEnabled: e.target.checked })}
-                    disabled={savingWeeklyConfig}
-                  />
-                </label>
-                <label className="flex items-center justify-between gap-3 text-amber-200">
-                  <span>Bypass schedule in auto mode</span>
-                  <input
-                    type="checkbox"
-                    checked={weeklyConfig?.forceBypassSchedule ?? true}
-                    onChange={(e) => updateWeeklyConfig({ forceBypassSchedule: e.target.checked })}
-                    disabled={savingWeeklyConfig}
-                  />
-                </label>
-                <label className="flex items-center justify-between gap-3 text-amber-200">
-                  <span>Auto-claim pending tickets</span>
-                  <input
-                    type="checkbox"
-                    checked={weeklyConfig?.autoClaimPendingTickets ?? true}
-                    onChange={(e) => updateWeeklyConfig({ autoClaimPendingTickets: e.target.checked })}
-                    disabled={savingWeeklyConfig}
-                  />
-                </label>
-              </div>
-              {payoutLogs.length > 0 && (
-                <div className="mt-3 pt-2 border-t border-amber-900">
-                  <div className="text-amber-400 text-xs uppercase tracking-widest mb-1">Recent Payouts</div>
-                  {payoutLogs.slice(0, 3).map((log, i) => (
-                    <div key={i} className="text-amber-200 text-xs">
-                      {log.at ? new Date(log.at).toLocaleString("en-GB", { timeZone: "Europe/Rome" }) : "n/a"} ·
-                      pot {Math.round(Number(log.potBf || 0)).toLocaleString()} BF ·
-                      tx {Array.isArray(log.results) ? log.results.length : 0} ·
-                      {log.force ? " forced" : " scheduled"}
-                    </div>
-                  ))}
-                </div>
-              )}
-              {txDiagnostics.length > 0 && (
-                <div className="mt-3 pt-2 border-t border-amber-900">
-                  <div className="text-red-300 text-xs uppercase tracking-widest mb-1">Recent Tx Errors</div>
-                  {txDiagnostics.slice(0, 4).map((e) => (
-                    <div key={e.id} className="text-red-200 text-xs">
-                      {new Date(e.at).toLocaleString("en-GB", { timeZone: "Europe/Rome" })} · {e.stage || "unknown"} · {e.reason || "error"}
-                    </div>
-                  ))}
-                </div>
-              )}
-              {bfDiagnostics && (
-                <div className="mt-3 pt-2 border-t border-amber-900">
-                  <div className="flex items-center justify-between gap-2 mb-1">
-                    <div className="text-sky-300 text-xs uppercase tracking-widest">BF Diagnostics</div>
-                    <button
-                      type="button"
-                      onClick={handleCopyBfDiagnostics}
-                      className="px-2 py-1 rounded text-[10px] font-black text-black"
-                      style={{ background: "#fbbf24" }}
-                    >
-                      Copy
-                    </button>
-                  </div>
-                  <div className="text-sky-200 text-xs">
-                    winner: {bfDiagnostics.simulate.winnerTransfer.ok ? "ok" : "revert"} · pot: {bfDiagnostics.simulate.potTransfer.ok ? "ok" : "revert"}
-                  </div>
-                  {!bfDiagnostics.simulate.winnerTransfer.ok && (
-                    <div className="text-red-300 text-xs mt-1 break-words">winner reason: {bfDiagnostics.simulate.winnerTransfer.reason}</div>
-                  )}
-                  {!bfDiagnostics.simulate.potTransfer.ok && (
-                    <div className="text-red-300 text-xs mt-1 break-words">pot reason: {bfDiagnostics.simulate.potTransfer.reason}</div>
-                  )}
-                  <div className="text-amber-200 text-xs mt-1">
-                    balance prize: {Math.round(bfDiagnostics.balances.prize).toLocaleString()} BF · recipient: {Math.round(bfDiagnostics.balances.recipient).toLocaleString()} BF
-                  </div>
-                </div>
-              )}
-            </div>
-
-            <div className="rounded-xl border border-amber-900 p-3" style={{ background: "#140a00" }}>
-              <div className="text-amber-400 text-xs uppercase tracking-widest mb-2">Games by difficulty</div>
-              <div className="text-amber-200 text-sm">
-                {Object.entries(stats.gamesByDifficulty).map(([k, v]) => (
-                  <span key={k} className="mr-3">{k}: {v}</span>
-                ))}
-              </div>
-            </div>
-
-            <div className="space-y-2">
-              {stats.players.map(p => (
-                <div key={p.fid} className="rounded-xl border border-amber-900 p-3" style={{ background: "#140a00" }}>
-                  <div className="flex items-center gap-3">
-                    {p.pfpUrl ? <img src={p.pfpUrl} alt="" className="w-8 h-8 rounded-full" /> : <div className="w-8 h-8 rounded-full bg-amber-900" />}
-                    <div className="flex-1 min-w-0">
-                      <div className="text-white font-bold text-sm truncate">{p.displayName} <span className="text-amber-400">@{p.username}</span></div>
-                      <div className="text-amber-700 text-xs">Games {p.games} · W/L {p.wins}/{p.losses} · {p.winRate}%</div>
-                      <div className="text-amber-700 text-xs">
-                        Easy {p.gamesByDifficulty.easy || 0} · Medium {p.gamesByDifficulty.medium || 0} · Hard {p.gamesByDifficulty.hard || 0}
-                      </div>
-                    </div>
-                    <div className="text-right">
-                      <div className="text-amber-300 text-sm">Spent {p.totalFees.toFixed(3)}</div>
-                      <div className="text-green-400 text-sm">Won {p.totalPrize.toFixed(3)}</div>
-                    </div>
-                  </div>
-                </div>
-              ))}
-            </div>
-          </>
+          <div className="text-amber-600 text-sm">Caricamento stats…</div>
         )}
+
+        {/* Nav */}
+        <div className="space-y-3">
+          {SECTIONS.map((s) => (
+            <Link
+              key={s.href}
+              href={s.href}
+              className="flex items-center gap-4 rounded-2xl p-5 border border-amber-900 active:scale-95 transition-transform"
+              style={{ background: "#140a00" }}
+            >
+              <div
+                className="w-14 h-14 rounded-xl flex items-center justify-center text-3xl shrink-0"
+                style={{ background: s.grad }}
+              >
+                {s.icon}
+              </div>
+              <div className="flex-1 min-w-0">
+                <div className="text-white font-black text-lg">{s.label}</div>
+                <div className="text-amber-600 text-sm">{s.desc}</div>
+              </div>
+              <div className="text-amber-700 text-2xl">›</div>
+            </Link>
+          ))}
+        </div>
       </div>
     </div>
   );
 }
 
-function Stat({ label, value }: { label: string; value: string }) {
+function Center({ children }: { children: React.ReactNode }) {
   return (
-    <div className="rounded-xl border border-amber-900 p-3 text-center" style={{ background: "#140a00" }}>
-      <div className="text-amber-500 text-xs uppercase tracking-widest">{label}</div>
-      <div className="text-white text-xl font-black mt-1">{value}</div>
+    <div
+      className="min-h-dvh flex flex-col items-center justify-center p-6 text-center"
+      style={{ background: "#1a0a00" }}
+    >
+      {children}
     </div>
   );
 }

@@ -9,8 +9,8 @@ import {
   toBFUnits,
   PRIZE_WALLET,
 } from "@/lib/contracts";
+import { addWeeklyPot, getWeeklyMeta } from "@/lib/weekly";
 import { usdcToBf, getBfPerUsdc } from "@/lib/pricing";
-import { getWeeklyMeta } from "@/lib/weekly";
 import { logTxRecord } from "@/lib/txLedger";
 
 // ── Env ───────────────────────────────────────────────────────────────────────
@@ -186,6 +186,14 @@ export async function POST(req: NextRequest) {
         split: { player: "94.5%", pot: "4.5%", burn: "1%" },
       },
     });
+
+    // ── Aggiorna contatore pot weekly (4.5% del gross in BF) ─────────────────
+    try {
+      const potBfAmount = fromBFUnits(bfGross) * 0.045;
+      await addWeeklyPot(potBfAmount);
+    } catch (e) {
+      console.warn("[payout] addWeeklyPot failed (non-blocking):", e);
+    }
 
     // ── Return signed claim to frontend ──────────────────────────────────────
 
