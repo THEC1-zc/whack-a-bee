@@ -19,14 +19,14 @@ export default function RulesScreen({ onBack }: { onBack: () => void }) {
         <Section title="🎮 How to Play">
           <p className="text-amber-200 text-sm leading-relaxed">
             Butterflies appear randomly on a 3×3 grid. Tap them before they disappear to score points.
-            Watch out for red butterflies — they cost you points!
+            Watch out for Bombs — they cost you points!
           </p>
           <div className="mt-3 space-y-2">
             <BeeRule emoji="🦋" label="Butterfly" desc="Visible for 800–1200ms" points="+1 point" color="#fbbf24" />
             <BeeRule emoji="🦋" label="Triplefly" desc="Visible for 600–1050ms, faster scorer" points="+3 points" color="#3b82f6" fast />
             <BeeRule emoji="💖" label="Quickfly" desc="Very fast, rare" points="+5 points" color="#ec4899" fast />
             <BeeRule emoji="🔴" label="Bomb" desc="Avoid it! Costs you points" points="-2 points" color="#dc2626" />
-            <BeeRule emoji="💜" label="Prizefly" desc="Rare bonus butterfly" points="+100000 BF" color="#a855f7" />
+            <BeeRule emoji="💜" label="Prizefly" desc="Rare bonus Prizefly" points="+100000 BF" color="#a855f7" />
           </div>
         </Section>
 
@@ -62,8 +62,8 @@ export default function RulesScreen({ onBack }: { onBack: () => void }) {
             </div>
 
             <p className="text-amber-300 text-xs leading-relaxed">
-              The prize is calculated at the end of each game and paid in BF tokens based on the current BF/USDC rate.
-              Payouts are batched and sent hourly to your connected Farcaster wallet.
+              The prize is calculated at the end of each game and claimed in BF tokens based on the current BF/USDC rate.
+              Claims are executed on-chain from your connected Farcaster wallet.
             </p>
 
             <div className="rounded-xl p-3 border border-amber-900" style={{ background: "#1f1000" }}>
@@ -129,7 +129,7 @@ export default function RulesScreen({ onBack }: { onBack: () => void }) {
             <li>• Scores are recorded on the public leaderboard</li>
             <li>• Any wallet can play unlimited games</li>
             <li>• The prize pool is publicly verifiable</li>
-            <li>• In case of technical errors, the fee will be refunded</li>
+            <li>• Payout claims happen on-chain through the game payout flow</li>
           </ul>
         </Section>
 
