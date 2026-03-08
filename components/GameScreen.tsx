@@ -50,9 +50,9 @@ const SPAWN_CONFIG = {
 const SUPER_BEE_CHANCE_PER_GAME = 0.025;
 const SUPER_BEE_BONUS_BF = 100000;
 const TEST_PRIZE_PER_POINT: Record<Difficulty, number> = {
-  easy: 0.0005,
-  medium: 0.00056,
-  hard: 0.00058,
+  easy: 0.00025,
+  medium: 0.0004,
+  hard: 0.0006,
 };
 const TEST_POINT_VALUES: Record<Difficulty, Record<Bee["type"], number>> = {
   easy: { normal: 1, fast: 2, fuchsia: 3, bomb: -1, super: 1 },
