@@ -152,7 +152,7 @@ export default function GameScreen({ user, difficulty, onGameEnd }: Props) {
       let fastPlaced = 0;
       let fuchsiaPlaced = false;
       const fastLimit = isMegaJackpot ? 3 : 2;
-      const bombTarget = ensureRed ? (Math.random() < 0.5 ? 2 : 1) : 0;
+      const bombTarget = ensureRed ? (Math.random() < 0.5 ? 3 : 1) : 0;
       for (let i = 0; i < count; i += 1) {
         const available = Array.from({ length: SLOTS }, (_, idx) => idx).filter(s => !usedSlots.has(s));
         if (available.length === 0) break;
