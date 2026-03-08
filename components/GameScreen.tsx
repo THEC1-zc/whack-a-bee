@@ -5,6 +5,7 @@ import { DIFFICULTY_CONFIG, PRIZE_PER_POINT, type Difficulty } from "./App";
 import { BF_PER_USDC_FALLBACK } from "@/lib/pricing";
 import { payGameFee, claimPrize, getAddress } from "@/lib/payments";
 import { sdk } from "@farcaster/miniapp-sdk";
+type GameMode = "live" | "test";
 
 interface Bee {
   id: number;
@@ -17,7 +18,8 @@ interface Bee {
 interface Props {
   user: FarcasterUser;
   difficulty: Difficulty;
-  onGameEnd: (score: number, prize: number) => void;
+  mode: GameMode;
+  onGameEnd: (score: number, prize: number, mode: GameMode) => void;
 }
 
 type HitStats = {
@@ -47,6 +49,33 @@ const SPAWN_CONFIG = {
 
 const SUPER_BEE_CHANCE_PER_GAME = 0.025;
 const SUPER_BEE_BONUS_BF = 100000;
+const TEST_PRIZE_PER_POINT: Record<Difficulty, number> = {
+  easy: 0.0005,
+  medium: 0.00056,
+  hard: 0.00058,
+};
+const TEST_POINT_VALUES: Record<Difficulty, Record<Bee["type"], number>> = {
+  easy: { normal: 1, fast: 2, fuchsia: 3, bomb: -1, super: 1 },
+  medium: { normal: 1, fast: 3, fuchsia: 5, bomb: -2, super: 1 },
+  hard: { normal: 1, fast: 4, fuchsia: 7, bomb: -3, super: 1 },
+};
+const TEST_SOFT_CAPS: Record<Difficulty, Array<{ upTo: number; multiplier: number }>> = {
+  easy: [
+    { upTo: 20, multiplier: 1 },
+    { upTo: 35, multiplier: 0.7 },
+    { upTo: Number.POSITIVE_INFINITY, multiplier: 0.4 },
+  ],
+  medium: [
+    { upTo: 30, multiplier: 1 },
+    { upTo: 50, multiplier: 0.7 },
+    { upTo: Number.POSITIVE_INFINITY, multiplier: 0.4 },
+  ],
+  hard: [
+    { upTo: 40, multiplier: 1 },
+    { upTo: 65, multiplier: 0.7 },
+    { upTo: Number.POSITIVE_INFINITY, multiplier: 0.4 },
+  ],
+};
 
 const BEE_DISPLAY_NAMES: Record<Bee["type"], string> = {
   normal: "Butterfly",
@@ -82,7 +111,23 @@ function capLabel(mult: number) {
   return { icon: "🪫", label: "Low" };
 }
 
-export default function GameScreen({ user, difficulty, onGameEnd }: Props) {
+function getTestPayoutScore(score: number, difficulty: Difficulty) {
+  let remaining = Math.max(0, score);
+  let previousUpper = 0;
+  let total = 0;
+  for (const band of TEST_SOFT_CAPS[difficulty]) {
+    if (remaining <= 0) break;
+    const span = Number.isFinite(band.upTo) ? band.upTo - previousUpper : remaining;
+    const applied = Math.min(remaining, span);
+    total += applied * band.multiplier;
+    remaining -= applied;
+    previousUpper = Number.isFinite(band.upTo) ? band.upTo : previousUpper;
+  }
+  return Number(total.toFixed(2));
+}
+
+export default function GameScreen({ user, difficulty, mode, onGameEnd }: Props) {
+  const isTestMode = mode === "test";
   const cfg = DIFFICULTY_CONFIG[difficulty];
   const [bees, setBees] = useState<Bee[]>([]);
   const [score, setScore] = useState(0);
@@ -90,11 +135,11 @@ export default function GameScreen({ user, difficulty, onGameEnd }: Props) {
   const [gameState, setGameState] = useState<"countdown" | "playing" | "ended">("countdown");
   const [countdown, setCountdown] = useState(3);
   const [hitEffects, setHitEffects] = useState<{ id: number; slot: number; text: string }[]>([]);
-  const [paymentStatus, setPaymentStatus] = useState<"pending" | "paid" | "failed">("pending");
+  const [paymentStatus, setPaymentStatus] = useState<"pending" | "paid" | "failed">(isTestMode ? "paid" : "pending");
   const [paymentError, setPaymentError] = useState<string | null>(null);
   const [paymentErrorCode, setPaymentErrorCode] = useState<string | null>(null);
   const [paymentNote, setPaymentNote] = useState<string | null>(null);
-  const [feeStatus, setFeeStatus] = useState<"waiting" | "paying" | "paid" | "failed">("waiting");
+  const [feeStatus, setFeeStatus] = useState<"waiting" | "paying" | "paid" | "failed">(isTestMode ? "paid" : "waiting");
   const [feeError, setFeeError] = useState<string | null>(null);
   const [gameStarted, setGameStarted] = useState(false);
   const [superBonus, setSuperBonus] = useState(0);
@@ -200,14 +245,15 @@ export default function GameScreen({ user, difficulty, onGameEnd }: Props) {
     setTimeout(() => setBees(prev => prev.filter(b => b.id !== bee.id)), 150);
     setHitStats((prev) => ({ ...prev, [bee.type]: prev[bee.type] + 1 }));
 
+    const pointConfig = isTestMode ? TEST_POINT_VALUES[difficulty] : undefined;
     let points = 0;
     let text = "";
-    if (bee.type === "normal") { points = 1; text = "+1"; }
-    else if (bee.type === "fast") { points = 3; text = "⚡ +3"; }
-    else if (bee.type === "fuchsia") { points = 5; text = "💖 +5"; }
-    else if (bee.type === "bomb") { points = -2; text = "💥 -2"; }
+    if (bee.type === "normal") { points = pointConfig?.normal ?? 1; text = `+${points}`; }
+    else if (bee.type === "fast") { points = pointConfig?.fast ?? 3; text = `⚡ +${points}`; }
+    else if (bee.type === "fuchsia") { points = pointConfig?.fuchsia ?? 5; text = `💖 +${points}`; }
+    else if (bee.type === "bomb") { points = pointConfig?.bomb ?? -2; text = `💥 ${points}`; }
     else if (bee.type === "super") {
-      points = 1;
+      points = pointConfig?.super ?? 1;
       text = "💜 +100K BF";
       const bonusUsdc = SUPER_BEE_BONUS_BF / bfPerUsdc;
       bonusRef.current = parseFloat((bonusRef.current + bonusUsdc).toFixed(6));
@@ -215,17 +261,21 @@ export default function GameScreen({ user, difficulty, onGameEnd }: Props) {
     }
 
     addHitEffect(bee.slot, text);
-    scoreRef.current = Math.max(0, Math.min(scoreRef.current + points, capScoreRef.current as number));
+    const nextScore = scoreRef.current + points;
+    scoreRef.current = isTestMode
+      ? Math.max(0, nextScore)
+      : Math.max(0, Math.min(nextScore, capScoreRef.current as number));
     setScore(scoreRef.current);
-  }, [addHitEffect, cfg.maxPts]);
+  }, [addHitEffect, bfPerUsdc, difficulty, isTestMode]);
 
   // Pay fee before starting countdown
   useEffect(() => {
     if (gameStarted) return;
     setGameStarted(true);
+    if (isTestMode) return;
     handlePayFee();
   // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
+  }, [isTestMode]);
 
   async function handlePayFee() {
     setFeeStatus("paying");
@@ -287,10 +337,20 @@ export default function GameScreen({ user, difficulty, onGameEnd }: Props) {
   async function handleGameEnd() {
     const finalScore = scoreRef.current;
     const adjustedScore = finalScore;
-    const prizeBase = adjustedScore * PRIZE_PER_POINT[difficulty];
+    const payoutScore = isTestMode ? getTestPayoutScore(adjustedScore, difficulty) : adjustedScore;
+    const prizePerPoint = isTestMode ? TEST_PRIZE_PER_POINT[difficulty] : PRIZE_PER_POINT[difficulty];
+    const prizeBase = payoutScore * prizePerPoint;
     const prize = parseFloat((prizeBase + bonusRef.current).toFixed(4));
-    const fee = cfg.fee;
-    const address = await getAddress();
+    const fee = isTestMode ? 0 : cfg.fee;
+    const address = isTestMode ? null : await getAddress();
+
+    if (isTestMode) {
+      setPaymentStatus("paid");
+      setPaymentError(null);
+      setPaymentErrorCode(null);
+      setPaymentNote("Test mode · simulated payout only");
+      return;
+    }
 
     // Submit score
     try {
@@ -354,7 +414,7 @@ export default function GameScreen({ user, difficulty, onGameEnd }: Props) {
   const prizeBfNet = Math.round(prizeBfGross * 0.95);
 
   // Fee payment screen
-  if (feeStatus === "waiting" || feeStatus === "paying") {
+  if (!isTestMode && (feeStatus === "waiting" || feeStatus === "paying")) {
     return (
       <div className="min-h-dvh flex flex-col items-center justify-center gap-6 p-6" style={{ background: "#1a0a00" }}>
         <div className="text-6xl animate-bounce">💳</div>
@@ -375,20 +435,20 @@ export default function GameScreen({ user, difficulty, onGameEnd }: Props) {
         <div className="text-amber-400 text-sm animate-pulse">
           {feeStatus === "paying" ? "⏳ Waiting for wallet confirmation..." : "⏳ Initializing..."}
         </div>
-        <button onClick={() => onGameEnd(0, 0)} className="text-amber-700 text-sm underline">Cancel</button>
+        <button onClick={() => onGameEnd(0, 0, mode)} className="text-amber-700 text-sm underline">Cancel</button>
       </div>
     );
   }
 
   // Fee failed screen
-  if (feeStatus === "failed") {
+  if (!isTestMode && feeStatus === "failed") {
     return (
       <div className="min-h-dvh flex flex-col items-center justify-center gap-6 p-6 text-center" style={{ background: "#1a0a00" }}>
         <div className="text-6xl">❌</div>
         <h2 className="text-2xl font-black text-white">Payment Failed</h2>
         <p className="text-red-400 text-sm max-w-xs">{feeError || "Transaction was rejected or failed."}</p>
         <button
-          onClick={() => onGameEnd(0, 0)}
+          onClick={() => onGameEnd(0, 0, mode)}
           className="w-full max-w-xs py-4 rounded-2xl text-lg font-black text-black"
           style={{ background: "linear-gradient(135deg, #fbbf24, #f59e0b)" }}
         >
@@ -402,7 +462,7 @@ export default function GameScreen({ user, difficulty, onGameEnd }: Props) {
     return (
       <div className="min-h-dvh flex flex-col items-center justify-center gap-4" style={{ background: "#1a0a00" }}>
         <div className="text-amber-500 text-sm font-bold uppercase tracking-widest">{cfg.emoji} {cfg.label} Mode</div>
-        <div className="text-amber-400 text-sm">✅ Fee paid: {cfg.fee} USDC</div>
+        <div className="text-amber-400 text-sm">{isTestMode ? "🧪 Test game · no fee · no payout tx" : `✅ Fee paid: ${cfg.fee} USDC`}</div>
         <div className="text-9xl font-black text-amber-400 animate-pulse">{countdown || "GO!"}</div>
       </div>
     );
@@ -410,11 +470,13 @@ export default function GameScreen({ user, difficulty, onGameEnd }: Props) {
 
   if (gameState === "ended") {
     const shownScore = scoreRef.current;
-    const finalPrizeUsdc = (shownScore * PRIZE_PER_POINT[difficulty]) + bonusRef.current;
+    const payoutScore = isTestMode ? getTestPayoutScore(shownScore, difficulty) : shownScore;
+    const prizePerPoint = isTestMode ? TEST_PRIZE_PER_POINT[difficulty] : PRIZE_PER_POINT[difficulty];
+    const finalPrizeUsdc = (payoutScore * prizePerPoint) + bonusRef.current;
     const finalPrizeBfGross = Math.round(finalPrizeUsdc * bfPerUsdc);
     const finalPrizeBfNet = Math.round(finalPrizeBfGross * 0.95);
     const capMaxPts = capScoreRef.current;
-    const pct = Math.round((shownScore / capMaxPts) * 100);
+    const pct = isTestMode ? 0 : Math.round((shownScore / capMaxPts) * 100);
     const shortPaymentError = paymentError
       ? (paymentError.includes("replacement transaction underpriced")
         ? "Network busy. Please try again later."
@@ -432,23 +494,25 @@ export default function GameScreen({ user, difficulty, onGameEnd }: Props) {
         <div className="text-5xl">{finalPrizeBfNet > 0 ? "🎉" : "😔"}</div>
         <h2 className="text-3xl font-black text-white">Game Over</h2>
         <div className="text-6xl font-black text-amber-400">{shownScore}</div>
-        <div className="text-amber-600 text-sm">points out of {capMaxPts} max</div>
+        <div className="text-amber-600 text-sm">{isTestMode ? "points scored" : `points out of ${capMaxPts} max`}</div>
         <div className="text-amber-500 text-xs mt-1">{cfg.emoji} {cfg.label} difficulty</div>
-        <div className="text-amber-400 text-xs mt-1">{capInfo.icon} Max prize was {capInfo.label}</div>
+        {!isTestMode && <div className="text-amber-400 text-xs mt-1">{capInfo.icon} Max prize was {capInfo.label}</div>}
 
-        <div className="w-full max-w-xs mt-3">
-          <div className="text-amber-500 text-xs mb-1">Your game was {pct}%</div>
-          <div className="h-2 rounded-full bg-amber-950 border border-amber-900 overflow-hidden">
-            <div
-              className="h-full"
-              style={{
-                width: `${pct}%`,
-                background: "linear-gradient(90deg, #f87171 0%, #fbbf24 50%, #22c55e 100%)",
-                transition: "width 0.6s ease",
-              }}
-            />
+        {!isTestMode && (
+          <div className="w-full max-w-xs mt-3">
+            <div className="text-amber-500 text-xs mb-1">Your game was {pct}%</div>
+            <div className="h-2 rounded-full bg-amber-950 border border-amber-900 overflow-hidden">
+              <div
+                className="h-full"
+                style={{
+                  width: `${pct}%`,
+                  background: "linear-gradient(90deg, #f87171 0%, #fbbf24 50%, #22c55e 100%)",
+                  transition: "width 0.6s ease",
+                }}
+              />
+            </div>
           </div>
-        </div>
+        )}
 
         <div className="w-full max-w-xs rounded-2xl p-3 border border-amber-900 text-xs" style={{ background: "#1f1000" }}>
           <div className="text-amber-500 uppercase tracking-widest mb-2">Hit Counter</div>
@@ -460,15 +524,25 @@ export default function GameScreen({ user, difficulty, onGameEnd }: Props) {
         </div>
 
         <div className="w-full max-w-xs rounded-2xl p-4 border border-amber-800" style={{ background: "#2a1500" }}>
-          <div className="text-xs text-amber-600 uppercase tracking-widest mb-2">Prize</div>
-          <div className="text-3xl font-black text-amber-400">{finalPrizeBfNet.toLocaleString()} BF</div>
-          <div className="text-xs text-amber-700 mt-1">{shownScore} pt × 0.001 USDC (approx)</div>
-          <div className="text-[11px] text-amber-600 mt-1">Gross: {finalPrizeBfGross.toLocaleString()} BF · 5% to weekly pot</div>
+          <div className="text-xs text-amber-600 uppercase tracking-widest mb-2">{isTestMode ? "Simulated Payout" : "Prize"}</div>
+          <div className="text-3xl font-black text-amber-400">{(isTestMode ? finalPrizeBfGross : finalPrizeBfNet).toLocaleString()} BF</div>
+          {isTestMode ? (
+            <>
+              <div className="text-xs text-sky-300 mt-1">Gameplay score: {shownScore} pt</div>
+              <div className="text-xs text-sky-300 mt-1">Soft-cap payout score: {payoutScore.toFixed(2)} pt</div>
+              <div className="text-[11px] text-amber-600 mt-1">PPP test: {TEST_PRIZE_PER_POINT[difficulty].toFixed(5)} USDC · no on-chain transaction</div>
+            </>
+          ) : (
+            <>
+              <div className="text-xs text-amber-700 mt-1">{shownScore} pt × 0.001 USDC (approx)</div>
+              <div className="text-[11px] text-amber-600 mt-1">Gross: {finalPrizeBfGross.toLocaleString()} BF · 5% to weekly pot</div>
+            </>
+          )}
           {bonusRef.current > 0 && (
             <div className="text-xs text-purple-300 mt-1">Prizefly bonus +{Math.round(bonusRef.current * bfPerUsdc)} BF</div>
           )}
 
-          {finalPrizeBfNet > 0 && (
+          {!isTestMode && finalPrizeBfNet > 0 && (
             <div className={`mt-3 text-xs font-bold rounded-lg p-2 ${
               paymentStatus === "paid" ? "bg-green-900 text-green-300" :
               paymentStatus === "failed" ? "bg-red-900 text-red-300" :
@@ -487,33 +561,40 @@ export default function GameScreen({ user, difficulty, onGameEnd }: Props) {
           {paymentStatus === "failed" && paymentNote && (
             <div className="mt-1 text-[11px] text-amber-300">{paymentNote}</div>
           )}
+          {isTestMode && (
+            <div className="mt-3 text-xs font-bold rounded-lg p-2 bg-sky-950 text-sky-300">
+              🧪 Test mode only — payout shown on screen, no fee charged, no real transaction sent
+            </div>
+          )}
         </div>
 
-        <button
-          onClick={async () => {
-            try {
-              await sdk.actions.composeCast({
-                text: `${shareText}\n${appUrl}`,
-                embeds: [shareImage],
-              });
-            } catch (e) {
-              console.error("Share error", e);
-            }
-          }}
-          className="mt-3 w-full max-w-xs py-3 rounded-2xl text-sm font-black text-black flex items-center justify-center gap-2"
-          style={{ background: "linear-gradient(135deg, #fbbf24, #f59e0b)" }}
-        >
-          <span
-            className="w-5 h-5 rounded-full flex items-center justify-center text-[11px] font-black"
-            style={{ background: "#6d28d9", color: "#fff" }}
+        {!isTestMode && (
+          <button
+            onClick={async () => {
+              try {
+                await sdk.actions.composeCast({
+                  text: `${shareText}\n${appUrl}`,
+                  embeds: [shareImage],
+                });
+              } catch (e) {
+                console.error("Share error", e);
+              }
+            }}
+            className="mt-3 w-full max-w-xs py-3 rounded-2xl text-sm font-black text-black flex items-center justify-center gap-2"
+            style={{ background: "linear-gradient(135deg, #fbbf24, #f59e0b)" }}
           >
-            f
-          </span>
-          Share to Farcaster
-        </button>
+            <span
+              className="w-5 h-5 rounded-full flex items-center justify-center text-[11px] font-black"
+              style={{ background: "#6d28d9", color: "#fff" }}
+            >
+              f
+            </span>
+            Share to Farcaster
+          </button>
+        )}
 
         <button
-          onClick={() => onGameEnd(shownScore, prize)}
+          onClick={() => onGameEnd(shownScore, finalPrizeUsdc, mode)}
           className="mt-5 w-full max-w-xs py-4 rounded-2xl text-lg font-black text-black"
           style={{ background: "linear-gradient(135deg, #fbbf24, #f59e0b)" }}
         >

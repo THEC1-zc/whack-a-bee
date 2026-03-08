@@ -10,6 +10,7 @@ import { useEffect } from "react";
 import { BF_PER_USDC_FALLBACK } from "@/lib/pricing";
 
 type Screen = "home" | "game" | "leaderboard" | "rules";
+type GameMode = "live" | "test";
 
 export type Difficulty = "easy" | "medium" | "hard";
 
@@ -35,8 +36,9 @@ const ADMIN_WALLET = (process.env.NEXT_PUBLIC_ADMIN_WALLET || "0xd29c79046667515
 export default function App() {
   const { user, isLoading, isConnected, logout, connectWallet } = useFarcaster();
   const [screen, setScreen] = useState<Screen>("home");
+  const [gameMode, setGameMode] = useState<GameMode>("live");
   const [difficulty, setDifficulty] = useState<Difficulty>("medium");
-  const [lastResult, setLastResult] = useState<{ score: number; prize: number } | null>(null);
+  const [lastResult, setLastResult] = useState<{ score: number; prize: number; mode: GameMode } | null>(null);
   const [poolBalance, setPoolBalance] = useState<number>(0);
   const [poolBalanceBf, setPoolBalanceBf] = useState<number>(0);
   const [poolLoading, setPoolLoading] = useState(true);
@@ -48,6 +50,7 @@ export default function App() {
   const [claimingTickets, setClaimingTickets] = useState(false);
   const [claimError, setClaimError] = useState<string | null>(null);
   const [shareError, setShareError] = useState<string | null>(null);
+  const [showTestPicker, setShowTestPicker] = useState(false);
 
   useEffect(() => {
     fetch("/api/payout")
@@ -146,8 +149,8 @@ export default function App() {
 
   if (!isConnected || !user) return <NotConnected />;
   if (screen === "game") return (
-    <GameScreen user={user} difficulty={difficulty} onGameEnd={(score, prize) => {
-      setLastResult({ score, prize });
+    <GameScreen user={user} difficulty={difficulty} mode={gameMode} onGameEnd={(score, prize, mode) => {
+      setLastResult({ score, prize, mode });
       setScreen("home");
     }} />
   );
@@ -295,7 +298,11 @@ export default function App() {
         <div className={`w-full max-w-sm rounded-2xl p-3 text-center border ${
           lastResult.prize > 0 ? "border-green-600 bg-green-950" : "border-amber-800 bg-amber-950"
         }`}>
-          {lastResult.prize > 0 ? (
+          {lastResult.mode === "test" ? (
+            <span className="text-sky-300 font-bold">
+              🧪 Test payout simulated: {Math.round(lastResult.prize * liveBfPerUsdc).toLocaleString()} BF with {lastResult.score} points
+            </span>
+          ) : lastResult.prize > 0 ? (
             <span className="text-green-300 font-bold">
               🎉 You won {Math.round(lastResult.prize * liveBfPerUsdc * 0.95).toLocaleString()} BF with {lastResult.score} points!
             </span>
@@ -329,7 +336,10 @@ export default function App() {
       <button
         type="button"
         disabled={poolDisabled}
-        onClick={() => setScreen("game")}
+        onClick={() => {
+          setGameMode("live");
+          setScreen("game");
+        }}
         className="w-full max-w-sm py-5 rounded-2xl text-xl font-black text-black transition-all active:scale-95 disabled:opacity-40"
         style={{
           background: poolDisabled ? "#555" : `linear-gradient(135deg, #fbbf24, #f59e0b)`,
@@ -337,6 +347,18 @@ export default function App() {
         }}
       >
         {poolUnavailable ? "Pool Unavailable" : poolEmpty ? "Pool Empty 😔" : `PLAY — ${cfg.fee} USDC 🦋`}
+      </button>
+
+      <button
+        type="button"
+        onClick={() => setShowTestPicker(true)}
+        className="w-full max-w-sm py-4 rounded-2xl text-lg font-black text-black transition-all active:scale-95"
+        style={{
+          background: "linear-gradient(135deg, #7dd3fc, #38bdf8)",
+          boxShadow: "0 8px 30px rgba(56,189,248,0.28)",
+        }}
+      >
+        TEST GAME — No Fee · No Real Payout
       </button>
 
       {/* Quick rules */}
@@ -414,6 +436,48 @@ export default function App() {
         This game is for pure fun only. It is playable as long as there is prize pool available.
         It could end anytime or be paused. Under construction — it may change without notice.
       </div>
+
+      {showTestPicker && (
+        <div className="fixed inset-0 z-50 bg-black/70 flex items-center justify-center p-4">
+          <div className="w-full max-w-sm rounded-3xl border border-sky-400/40 bg-[#120700] p-5 shadow-2xl">
+            <div className="text-center mb-4">
+              <div className="text-sky-300 text-xs uppercase tracking-[0.25em] mb-2">Test Mode</div>
+              <div className="text-white text-2xl font-black">Choose Difficulty</div>
+              <div className="text-sky-100 text-xs mt-2">
+                No fee, no leaderboard, no on-chain payout. Simulated payout only.
+              </div>
+            </div>
+            <div className="grid grid-cols-3 gap-2">
+              {(Object.entries(DIFFICULTY_CONFIG) as [Difficulty, typeof DIFFICULTY_CONFIG.easy][]).map(([key, c]) => (
+                <button
+                  key={key}
+                  type="button"
+                  onClick={() => {
+                    setDifficulty(key);
+                    setGameMode("test");
+                    setShowTestPicker(false);
+                    setScreen("game");
+                  }}
+                  className="rounded-xl p-3 text-center border-2 transition-all active:scale-95"
+                  style={{ background: "#120f1a", borderColor: c.color }}
+                >
+                  <div className="text-lg">{c.emoji}</div>
+                  <div className="text-white font-bold text-xs">{c.label}</div>
+                  <div className="text-sky-200 text-[11px] mt-1">{c.time}s</div>
+                </button>
+              ))}
+            </div>
+            <button
+              type="button"
+              onClick={() => setShowTestPicker(false)}
+              className="mt-4 w-full rounded-2xl py-3 font-black text-black"
+              style={{ background: "linear-gradient(135deg, #fbbf24, #f59e0b)" }}
+            >
+              Close
+            </button>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
