@@ -64,7 +64,11 @@ function normalizePrivateKey(value: string | undefined): string {
   return raw.startsWith("0x") ? raw : `0x${raw}`;
 }
 
-async function readPrizeWalletBalanceBf(publicClient: ReturnType<typeof createPublicClient>) {
+async function readPrizeWalletBalanceBf() {
+  const publicClient = createPublicClient({
+    chain: base,
+    transport: baseTransport(),
+  });
   const timestamp = BigInt(Math.floor(Date.now() / 1000));
 
   try {
@@ -136,12 +140,7 @@ export async function POST(req: NextRequest) {
 
     // ── Check pool balance ────────────────────────────────────────────────────
 
-    const publicClient = createPublicClient({
-      chain: base,
-      transport: baseTransport(),
-    });
-
-    const poolBalanceBf = await readPrizeWalletBalanceBf(publicClient);
+    const poolBalanceBf = await readPrizeWalletBalanceBf();
 
     // Convert prize USDC → BF gross
     const bfGrossFloat = await usdcToBf(amount);
@@ -255,12 +254,7 @@ export async function POST(req: NextRequest) {
 
 export async function GET() {
   try {
-    const publicClient = createPublicClient({
-      chain: base,
-      transport: baseTransport(),
-    });
-
-    const balanceBf = await readPrizeWalletBalanceBf(publicClient);
+    const balanceBf = await readPrizeWalletBalanceBf();
     const bfPerUsdc = await getBfPerUsdc();
     const balanceUsdc = balanceBf / bfPerUsdc;
 
