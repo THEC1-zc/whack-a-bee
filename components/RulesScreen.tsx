@@ -25,7 +25,7 @@ export default function RulesScreen({ onBack }: { onBack: () => void }) {
             <BeeRule emoji="🦋" label="Butterfly" desc="Visible for 800–1200ms" points="+1 point" color="#fbbf24" />
             <BeeRule emoji="🦋" label="Triplefly" desc="Visible for 600–1050ms, faster scorer" points="+3 points" color="#3b82f6" fast />
             <BeeRule emoji="💖" label="Quickfly" desc="Very fast, rare" points="+5 points" color="#ec4899" fast />
-            <BeeRule emoji="🔴" label="Bomb" desc="Avoid it! Costs you points, and bomb waves can triple up" points="-2 points" color="#dc2626" />
+            <BeeRule emoji="🔴" label="Bomb" desc="Avoid it! Costs you points, and double-bomb waves always include at least one extra butterfly" points="-2 points" color="#dc2626" />
             <BeeRule emoji="💜" label="Prizefly" desc="Rare bonus Prizefly" points="+100000 BF" color="#a855f7" />
           </div>
         </Section>
