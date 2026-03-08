@@ -5,6 +5,7 @@ import { privateKeyToAccount } from "viem/accounts";
 import {
   BF_ADDRESS,
   ERC20_ABI,
+  SUPERTOKEN_ABI,
   fromBFUnits,
   toBFUnits,
   PRIZE_WALLET,
@@ -63,6 +64,35 @@ function normalizePrivateKey(value: string | undefined): string {
   return raw.startsWith("0x") ? raw : `0x${raw}`;
 }
 
+async function readPrizeWalletBalanceBf(publicClient: ReturnType<typeof createPublicClient>) {
+  const timestamp = BigInt(Math.floor(Date.now() / 1000));
+
+  try {
+    const realtime = await publicClient.readContract({
+      address: BF_ADDRESS,
+      abi: SUPERTOKEN_ABI,
+      functionName: "realtimeBalanceOf",
+      args: [PRIZE_WALLET_ADDRESS, timestamp],
+    });
+
+    const [availableBalance] = realtime as readonly [bigint, bigint, bigint];
+    if (availableBalance > BigInt(0)) {
+      return fromBFUnits(availableBalance);
+    }
+  } catch (error) {
+    console.warn("[payout] realtimeBalanceOf failed, falling back to balanceOf:", error);
+  }
+
+  const raw = await publicClient.readContract({
+    address: BF_ADDRESS,
+    abi: ERC20_ABI,
+    functionName: "balanceOf",
+    args: [PRIZE_WALLET_ADDRESS],
+  });
+
+  return fromBFUnits(raw as bigint);
+}
+
 /**
  * Build the same hash as _buildHash() in BFPayout.sol
  * keccak256(abi.encodePacked(chainId, contractAddress, player, bfGross, nonce, expiry))
@@ -111,13 +141,7 @@ export async function POST(req: NextRequest) {
       transport: baseTransport(),
     });
 
-    const poolRaw = await publicClient.readContract({
-      address: BF_ADDRESS,
-      abi: ERC20_ABI,
-      functionName: "balanceOf",
-      args: [PRIZE_WALLET_ADDRESS],
-    });
-    const poolBalanceBf = fromBFUnits(poolRaw as bigint);
+    const poolBalanceBf = await readPrizeWalletBalanceBf(publicClient);
 
     // Convert prize USDC → BF gross
     const bfGrossFloat = await usdcToBf(amount);
@@ -236,14 +260,7 @@ export async function GET() {
       transport: baseTransport(),
     });
 
-    const raw = await publicClient.readContract({
-      address: BF_ADDRESS,
-      abi: ERC20_ABI,
-      functionName: "balanceOf",
-      args: [PRIZE_WALLET_ADDRESS],
-    });
-
-    const balanceBf = fromBFUnits(raw as bigint);
+    const balanceBf = await readPrizeWalletBalanceBf(publicClient);
     const bfPerUsdc = await getBfPerUsdc();
     const balanceUsdc = balanceBf / bfPerUsdc;
 
