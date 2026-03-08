@@ -31,9 +31,9 @@ type HitStats = {
 const SLOTS = 9;
 
 const BEE_CHANCES = {
-  easy: { bomb: 0.07, fast: 0.22 },
-  medium: { bomb: 0.10, fast: 0.25 },
-  hard: { bomb: 0.18, fast: 0.30 },
+  easy: { fast: 0.22 },
+  medium: { fast: 0.25 },
+  hard: { fast: 0.30 },
 } as const;
 
 const FUCHSIA_CHANCE = 0.15;
@@ -47,6 +47,14 @@ const SPAWN_CONFIG = {
 
 const SUPER_BEE_CHANCE_PER_GAME = 0.025;
 const SUPER_BEE_BONUS_BF = 100000;
+
+const BEE_DISPLAY_NAMES: Record<Bee["type"], string> = {
+  normal: "Butterfly",
+  fast: "Triplefly",
+  fuchsia: "Quickfly",
+  bomb: "Bomb",
+  super: "Prizefly",
+};
 
 const CAP_DISTRIBUTION = [
   { mult: 0.95, pct: 21.0 },
@@ -140,10 +148,11 @@ export default function GameScreen({ user, difficulty, onGameEnd }: Props) {
     setBees(prev => {
       let next = prev.filter(b => b.visible);
       const usedSlots = new Set(next.filter(b => b.visible && !b.hit).map(b => b.slot));
-      let redPlaced = false;
+      let bombPlaced = 0;
       let fastPlaced = 0;
       let fuchsiaPlaced = false;
-      const fastLimit = isMegaJackpot ? 2 : 1;
+      const fastLimit = isMegaJackpot ? 3 : 2;
+      const bombTarget = ensureRed ? (Math.random() < 0.5 ? 2 : 1) : 0;
       for (let i = 0; i < count; i += 1) {
         const available = Array.from({ length: SLOTS }, (_, idx) => idx).filter(s => !usedSlots.has(s));
         if (available.length === 0) break;
@@ -154,9 +163,9 @@ export default function GameScreen({ user, difficulty, onGameEnd }: Props) {
         const fastChance = BEE_CHANCES[difficulty].fast;
 
         let type: Bee["type"] = "normal";
-        if (ensureRed && !redPlaced) {
+        if (bombPlaced < bombTarget) {
           type = "bomb";
-          redPlaced = true;
+          bombPlaced += 1;
         } else if (shouldSpawnSuperRef.current && !superSpawnedRef.current) {
           type = "super";
           superSpawnedRef.current = true;
@@ -170,13 +179,11 @@ export default function GameScreen({ user, difficulty, onGameEnd }: Props) {
         }
 
         const id = beeIdRef.current++;
-        const baseFast = difficulty === "easy" ? 1200 : difficulty === "medium" ? 900 : 650;
-        const baseNormal = difficulty === "easy" ? 1500 : difficulty === "medium" ? 1100 : 850;
-        const duration = type === "fast"
-          ? baseFast
-          : type === "fuchsia"
-          ? Math.round(baseFast * (2 / 3))
-          : baseNormal;
+        const duration =
+          type === "normal" ? (difficulty === "easy" ? 1200 : difficulty === "medium" ? 1000 : 800) :
+          type === "fast" ? (difficulty === "easy" ? 1050 : difficulty === "medium" ? 850 : 600) :
+          type === "fuchsia" ? (difficulty === "easy" ? 750 : difficulty === "medium" ? 600 : 500) :
+          (difficulty === "easy" ? 1300 : difficulty === "medium" ? 1000 : 800);
 
         setTimeout(() => setBees(p => p.filter(b => b.id !== id)), duration);
         next = [...next, { id, slot, type, visible: true, hit: false }];
@@ -196,7 +203,7 @@ export default function GameScreen({ user, difficulty, onGameEnd }: Props) {
     let text = "";
     if (bee.type === "normal") { points = 1; text = "+1"; }
     else if (bee.type === "fast") { points = 3; text = "⚡ +3"; }
-    else if (bee.type === "fuchsia") { points = 4; text = "💖 +4"; }
+    else if (bee.type === "fuchsia") { points = 5; text = "💖 +5"; }
     else if (bee.type === "bomb") { points = -2; text = "💥 -2"; }
     else if (bee.type === "super") {
       points = 1;
@@ -444,11 +451,11 @@ export default function GameScreen({ user, difficulty, onGameEnd }: Props) {
 
         <div className="w-full max-w-xs rounded-2xl p-3 border border-amber-900 text-xs" style={{ background: "#1f1000" }}>
           <div className="text-amber-500 uppercase tracking-widest mb-2">Hit Counter</div>
-          <div className="text-amber-200">Normal: {hitStats.normal}</div>
-          <div className="text-amber-200">Fast: {hitStats.fast}</div>
-          <div className="text-amber-200">Fuchsia: {hitStats.fuchsia}</div>
-          <div className="text-amber-200">Bomb: {hitStats.bomb}</div>
-          <div className="text-amber-200">Super: {hitStats.super}</div>
+          <div className="text-amber-200">{BEE_DISPLAY_NAMES.normal}: {hitStats.normal}</div>
+          <div className="text-amber-200">{BEE_DISPLAY_NAMES.fast}: {hitStats.fast}</div>
+          <div className="text-amber-200">{BEE_DISPLAY_NAMES.fuchsia}: {hitStats.fuchsia}</div>
+          <div className="text-amber-200">{BEE_DISPLAY_NAMES.bomb}: {hitStats.bomb}</div>
+          <div className="text-amber-200">{BEE_DISPLAY_NAMES.super}: {hitStats.super}</div>
         </div>
 
         <div className="w-full max-w-xs rounded-2xl p-4 border border-amber-800" style={{ background: "#2a1500" }}>
@@ -457,7 +464,7 @@ export default function GameScreen({ user, difficulty, onGameEnd }: Props) {
           <div className="text-xs text-amber-700 mt-1">{shownScore} pt × 0.001 USDC (approx)</div>
           <div className="text-[11px] text-amber-600 mt-1">Gross: {finalPrizeBfGross.toLocaleString()} BF · 5% to weekly pot</div>
           {bonusRef.current > 0 && (
-            <div className="text-xs text-purple-300 mt-1">Super bonus +{Math.round(bonusRef.current * bfPerUsdc)} BF</div>
+            <div className="text-xs text-purple-300 mt-1">Prizefly bonus +{Math.round(bonusRef.current * bfPerUsdc)} BF</div>
           )}
 
           {finalPrizeBfNet > 0 && (

@@ -348,7 +348,7 @@ export default function App() {
           >
             <img src="/bf.png" alt="" className="w-4 h-4" style={{ filter: "hue-rotate(20deg) saturate(0.8)" }} />
           </span>
-          <span>Normal butterfly → +1 pt</span>
+          <span>Butterfly → +1 pt</span>
         </div>
         <div className="flex items-center gap-2">
           <span
@@ -362,7 +362,7 @@ export default function App() {
               style={{ filter: "hue-rotate(180deg) saturate(2)" }}
             />
           </span>
-          <span>Power butterfly → +3 pts</span>
+          <span>Triplefly → +3 pts</span>
         </div>
         <div className="flex items-center gap-2">
           <span
@@ -376,7 +376,7 @@ export default function App() {
               style={{ filter: "hue-rotate(310deg) saturate(2)" }}
             />
           </span>
-          <span>Fast butterfly → +4 pts</span>
+          <span>Quickfly → +5 pts</span>
         </div>
         <div className="flex items-center gap-2">
           <span
@@ -390,7 +390,7 @@ export default function App() {
               style={{ filter: "hue-rotate(330deg) saturate(2)" }}
             />
           </span>
-          <span>Red butterfly → -2 pts</span>
+          <span>Bomb → -2 pts</span>
         </div>
         <div className="flex items-center gap-2">
           <span
@@ -404,7 +404,7 @@ export default function App() {
               style={{ filter: "hue-rotate(260deg) saturate(2)" }}
             />
           </span>
-          <span>Mega butterfly → +100000 BF</span>
+          <span>Prizefly → +100000 BF</span>
         </div>
         <div>📖 <button onClick={() => setScreen("rules")} className="underline text-amber-200">All rules</button></div>
       </div>

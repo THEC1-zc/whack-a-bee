@@ -3,8 +3,6 @@ import { DIFFICULTY_CONFIG, PRIZE_PER_POINT, PRIZE_WALLET } from "./App";
 import { BF_PER_USDC_FALLBACK } from "@/lib/pricing";
 
 export default function RulesScreen({ onBack }: { onBack: () => void }) {
-  const shortWallet = `${PRIZE_WALLET.slice(0, 6)}...${PRIZE_WALLET.slice(-4)}`;
-
   return (
     <div className="user-page-bg min-h-dvh flex flex-col">
 
@@ -24,18 +22,18 @@ export default function RulesScreen({ onBack }: { onBack: () => void }) {
             Watch out for red butterflies — they cost you points!
           </p>
           <div className="mt-3 space-y-2">
-            <BeeRule emoji="🦋" label="Normal butterfly" desc="Visible for 850–1500ms" points="+1 point" color="#fbbf24" />
-            <BeeRule emoji="🦋" label="Fast butterfly" desc="Visible for 650–1200ms, moves faster" points="+3 points" color="#3b82f6" fast />
-            <BeeRule emoji="💖" label="Fuchsia butterfly" desc="Very fast, rare" points="+4 points" color="#ec4899" fast />
-            <BeeRule emoji="🔴" label="Red butterfly" desc="Avoid it! Costs you points" points="-2 points" color="#dc2626" />
-            <BeeRule emoji="💜" label="Super butterfly" desc="Rare bonus butterfly" points="+100000 BF" color="#a855f7" />
+            <BeeRule emoji="🦋" label="Butterfly" desc="Visible for 800–1200ms" points="+1 point" color="#fbbf24" />
+            <BeeRule emoji="🦋" label="Triplefly" desc="Visible for 600–1050ms, faster scorer" points="+3 points" color="#3b82f6" fast />
+            <BeeRule emoji="💖" label="Quickfly" desc="Very fast, rare" points="+5 points" color="#ec4899" fast />
+            <BeeRule emoji="🔴" label="Bomb" desc="Avoid it! Costs you points" points="-2 points" color="#dc2626" />
+            <BeeRule emoji="💜" label="Prizefly" desc="Rare bonus butterfly" points="+100000 BF" color="#a855f7" />
           </div>
         </Section>
 
         {/* Difficoltà */}
         <Section title="⚙️ Difficulty">
           <div className="space-y-2">
-            {(Object.entries(DIFFICULTY_CONFIG) as any[]).map(([key, cfg]: any) => (
+            {(Object.entries(DIFFICULTY_CONFIG) as [keyof typeof DIFFICULTY_CONFIG, typeof DIFFICULTY_CONFIG.easy][]).map(([key, cfg]) => (
               <div key={key} className="rounded-xl p-3 border" style={{ background: "#0f0800", borderColor: cfg.color + "55" }}>
                 <div className="flex items-center justify-between mb-2">
                   <div className="flex items-center gap-2">
