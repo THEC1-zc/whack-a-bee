@@ -165,7 +165,7 @@ export default function App() {
     <div className="user-page-bg min-h-dvh flex flex-col items-center p-5 gap-4">
 
       {/* Header */}
-      <div className="w-full flex items-center gap-3 pt-2">
+      <div className="user-page-chrome w-full max-w-sm rounded-2xl flex items-center gap-3 px-3 py-3 mt-2">
         {user.pfpUrl && (
           <img src={user.pfpUrl} alt={user.username} className="w-9 h-9 rounded-full border-2 border-amber-400" />
         )}
@@ -174,14 +174,14 @@ export default function App() {
           <div className="text-amber-400 text-xs">@{user.username}</div>
           <button
             onClick={logout}
-            className="text-[10px] text-amber-600 hover:text-amber-400 underline mt-1"
+            className="text-[10px] text-amber-300 hover:text-amber-100 underline mt-1"
           >
             Logout
           </button>
           {!user.address && (
             <button
               onClick={connectWallet}
-              className="text-[10px] text-amber-600 hover:text-amber-400 underline mt-1 block"
+              className="text-[10px] text-amber-300 hover:text-amber-100 underline mt-1 block"
             >
               Connect wallet
             </button>
@@ -199,7 +199,7 @@ export default function App() {
       </div>
 
       {/* Title */}
-      <div className="text-center">
+      <div className="user-page-chrome w-full max-w-sm rounded-2xl px-4 py-5 text-center">
         <div className="text-6xl mb-1" style={{ filter: "drop-shadow(0 0 20px #fbbf24)" }}>🦋</div>
         <h1 className="text-3xl font-black text-white">Whack-a-Butterfly</h1>
         <button
@@ -318,8 +318,8 @@ export default function App() {
               }}>
               <div className="text-lg">{c.emoji}</div>
               <div className="text-white font-bold text-xs">{c.label}</div>
-              <div className="text-amber-500 text-xs mt-1">{c.fee} USDC</div>
-              <div className="text-amber-700 text-xs">{c.time}s · {c.maxPts}pt max</div>
+              <div className="text-amber-300 text-xs mt-1">{c.fee} USDC</div>
+              <div className="text-amber-200 text-xs">{c.time}s · {c.maxPts}pt max</div>
             </button>
           ))}
         </div>
@@ -340,7 +340,7 @@ export default function App() {
       </button>
 
       {/* Quick rules */}
-      <div className="w-full max-w-sm text-xs text-amber-800 grid grid-cols-2 gap-1">
+      <div className="user-page-chrome w-full max-w-sm rounded-2xl p-3 text-xs text-amber-100 grid grid-cols-2 gap-2">
         <div className="flex items-center gap-2">
           <span
             className="w-5 h-5 rounded-md border flex items-center justify-center"
@@ -406,11 +406,11 @@ export default function App() {
           </span>
           <span>Mega butterfly → +100000 BF</span>
         </div>
-        <div>📖 <button onClick={() => setScreen("rules")} className="underline text-amber-600">All rules</button></div>
+        <div>📖 <button onClick={() => setScreen("rules")} className="underline text-amber-200">All rules</button></div>
       </div>
 
       {/* Disclaimer */}
-      <div className="w-full max-w-sm text-[11px] text-amber-700 text-center leading-relaxed">
+      <div className="user-page-chrome w-full max-w-sm rounded-2xl px-4 py-3 text-[11px] text-amber-100 text-center leading-relaxed">
         This game is for pure fun only. It is playable as long as there is prize pool available.
         It could end anytime or be paused. Under construction — it may change without notice.
       </div>
@@ -423,8 +423,8 @@ function NotConnected() {
     <div className="user-page-bg min-h-dvh flex flex-col items-center justify-center p-6 text-center">
       <div className="text-6xl mb-4">🦋</div>
       <h1 className="text-2xl font-black text-white mb-2">Whack-a-Butterfly</h1>
-      <p className="text-amber-400 text-sm mb-6">Open this app from Warpcast to play!</p>
-      <div className="text-xs text-amber-800 max-w-xs">Search "Whack-a-Butterfly" on Warpcast or open it via a cast.</div>
+      <p className="text-amber-200 text-sm mb-6">Open this app from Warpcast to play!</p>
+      <div className="user-page-chrome rounded-2xl px-4 py-3 text-xs text-amber-100 max-w-xs">Search &quot;Whack-a-Butterfly&quot; on Warpcast or open it via a cast.</div>
     </div>
   );
 }

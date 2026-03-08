@@ -41,7 +41,7 @@ export default function LeaderboardScreen({ onBack }: { onBack: () => void }) {
   return (
     <div className="user-page-bg min-h-dvh flex flex-col">
 
-      <div className="flex items-center gap-3 px-4 pt-5 pb-3">
+      <div className="user-page-chrome mx-4 mt-4 rounded-2xl flex items-center gap-3 px-4 py-3">
         <button onClick={onBack} className="text-amber-400 font-bold text-sm">← Back</button>
         <h2 className="text-xl font-black text-white flex-1 text-center">🏆 Leaderboard</h2>
         <div className="w-12" />
@@ -55,9 +55,9 @@ export default function LeaderboardScreen({ onBack }: { onBack: () => void }) {
             onClick={() => setFilter(f)}
             className="flex-1 py-2 rounded-xl text-xs font-bold border transition-all"
             style={{
-              background: filter === f ? "#fbbf24" : "#1a0a00",
-              color: filter === f ? "#000" : "#888",
-              borderColor: filter === f ? "#fbbf24" : "#3d1a00",
+              background: filter === f ? "#fbbf24" : "rgba(31,16,0,0.82)",
+              color: filter === f ? "#000" : "#fde68a",
+              borderColor: filter === f ? "#fbbf24" : "#5d2e00",
             }}
           >
             {f === "all" ? "All" : DIFFICULTY_CONFIG[f].emoji + " " + DIFFICULTY_CONFIG[f].label}
@@ -67,12 +67,12 @@ export default function LeaderboardScreen({ onBack }: { onBack: () => void }) {
 
       <div className="flex-1 px-4 space-y-2 overflow-y-auto">
         {loading ? (
-          <div className="text-center text-amber-600 py-10">
+          <div className="user-page-chrome mx-4 rounded-2xl text-center text-amber-100 py-10">
             <div className="text-3xl animate-bounce">🐝</div>
             <div className="text-sm mt-2">Loading...</div>
           </div>
         ) : entries.length === 0 ? (
-          <div className="text-center text-amber-700 py-10">
+          <div className="user-page-chrome mx-4 rounded-2xl text-center text-amber-100 py-10">
             <div className="text-3xl">😔</div>
             <div className="text-sm mt-2">No scores yet.</div>
           </div>

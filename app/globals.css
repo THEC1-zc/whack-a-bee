@@ -27,7 +27,7 @@ body {
 .user-page-bg {
   background-color: #d6b81f;
   background-image:
-    linear-gradient(180deg, rgba(255, 252, 227, 0.12) 0%, rgba(116, 71, 0, 0.18) 100%),
+    linear-gradient(180deg, rgba(56, 31, 0, 0.18) 0%, rgba(42, 24, 0, 0.34) 100%),
     url('/user-pages-bg.svg');
   background-position: center;
   background-size: cover;
@@ -36,4 +36,12 @@ body {
 
 .user-page-overlay {
   background: linear-gradient(180deg, rgba(20, 10, 0, 0.18) 0%, rgba(20, 10, 0, 0.28) 100%);
+}
+
+.user-page-chrome {
+  background: rgba(28, 14, 0, 0.66);
+  border: 1px solid rgba(146, 64, 14, 0.55);
+  box-shadow: 0 10px 28px rgba(60, 31, 0, 0.18);
+  backdrop-filter: blur(6px);
+  -webkit-backdrop-filter: blur(6px);
 }

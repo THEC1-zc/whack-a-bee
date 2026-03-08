@@ -28,8 +28,8 @@ export default function WeeklyPage() {
   return (
     <div className="user-page-bg min-h-dvh p-6">
       <div className="max-w-xl mx-auto space-y-4">
-        <div className="flex items-center gap-3">
-          <a href="/" className="text-amber-400 font-bold text-sm">← Back</a>
+        <div className="user-page-chrome rounded-2xl flex items-center gap-3 px-4 py-3">
+          <a href="/" className="text-amber-200 font-bold text-sm">← Back</a>
           <h1 className="text-2xl font-black text-white">Weekly Pot</h1>
         </div>
 
@@ -39,7 +39,7 @@ export default function WeeklyPage() {
             {state ? `${Math.round(state.potBf).toLocaleString()} BF` : "—"}
           </div>
           {state?.payoutAt && (
-            <div className="text-amber-700 text-xs mt-1">
+            <div className="text-amber-300 text-xs mt-1">
               Payout {new Date(state.payoutAt).toLocaleString("en-GB", { timeZone: "Europe/Rome" })} CET
             </div>
           )}

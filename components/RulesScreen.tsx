@@ -9,7 +9,7 @@ export default function RulesScreen({ onBack }: { onBack: () => void }) {
     <div className="user-page-bg min-h-dvh flex flex-col">
 
       {/* Header */}
-      <div className="flex items-center gap-3 px-4 pt-5 pb-3 border-b border-amber-950">
+      <div className="user-page-chrome mx-4 mt-4 rounded-2xl flex items-center gap-3 px-4 py-3">
         <button onClick={onBack} className="text-amber-400 font-bold text-sm">← Back</button>
         <h2 className="text-xl font-black text-white flex-1 text-center">📖 Rules & Pricing</h2>
         <div className="w-12" />
@@ -63,7 +63,7 @@ export default function RulesScreen({ onBack }: { onBack: () => void }) {
               <div className="text-green-700 text-xs mt-1">per point (approx, based on BF/USDC rate)</div>
             </div>
 
-            <p className="text-amber-700 text-xs leading-relaxed">
+            <p className="text-amber-300 text-xs leading-relaxed">
               The prize is calculated at the end of each game and paid in BF tokens based on the current BF/USDC rate.
               Payouts are batched and sent hourly to your connected Farcaster wallet.
             </p>
@@ -77,7 +77,7 @@ export default function RulesScreen({ onBack }: { onBack: () => void }) {
                   { pts: 60, mode: "Hard", diff: "Hard" },
                 ].map(ex => (
                   <div key={ex.pts} className="flex justify-between text-sm">
-                    <span className="text-amber-700">{ex.pts} pts ({ex.mode})</span>
+                    <span className="text-amber-200">{ex.pts} pts ({ex.mode})</span>
                     <span className="text-amber-400 font-bold">{Math.round(ex.pts * PRIZE_PER_POINT[ex.diff.toLowerCase() as keyof typeof PRIZE_PER_POINT] * BF_PER_USDC_FALLBACK)} BF</span>
                   </div>
                 ))}
@@ -119,14 +119,14 @@ export default function RulesScreen({ onBack }: { onBack: () => void }) {
               <div className="text-red-800 text-xs">USDC</div>
             </div>
           </div>
-          <p className="text-amber-800 text-xs mt-3">
+          <p className="text-amber-300 text-xs mt-3">
             ⚠️ Fees are non-refundable. Make sure you have USDC on Base before playing.
           </p>
         </Section>
 
         {/* Fair play */}
         <Section title="⚖️ Fair Play">
-          <ul className="text-amber-700 text-xs space-y-1 leading-relaxed">
+          <ul className="text-amber-200 text-xs space-y-1 leading-relaxed">
             <li>• The game is fully on-chain and transparent</li>
             <li>• Scores are recorded on the public leaderboard</li>
             <li>• Any wallet can play unlimited games</li>
@@ -154,7 +154,7 @@ function Section({ title, children }: { title: string; children: React.ReactNode
 function Stat({ label, value }: { label: string; value: string }) {
   return (
     <div className="rounded-lg p-2" style={{ background: "#1a0a00" }}>
-      <div className="text-amber-700 text-xs">{label}</div>
+      <div className="text-amber-300 text-xs">{label}</div>
       <div className="text-amber-300 font-bold text-sm">{value}</div>
     </div>
   );
@@ -168,7 +168,7 @@ function BeeRule({ emoji, label, desc, points, color, fast }: {
       <span className="text-3xl" style={{ filter: fast ? "hue-rotate(180deg)" : undefined }}>{emoji}</span>
       <div className="flex-1">
         <div className="text-white font-bold text-sm">{label}</div>
-        <div className="text-amber-700 text-xs">{desc}</div>
+        <div className="text-amber-200 text-xs">{desc}</div>
       </div>
       <div className="font-black text-sm" style={{ color }}>{points}</div>
     </div>
