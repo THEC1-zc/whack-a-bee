@@ -44,3 +44,5 @@ next-env.d.ts
 LOCAL_WORKING_MEMORY.md
 # local balance workbook
 /local-balance/
+
+aisync.md
