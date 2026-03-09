@@ -82,6 +82,11 @@ Original prompt: end game: aggiungiamo pulsante share to farcaster, che pubblich
   - Added clearer structured failure message when both BF and USDC fallback fail.
   - Added payout token indicator (`payoutToken`) in API response and richer warning aggregation.
 
+- 2026-03-09 follow-up:
+  - Wave pacing tightened in `components/GameScreen.tsx`.
+  - Next wave is now queued immediately when the board is empty; removed the between-wave timeout gap from the active gameplay loop.
+  - End-of-run transition also shortened so the run closes almost immediately after the last board clears.
+
 - Recovery/resume pass on 2026-03-09:
   - Inspected interrupted uncommitted session-auth redesign and avoided redoing the implemented game-session architecture.
   - Completed the unfinished integration step: updated remaining imports after moving shared gameplay constants to `lib/gameRules` and admin auth/session checks to `lib/adminSession`.

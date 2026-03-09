@@ -16,7 +16,6 @@ import {
   getFastLimit,
   getFuchsiaChance,
   getFullValueThreshold,
-  getWaveDelayMs,
   getWaveSpawnCount,
   LIVE_POINT_VALUES,
   SUPER_BEE_BONUS_BF,
@@ -98,6 +97,7 @@ export default function GameScreen({ user, difficulty, onGameEnd }: Props) {
   const shouldSpawnSuperRef = useRef(false);
   const gameStartedRef = useRef(false);
   const endTriggeredRef = useRef(false);
+  const nextWaveQueuedRef = useRef(false);
 
   const addHitEffect = useCallback((slot: number, text: string) => {
     const id = effectIdRef.current++;
@@ -230,7 +230,13 @@ export default function GameScreen({ user, difficulty, onGameEnd }: Props) {
     if (feeStatus !== "paid") return;
     if (gameState !== "countdown") return;
     if (countdown <= 0) {
-      const start = setTimeout(() => setGameState("playing"), 0);
+      const start = setTimeout(() => {
+        endTriggeredRef.current = false;
+        nextWaveQueuedRef.current = false;
+        setCurrentWave(0);
+        setBees([]);
+        setGameState("playing");
+      }, 0);
       return () => clearTimeout(start);
     }
     const t = setTimeout(() => setCountdown((value) => value - 1), 1000);
@@ -283,14 +289,23 @@ export default function GameScreen({ user, difficulty, onGameEnd }: Props) {
   useEffect(() => {
     if (gameState !== "playing" || !session) return;
     if (currentWave >= cfg.waves) return;
-    const delay = getWaveDelayMs(difficulty, currentWave);
+    if (currentWave > 0 && bees.length > 0) return;
+    if (nextWaveQueuedRef.current) return;
+
+    nextWaveQueuedRef.current = true;
+    let fired = false;
     const t = setTimeout(() => {
+      fired = true;
+      nextWaveQueuedRef.current = false;
       const count = getWaveSpawnCount(difficulty, session.capMultiplier);
       spawnBees(count, true);
       setCurrentWave((value) => value + 1);
-    }, currentWave === 0 ? 180 : delay);
-    return () => clearTimeout(t);
-  }, [cfg.waves, currentWave, difficulty, gameState, session, spawnBees]);
+    }, 0);
+    return () => {
+      clearTimeout(t);
+      if (!fired) nextWaveQueuedRef.current = false;
+    };
+  }, [bees.length, cfg.waves, currentWave, difficulty, gameState, session, spawnBees]);
 
   useEffect(() => {
     if (gameState !== "playing") return;
@@ -301,7 +316,7 @@ export default function GameScreen({ user, difficulty, onGameEnd }: Props) {
     const finish = setTimeout(() => {
       setGameState("ended");
       void handleGameEnd();
-    }, 150);
+    }, 60);
     return () => clearTimeout(finish);
   }, [bees.length, cfg.waves, currentWave, gameState, handleGameEnd]);
 
@@ -319,6 +334,16 @@ export default function GameScreen({ user, difficulty, onGameEnd }: Props) {
   const appUrl = process.env.NEXT_PUBLIC_APP_URL || "https://whack-a-bee.vercel.app";
   const pct = Math.round((score / capScore) * 100);
   const displayedWave = Math.min(currentWave + 1, cfg.waves);
+  const weeklyBf = Math.floor(prizeBfGross * 0.045);
+  const burnBf = Math.floor(prizeBfGross * 0.01);
+  const payoutRows = [
+    { label: "Game ID", value: session?.gameId || "—", tone: "#fef3c7", mono: true },
+    { label: "Game Difficulty", value: `${cfg.emoji} ${cfg.label}`, tone: cfg.color },
+    { label: "Game Type", value: `${capInfo.icon} ${capInfo.label}`, tone: "#c084fc" },
+    { label: "Win", value: `${prizeBfNet.toLocaleString()} BF`, tone: "#34d399" },
+    { label: "Weekly", value: `${weeklyBf.toLocaleString()} BF`, tone: "#fbbf24" },
+    { label: "Burn", value: `${burnBf.toLocaleString()} BF`, tone: "#f87171" },
+  ];
   const shareImage = `${appUrl}/api/share-image?score=${score}&pct=${pct}&prizeBf=${prizeBfNet}&fee=${cfg.fee}&difficulty=${cfg.label}&tickets=${ticketEstimate}&waves=${cfg.waves}&v=4`;
   const shareText = `I just cleared ${cfg.waves} waves on Whack-a-Butterfly by @Thec1, entered a ${cfg.fee} USDC ${cfg.label} run, hit ${pct}% of the cap and won ${prizeBfNet} BF plus ${ticketEstimate} weekly tickets. Can you beat it?`;
 
@@ -373,78 +398,111 @@ export default function GameScreen({ user, difficulty, onGameEnd }: Props) {
 
   if (gameState === "ended") {
     return (
-      <div className="min-h-dvh flex flex-col items-center justify-center p-6 text-center gap-4" style={{ background: "#1a0a00" }}>
-        <div className="text-5xl">{prizeBfNet > 0 ? "🎉" : "😔"}</div>
-        <h2 className="text-3xl font-black text-white">Game Over</h2>
-        <div className="text-6xl font-black text-amber-400">{score}</div>
-        <div className="text-amber-600 text-sm">points out of {capScore} max</div>
-        <div className="text-amber-500 text-xs mt-1">{cfg.emoji} {cfg.label} difficulty</div>
-        <div className="text-amber-500 text-xs mt-1">Waves cleared: {cfg.waves}/{cfg.waves}</div>
-        <div className="text-amber-400 text-xs mt-1">{capInfo.icon} Max prize was {capInfo.label}</div>
-
-        <div className="w-full max-w-xs mt-3">
-          <div className="text-amber-500 text-xs mb-1">Your game was {pct}%</div>
-          <div className="h-2 rounded-full bg-amber-950 border border-amber-900 overflow-hidden">
-            <div className="h-full" style={{ width: `${pct}%`, background: "linear-gradient(90deg, #f87171 0%, #fbbf24 50%, #22c55e 100%)", transition: "width 0.6s ease" }} />
+      <div className="user-page-bg min-h-dvh p-4">
+        <div className="max-w-sm mx-auto flex flex-col gap-4 pb-6">
+          <div className="user-page-chrome rounded-[28px] px-5 py-5 text-center">
+            <div className="text-5xl">{prizeBfNet > 0 ? "🎉" : "😔"}</div>
+            <div className="mt-2 text-[11px] uppercase tracking-[0.35em] text-amber-300">Payout Summary</div>
+            <h2 className="mt-2 text-3xl font-black text-white">Game Over</h2>
+            <div className="mt-4 text-6xl font-black text-amber-300">{prizeBfNet.toLocaleString()}</div>
+            <div className="text-sm font-bold text-emerald-300">BF won</div>
+            <div className="mt-3 text-amber-100 text-sm">
+              {score} points · {effectivePoints.toFixed(2)} effective payout points
+            </div>
+            <div className="mt-1 text-amber-200/80 text-xs">
+              {cfg.waves}/{cfg.waves} waves cleared · {pct}% of cap
+            </div>
+            <div className="mt-4 h-2 rounded-full bg-amber-950/80 border border-amber-900 overflow-hidden">
+              <div
+                className="h-full"
+                style={{
+                  width: `${pct}%`,
+                  background: "linear-gradient(90deg, #f87171 0%, #fbbf24 52%, #34d399 100%)",
+                }}
+              />
+            </div>
           </div>
-        </div>
 
-        <div className="w-full max-w-xs rounded-2xl p-3 border border-amber-900 text-xs" style={{ background: "#1f1000" }}>
-          <div className="text-amber-500 uppercase tracking-widest mb-2">Hit Counter</div>
-          <div className="text-amber-200">{BEE_DISPLAY_NAMES.normal}: {hitStats.normal}</div>
-          <div className="text-amber-200">{BEE_DISPLAY_NAMES.fast}: {hitStats.fast}</div>
-          <div className="text-amber-200">{BEE_DISPLAY_NAMES.fuchsia}: {hitStats.fuchsia}</div>
-          <div className="text-amber-200">{BEE_DISPLAY_NAMES.bomb}: {hitStats.bomb}</div>
-          <div className="text-amber-200">{BEE_DISPLAY_NAMES.super}: {hitStats.super}</div>
-        </div>
+          <div className="grid grid-cols-2 gap-3">
+            {payoutRows.map((row) => (
+              <div
+                key={row.label}
+                className="user-page-chrome rounded-2xl px-4 py-3 border"
+                style={{ borderColor: "rgba(251,191,36,0.18)" }}
+              >
+                <div className="text-[10px] uppercase tracking-[0.24em] text-amber-400/80">{row.label}</div>
+                <div
+                  className={`mt-2 text-sm font-black ${row.mono ? "font-mono break-all text-[12px] leading-4" : ""}`}
+                  style={{ color: row.tone }}
+                >
+                  {row.value}
+                </div>
+              </div>
+            ))}
+          </div>
 
-        <div className="w-full max-w-xs rounded-2xl p-4 border border-amber-800" style={{ background: "#2a1500" }}>
-          <div className="text-xs text-amber-600 uppercase tracking-widest mb-2">Prize</div>
-          <div className="text-3xl font-black text-amber-400">{prizeBfNet.toLocaleString()} BF</div>
-          <div className="text-xs text-amber-700 mt-1">{effectivePoints.toFixed(2)} effective payout points after bands</div>
-          <div className="text-[11px] text-amber-600 mt-1">Gross: {prizeBfGross.toLocaleString()} BF · 5.5% split to pot/burn</div>
-          <div className="text-[11px] text-amber-500 mt-1">Bands: full value to {getFullValueThreshold(difficulty)} pts, then reduced payout weight</div>
-          {ticketCount > 0 && <div className="text-[11px] text-amber-400 mt-1">Weekly tickets earned: {ticketCount}</div>}
-          {superBonus > 0 && (
-            <div className="text-xs text-purple-300 mt-1">Prizefly bonus +{Math.round(superBonus * bfPerUsdc)} BF</div>
-          )}
-          {prizeBfNet > 0 && (
-            <div className={`mt-3 text-xs font-bold rounded-lg p-2 ${paymentStatus === "paid" ? "bg-green-900 text-green-300" : paymentStatus === "failed" ? "bg-red-900 text-red-300" : "bg-amber-900 text-amber-300"}`}>
-              {paymentStatus === "paid" ? `✅ ${paymentNote || "Payment sent"}` : paymentStatus === "failed" ? "❌ Payment error" : "⏳ Processing..."}
+          <div className="user-page-chrome rounded-[24px] px-4 py-4">
+            <div className="text-[11px] uppercase tracking-[0.3em] text-amber-300">Run Details</div>
+            <div className="mt-3 grid grid-cols-3 gap-3">
+              <MetricTile label="Gross" value={`${prizeBfGross.toLocaleString()} BF`} tone="#fbbf24" />
+              <MetricTile label="Tickets" value={`${ticketCount}`} tone="#fde68a" />
+              <MetricTile label="Fee" value={`${cfg.fee} USDC`} tone="#c4b5fd" />
             </div>
-          )}
-          {paymentStatus === "failed" && paymentError && (
-            <div className="mt-2 text-[11px] text-red-300 whitespace-pre-wrap break-words">
-              {paymentErrorCode ? `[${paymentErrorCode}] ` : ""}{shortPaymentError}
+            <div className="mt-3 text-[11px] text-amber-200/80">
+              Bands: full value to {getFullValueThreshold(difficulty)} pts, then payout weight drops. Split: 94.5% win / 4.5% weekly / 1% burn.
             </div>
-          )}
-          {paymentStatus === "failed" && paymentNote && (
-            <div className="mt-1 text-[11px] text-amber-300">{paymentNote}</div>
-          )}
+            {superBonus > 0 && (
+              <div className="mt-2 text-xs text-purple-200">Prizefly bonus +{Math.round(superBonus * bfPerUsdc)} BF</div>
+            )}
+            {prizeBfNet > 0 && (
+              <div className={`mt-3 text-xs font-bold rounded-xl px-3 py-2 ${paymentStatus === "paid" ? "bg-green-900/80 text-green-300" : paymentStatus === "failed" ? "bg-red-900/80 text-red-300" : "bg-amber-900/80 text-amber-300"}`}>
+                {paymentStatus === "paid" ? `✅ ${paymentNote || "Payment sent"}` : paymentStatus === "failed" ? "❌ Payment error" : "⏳ Processing..."}
+              </div>
+            )}
+            {paymentStatus === "failed" && paymentError && (
+              <div className="mt-2 text-[11px] text-red-200 whitespace-pre-wrap break-words">
+                {paymentErrorCode ? `[${paymentErrorCode}] ` : ""}{shortPaymentError}
+              </div>
+            )}
+            {paymentStatus === "failed" && paymentNote && (
+              <div className="mt-1 text-[11px] text-amber-200">{paymentNote}</div>
+            )}
+          </div>
+
+          <div className="user-page-chrome rounded-[24px] px-4 py-4">
+            <div className="text-[11px] uppercase tracking-[0.3em] text-amber-300">Hit Counter</div>
+            <div className="mt-3 grid grid-cols-2 gap-2 text-xs">
+              <CounterRow label={BEE_DISPLAY_NAMES.normal} value={hitStats.normal} />
+              <CounterRow label={BEE_DISPLAY_NAMES.fast} value={hitStats.fast} />
+              <CounterRow label={BEE_DISPLAY_NAMES.fuchsia} value={hitStats.fuchsia} />
+              <CounterRow label={BEE_DISPLAY_NAMES.bomb} value={hitStats.bomb} />
+              <CounterRow label={BEE_DISPLAY_NAMES.super} value={hitStats.super} />
+            </div>
+          </div>
+
+          <button
+            onClick={async () => {
+              try {
+                await sdk.actions.composeCast({ text: `${shareText}\n${appUrl}`, embeds: [shareImage] });
+              } catch (error) {
+                console.error("Share error", error);
+              }
+            }}
+            className="w-full py-3.5 rounded-2xl text-sm font-black text-black flex items-center justify-center gap-2"
+            style={{ background: "linear-gradient(135deg, #fbbf24, #f59e0b)" }}
+          >
+            <span className="w-5 h-5 rounded-full flex items-center justify-center text-[11px] font-black" style={{ background: "#6d28d9", color: "#fff" }}>f</span>
+            Share to Farcaster
+          </button>
+
+          <button
+            onClick={() => onGameEnd(scoreRef.current, prize)}
+            className="w-full py-4 rounded-2xl text-lg font-black text-black"
+            style={{ background: "linear-gradient(135deg, #fbbf24, #f59e0b)" }}
+          >
+            Back
+          </button>
         </div>
-
-        <button
-          onClick={async () => {
-            try {
-              await sdk.actions.composeCast({ text: `${shareText}\n${appUrl}`, embeds: [shareImage] });
-            } catch (error) {
-              console.error("Share error", error);
-            }
-          }}
-          className="mt-3 w-full max-w-xs py-3 rounded-2xl text-sm font-black text-black flex items-center justify-center gap-2"
-          style={{ background: "linear-gradient(135deg, #fbbf24, #f59e0b)" }}
-        >
-          <span className="w-5 h-5 rounded-full flex items-center justify-center text-[11px] font-black" style={{ background: "#6d28d9", color: "#fff" }}>f</span>
-          Share to Farcaster
-        </button>
-
-        <button
-          onClick={() => onGameEnd(scoreRef.current, prize)}
-          className="mt-5 w-full max-w-xs py-4 rounded-2xl text-lg font-black text-black"
-          style={{ background: "linear-gradient(135deg, #fbbf24, #f59e0b)" }}
-        >
-          Back
-        </button>
       </div>
     );
   }
@@ -541,6 +599,24 @@ export default function GameScreen({ user, difficulty, onGameEnd }: Props) {
           to { transform: translateY(-35px); opacity: 0; }
         }
       `}</style>
+    </div>
+  );
+}
+
+function MetricTile({ label, value, tone }: { label: string; value: string; tone: string }) {
+  return (
+    <div className="rounded-2xl px-3 py-3 border border-amber-900/50" style={{ background: "rgba(20, 10, 0, 0.42)" }}>
+      <div className="text-[10px] uppercase tracking-[0.2em] text-amber-400/80">{label}</div>
+      <div className="mt-2 text-sm font-black" style={{ color: tone }}>{value}</div>
+    </div>
+  );
+}
+
+function CounterRow({ label, value }: { label: string; value: number }) {
+  return (
+    <div className="rounded-xl px-3 py-2 border border-amber-900/45" style={{ background: "rgba(20, 10, 0, 0.34)" }}>
+      <div className="text-amber-200">{label}</div>
+      <div className="mt-1 text-amber-300 font-black">{value}</div>
     </div>
   );
 }
