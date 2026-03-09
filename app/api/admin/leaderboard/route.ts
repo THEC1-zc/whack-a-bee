@@ -5,10 +5,11 @@ import { getAdminWallet, getWeeklyState, resetWeeklyState } from "@/lib/weekly";
 import { verifyAdminChallenge } from "@/lib/adminAuth";
 
 const ADMIN_WALLET = getAdminWallet();
+const ADMIN_API_KEY = process.env.ADMIN_API_KEY;
 
 function isAuthorized(req: NextRequest) {
-  const addr = req.headers.get("x-admin-wallet") || "";
-  return addr.toLowerCase() === ADMIN_WALLET;
+  const token = req.headers.get("x-admin-token");
+  return Boolean(ADMIN_API_KEY && token === ADMIN_API_KEY);
 }
 
 export async function GET(req: NextRequest) {

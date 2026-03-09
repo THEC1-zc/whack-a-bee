@@ -7,9 +7,7 @@ const ADMIN_API_KEY = process.env.ADMIN_API_KEY;
 
 function isAuthorized(req: NextRequest) {
   const token = req.headers.get("x-admin-token");
-  if (ADMIN_API_KEY && token === ADMIN_API_KEY) return true;
-  const addr = req.headers.get("x-admin-wallet") || "";
-  return addr.toLowerCase() === ADMIN_WALLET;
+  return Boolean(ADMIN_API_KEY && token === ADMIN_API_KEY);
 }
 
 export async function GET(req: NextRequest) {
