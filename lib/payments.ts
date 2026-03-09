@@ -48,6 +48,7 @@ type FinishGameResponse = {
   scorePossible: number;
   prizeUsdc: number;
   prizeBfGross: number;
+  ticketCount: number;
 };
 
 function getErrorMessage(error: unknown, fallback: string) {

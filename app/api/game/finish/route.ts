@@ -20,6 +20,7 @@ export async function POST(req: NextRequest) {
       prizeUsdc: game.prizeUsdc,
       prizeBfGross: game.prizeBfGross,
       capLabel: game.capLabel,
+      ticketCount: game.ticketCount,
     });
   } catch (error) {
     return NextResponse.json({ ok: false, error: error instanceof Error ? error.message : "Game finish failed" }, { status: 400 });

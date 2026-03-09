@@ -8,7 +8,13 @@ import GameScreen from "./GameScreen";
 import LeaderboardScreen from "./LeaderboardScreen";
 import RulesScreen from "./RulesScreen";
 import { BF_PER_USDC_FALLBACK } from "@/lib/pricing";
-import { DIFFICULTY_CONFIG, PRIZE_PER_POINT, type Difficulty } from "@/lib/gameRules";
+import {
+  calculatePrizeUsdc,
+  DIFFICULTY_CONFIG,
+  getFullValueThreshold,
+  PRIZE_PER_POINT,
+  type Difficulty,
+} from "@/lib/gameRules";
 
 const PRIZE_WALLET = "0xFd144C774582a450a3F578ae742502ff11Ff92Df";
 const MIN_POOL_BALANCE_BF = 100000;
@@ -108,6 +114,7 @@ export default function App() {
   const poolDisabled = poolEmpty || poolUnavailable;
   const liveBfPerUsdc = bfPerUsdc ?? BF_PER_USDC_FALLBACK;
   const bfPerPoint = PRIZE_PER_POINT[difficulty] * liveBfPerUsdc;
+  const maxPrizeBf = Math.round(calculatePrizeUsdc(cfg.maxPts, difficulty) * liveBfPerUsdc * 0.945);
   const visibleTickets = user?.address ? myTickets : null;
   const ticketTotal = (visibleTickets?.claimed || 0) + (visibleTickets?.pending || 0);
 
@@ -156,7 +163,7 @@ export default function App() {
         </div>
         {poolEmpty && <div className="text-red-400 text-xs text-center mt-1">Game temporarily suspended</div>}
         {poolUnavailable && <div className="text-red-400 text-xs text-center mt-1">Pool not configured</div>}
-        <div className="text-xs text-amber-700 text-center mt-1">Reward: {bfPerPoint.toFixed(0)} BF per point (approx)</div>
+        <div className="text-xs text-amber-700 text-center mt-1">Base reward: {bfPerPoint.toFixed(0)} BF per full-value point</div>
       </div>
 
       <div className="w-full max-w-sm rounded-2xl p-3 border border-amber-900 text-center text-xs" style={{ background: "#1f1000" }}>
@@ -174,7 +181,7 @@ export default function App() {
       <div className="w-full max-w-sm rounded-2xl p-3 border border-amber-900 text-center text-xs" style={{ background: "#1f1000" }}>
         <div className="text-amber-500 uppercase tracking-widest mb-1">My Weekly Tickets</div>
         <div className="text-amber-200 font-bold">{ticketTotal}</div>
-        <div className="text-amber-700 mt-1">Tickets are assigned automatically on successful payout claim.</div>
+        <div className="text-amber-700 mt-1">1 base ticket, +1 full-value run, +1 profitable run, +1 every 10th win.</div>
       </div>
 
       {lastResult && (
@@ -203,7 +210,8 @@ export default function App() {
                 <div className="text-3xl mb-1">{item.emoji}</div>
                 <div className="text-white font-black text-lg">{item.label}</div>
                 <div className="text-amber-500 text-xs mt-1">{item.fee} USDC</div>
-                <div className="text-amber-700 text-[11px] mt-1">{item.time}s · {item.maxPts}pt max</div>
+                <div className="text-amber-700 text-[11px] mt-1">{item.waves} waves · {item.maxPts}pt cap</div>
+                <div className="text-amber-700 text-[11px] mt-1">Full value to {getFullValueThreshold(key)} pt</div>
               </button>
             );
           })}
@@ -219,6 +227,9 @@ export default function App() {
       >
         PLAY — {cfg.fee} USDC 🦋
       </button>
+      <div className="text-[11px] text-amber-600 text-center max-w-sm">
+        {cfg.label}: {cfg.waves} waves, base {bfPerPoint.toFixed(0)} BF per full-value point, up to about {maxPrizeBf.toLocaleString()} BF net before Prizefly bonus.
+      </div>
     </div>
   );
 }

@@ -17,6 +17,7 @@ export async function GET(req: Request) {
   const fee = readNumber(searchParams.get("fee"), 0.0);
   const difficulty = (searchParams.get("difficulty") || "Battle").slice(0, 16);
   const tickets = Math.max(0, Math.floor(readNumber(searchParams.get("tickets"), 0)));
+  const waves = Math.max(0, Math.floor(readNumber(searchParams.get("waves"), 0)));
 
   return new ImageResponse(
     (
@@ -90,7 +91,7 @@ export async function GET(req: Request) {
               Whack-a-Butterfly
             </div>
             <div style={{ display: "flex", fontSize: "30px", color: "#fbbf24", fontWeight: 800 }}>
-              {difficulty} mode recap
+              {difficulty} mode · {waves || "?"} waves
             </div>
             <div style={{ display: "flex", gap: "12px", alignItems: "center" }}>
               <div
@@ -121,7 +122,7 @@ export async function GET(req: Request) {
               </div>
             </div>
             <div style={{ display: "flex", fontSize: "30px", color: "#f3f4f6", fontWeight: 700 }}>
-              Tap to play on Farcaster miniapp
+              Wave run cleared on Farcaster miniapp
             </div>
           </div>
         </div>

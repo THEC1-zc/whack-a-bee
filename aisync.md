@@ -18,12 +18,20 @@
 
 ## Economia di gioco (versione attuale)
 ```
-PRIZE_PER_POINT = 0.0008 USDC
+PRIZE_PER_POINT base:
+  easy   0.00025 USDC
+  medium 0.00040 USDC
+  hard   0.00060 USDC
 
 DIFFICULTY_CONFIG:
-  easy:   fee=0.015 USDC | maxPts=40 | time=30s | break-even=20pt (50% del cap)
-  medium: fee=0.025 USDC | maxPts=60 | time=25s | break-even=33pt (55% del cap)
-  hard:   fee=0.035 USDC | maxPts=80 | time=20s | break-even=47pt (59% del cap)
+  easy:   fee=0.015 USDC | maxPts=40 | waves=10
+  medium: fee=0.025 USDC | maxPts=60 | waves=9
+  hard:   fee=0.035 USDC | maxPts=80 | waves=8
+
+Payout bands:
+  easy   0-20 @100% | 21-35 @70% | 36+ @40%
+  medium 0-30 @100% | 31-50 @70% | 51+ @40%
+  hard   0-40 @100% | 41-65 @70% | 66+ @40%
 ```
 
 ### Cap moltiplicatore (scelto a inizio partita, ora visibile prima del gioco)
@@ -38,11 +46,11 @@ DIFFICULTY_CONFIG:
 ### Tipi farfalla
 | Tipo     | Punti | Chance spawn |
 |----------|-------|-------------|
-| Normal   | +1    | base        |
-| Fast ⚡  | +3    | easy 22% / med 25% / hard 30% |
-| Fuchsia 💖 | +4  | 15% (max 3/game) |
-| Bomb 💥  | −2    | easy 7% / med 10% / hard 18% |
-| Super 💜 | +1 +100K BF | 2.5% (7.5% in Mega round) |
+| Butterfly   | +1 | base |
+| Triplefly ⚡ | +2 / +3 / +4 | easy 22% / med 25% / hard 30%, doubled in Mega |
+| Quickfly 💖 | +3 / +5 / +7 | 15%, doubled in Mega (max 3/run) |
+| Bombfly 🔴 | −1 / −2 / −3 | 1 forced per wave |
+| Prizefly 💜 | +1 +100K BF | 2.5% (7.5% in Mega round) |
 
 ### Weekly pot
 - 5% di ogni prize lordo va al weekly pot (trattenuto dal prize del giocatore)
@@ -109,3 +117,27 @@ DIFFICULTY_CONFIG:
 - [ ] Valutare se rendere Super Bee bonus fisso in USDC invece che in BF (per stabilità con variazioni di prezzo)
 - [ ] Valutare se sostituire gli `<img>` principali con `next/image` dove non rompe il rendering miniapp
 - [ ] Valutare cleanup/expiry dei game record `created` abbandonati oltre al rate-limit per wallet
+
+### 2026-03-09 16:42:45 +0100
+- Added .devcontainer/devcontainer.json for standardized Codex/Claude remote development.
+- Ensured aisync.md is ignored in .gitignore.
+- Commit target: chore: add devcontainer for Codex remote development
+
+### 2026-03-09 17:25:00 +0100
+- Fixed Mega/live payout validation drift by deriving server hit bounds from the same cap-based spawn rules used by the client, instead of static per-difficulty limits.
+- Fixed BF prize conversion in `lib/gameSessions.ts`: signed claim amounts now convert `prizeUsdc` to BF using the live BF/USDC rate, instead of accidentally signing raw USDC-sized values.
+- Moved shared gameplay spawn helpers into `lib/gameRules.ts` (`getFastChance`, `getFastLimit`, `getFuchsiaChance`, `getSuperChance`, `getHitBounds`, shared durations/spawn config).
+- Updated `components/GameScreen.tsx` Mega gameplay to match the coordination balance notes more closely:
+  - Mega doubles Triplefly/Quickfly spawn pressure via shared helpers.
+  - Fast per-wave limit is now 1 normally, 2 in Mega.
+  - Bomb pressure is one forced Bomb per wave, removing the stale double-bomb branch.
+- Updated `components/RulesScreen.tsx` copy so the visible rules match the actual gameplay loop again.
+- End-game share text now uses the actual `ticketCount` returned by the server, instead of a hardcoded `1 ticket` estimate.
+
+### 2026-03-09 18:05:00 +0100
+- Promoted the old test-game balance into the live ruleset:
+  - live point values are now difficulty-based (`easy 1/2/3/-1`, `medium 1/3/5/-2`, `hard 1/4/7/-3`)
+  - live payout now uses soft bands instead of linear `score * PRIZE_PER_POINT`
+  - gameplay is wave-based instead of countdown-based (`easy 10`, `medium 9`, `hard 8`)
+- Updated `components/GameScreen.tsx`, `lib/gameRules.ts`, `lib/gameSessions.ts`, `components/App.tsx`, `components/RulesScreen.tsx`, `app/api/share-image/route.tsx`, `app/weekly/page.tsx`, and `README.md` to use the promoted live balance and terminology.
+- Weekly ticket copy + calculation now match the actual post-promote rules: `1 base + 1 full-value run + 1 profitable run + 1 every 10th claimed win`.

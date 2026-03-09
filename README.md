@@ -33,11 +33,14 @@ gh repo create whack-a-butterfly --public --push
 5. Rideploya
 
 ## Game Design
-- 🐝 Ape normale → +1 punto
-- ⚡ Ape veloce (blu) → +3 punti  
-- 💣 Ape bomba (rossa) → -2 punti
-- ⏱ 30 secondi per partita
-- 🏆 50 punti → vinci il prize pool
+- Ogni difficoltà è una run a wave fisse: `easy=10`, `medium=9`, `hard=8`
+- 🦋 Butterfly → `+1`
+- 🔵 Triplefly → `+2 / +3 / +4`
+- 💖 Quickfly → `+3 / +5 / +7`
+- 🔴 Bombfly → `-1 / -2 / -3`
+- 💜 Prizefly → `+100000 BF` bonus
+- Il payout non è lineare: i primi punti valgono al 100%, poi il peso scende al 70% e al 40%
+- I round Mega aumentano cap e pressione spawn
 
 ## TODO
 - [ ] Game fee (0.001 ETH per partita) via wallet

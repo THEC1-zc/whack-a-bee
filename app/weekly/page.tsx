@@ -1,4 +1,5 @@
 "use client";
+import Link from "next/link";
 import { useEffect, useState } from "react";
 
 type WeeklyState = {
@@ -11,7 +12,7 @@ type WeeklyState = {
 
 export default function WeeklyPage() {
   const [state, setState] = useState<WeeklyState | null>(null);
-  const [now, setNow] = useState(Date.now());
+  const [now, setNow] = useState<number | null>(null);
 
   useEffect(() => {
     fetch("/api/weekly")
@@ -29,7 +30,7 @@ export default function WeeklyPage() {
     <div className="user-page-bg min-h-dvh p-6">
       <div className="max-w-xl mx-auto space-y-4">
         <div className="user-page-chrome rounded-2xl flex items-center gap-3 px-4 py-3">
-          <a href="/" className="text-amber-200 font-bold text-sm">← Back</a>
+          <Link href="/" className="text-amber-200 font-bold text-sm">← Back</Link>
           <h1 className="text-2xl font-black text-white">Weekly Pot</h1>
         </div>
 
@@ -43,7 +44,7 @@ export default function WeeklyPage() {
               Payout {new Date(state.payoutAt).toLocaleString("en-GB", { timeZone: "Europe/Rome" })} CET
             </div>
           )}
-          {state?.payoutAt && (
+          {state?.payoutAt && now != null && (
             <div className="text-amber-300 text-xs mt-1">
               Countdown {formatCountdown(state.payoutAt - now)}
             </div>
@@ -56,7 +57,7 @@ export default function WeeklyPage() {
             <li>• Pot = 5% of every win paid</li>
             <li>• Top 3 (overall net gain) split 60% (50/30/20)</li>
             <li>• 7 lottery prizes split 40% equally</li>
-            <li>• Tickets: 1 per game, +1 per 1000 points, +1 per 0.25 USDC spent, +1 per 25 wins</li>
+            <li>• Tickets: 1 base, +1 full-value run, +1 profitable run, +1 every 10th claimed win</li>
           </ul>
         </div>
 

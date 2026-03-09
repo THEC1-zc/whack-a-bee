@@ -5,10 +5,22 @@ import { sdk } from "@farcaster/miniapp-sdk";
 import type { FarcasterUser } from "@/hooks/useFarcaster";
 import { BF_PER_USDC_FALLBACK } from "@/lib/pricing";
 import {
+  BEE_LABELS,
+  BEE_DURATIONS,
+  calculatePrizeUsdc,
   capLabel,
   DIFFICULTY_CONFIG,
-  PRIZE_PER_POINT,
+  FUCHSIA_MAX_PER_GAME,
+  getEffectivePayoutPoints,
+  getFastChance,
+  getFastLimit,
+  getFuchsiaChance,
+  getFullValueThreshold,
+  getWaveDelayMs,
+  getWaveSpawnCount,
+  LIVE_POINT_VALUES,
   SUPER_BEE_BONUS_BF,
+  getSuperChance,
   type Difficulty,
 } from "@/lib/gameRules";
 import {
@@ -51,33 +63,13 @@ type GameSessionInfo = {
 };
 
 const SLOTS = 9;
-const BEE_CHANCES = {
-  easy: { fast: 0.22 },
-  medium: { fast: 0.25 },
-  hard: { fast: 0.30 },
-} as const;
-const FUCHSIA_CHANCE = 0.15;
-const FUCHSIA_MAX_PER_GAME = 3;
-const SPAWN_CONFIG = {
-  easy: { base: 900, min: 450, step: 16 },
-  medium: { base: 820, min: 420, step: 18 },
-  hard: { base: 720, min: 380, step: 22 },
-} as const;
-const SUPER_BEE_CHANCE_PER_GAME = 0.025;
-const BEE_DISPLAY_NAMES: Record<Bee["type"], string> = {
-  normal: "Butterfly",
-  fast: "Triplefly",
-  fuchsia: "Quickfly",
-  bomb: "Bomb",
-  super: "Prizefly",
-};
+const BEE_DISPLAY_NAMES = BEE_LABELS;
 
 export default function GameScreen({ user, difficulty, onGameEnd }: Props) {
   const cfg = DIFFICULTY_CONFIG[difficulty];
   const [session, setSession] = useState<GameSessionInfo | null>(null);
   const [bees, setBees] = useState<Bee[]>([]);
   const [score, setScore] = useState(0);
-  const [timeLeft, setTimeLeft] = useState(cfg.time);
   const [gameState, setGameState] = useState<"countdown" | "playing" | "ended">("countdown");
   const [countdown, setCountdown] = useState(3);
   const [hitEffects, setHitEffects] = useState<{ id: number; slot: number; text: string }[]>([]);
@@ -92,6 +84,8 @@ export default function GameScreen({ user, difficulty, onGameEnd }: Props) {
   const [hitStats, setHitStats] = useState<HitStats>({ normal: 0, fast: 0, fuchsia: 0, bomb: 0, super: 0 });
   const [capScore, setCapScore] = useState(cfg.maxPts);
   const [capInfo, setCapInfo] = useState(capLabel(1));
+  const [ticketCount, setTicketCount] = useState(0);
+  const [currentWave, setCurrentWave] = useState(0);
 
   const beeIdRef = useRef(0);
   const scoreRef = useRef(0);
@@ -103,6 +97,7 @@ export default function GameScreen({ user, difficulty, onGameEnd }: Props) {
   const capScoreRef = useRef<number>(cfg.maxPts);
   const shouldSpawnSuperRef = useRef(false);
   const gameStartedRef = useRef(false);
+  const endTriggeredRef = useRef(false);
 
   const addHitEffect = useCallback((slot: number, text: string) => {
     const id = effectIdRef.current++;
@@ -126,10 +121,12 @@ export default function GameScreen({ user, difficulty, onGameEnd }: Props) {
       let bombPlaced = 0;
       let fastPlaced = 0;
       let fuchsiaPlaced = false;
-      const isMegaJackpot = session ? session.capMultiplier >= 3 : false;
-      const fastLimit = isMegaJackpot ? 3 : 2;
-      const bombTarget = ensureRed ? (Math.random() < 0.5 ? 2 : 1) : 0;
-      const spawnCount = bombTarget === 2 ? Math.max(count, 3) : count;
+      const capMultiplier = session?.capMultiplier || 1;
+      const fastLimit = getFastLimit(capMultiplier);
+      const fuchsiaChance = getFuchsiaChance(capMultiplier);
+      const fastChance = getFastChance(difficulty, capMultiplier);
+      const bombTarget = ensureRed ? 1 : 0;
+      const spawnCount = count;
 
       for (let i = 0; i < spawnCount; i += 1) {
         const available = Array.from({ length: SLOTS }, (_, idx) => idx).filter((slot) => !usedSlots.has(slot));
@@ -137,7 +134,6 @@ export default function GameScreen({ user, difficulty, onGameEnd }: Props) {
 
         const slot = available[Math.floor(Math.random() * available.length)];
         const rand = Math.random();
-        const fastChance = BEE_CHANCES[difficulty].fast;
 
         let type: Bee["type"] = "normal";
         if (bombPlaced < bombTarget) {
@@ -146,7 +142,7 @@ export default function GameScreen({ user, difficulty, onGameEnd }: Props) {
         } else if (shouldSpawnSuperRef.current && !superSpawnedRef.current) {
           type = "super";
           superSpawnedRef.current = true;
-        } else if (!fuchsiaPlaced && fuchsiaCountRef.current < FUCHSIA_MAX_PER_GAME && rand < FUCHSIA_CHANCE) {
+        } else if (!fuchsiaPlaced && fuchsiaCountRef.current < FUCHSIA_MAX_PER_GAME && rand < fuchsiaChance) {
           type = "fuchsia";
           fuchsiaPlaced = true;
           fuchsiaCountRef.current += 1;
@@ -156,11 +152,7 @@ export default function GameScreen({ user, difficulty, onGameEnd }: Props) {
         }
 
         const id = beeIdRef.current++;
-        const duration =
-          type === "normal" ? (difficulty === "easy" ? 1200 : difficulty === "medium" ? 1000 : 800) :
-          type === "fast" ? (difficulty === "easy" ? 1050 : difficulty === "medium" ? 850 : 600) :
-          type === "fuchsia" ? (difficulty === "easy" ? 750 : difficulty === "medium" ? 600 : 500) :
-          (difficulty === "easy" ? 1300 : difficulty === "medium" ? 1000 : 800);
+        const duration = BEE_DURATIONS[difficulty][type];
 
         setTimeout(() => setBees((current) => current.filter((bee) => bee.id !== id)), duration);
         next = [...next, { id, slot, type, visible: true, hit: false }];
@@ -176,14 +168,15 @@ export default function GameScreen({ user, difficulty, onGameEnd }: Props) {
     setTimeout(() => setBees((prev) => prev.filter((entry) => entry.id !== bee.id)), 150);
     setHitStats((prev) => ({ ...prev, [bee.type]: prev[bee.type] + 1 }));
 
+    const pointsTable = LIVE_POINT_VALUES[difficulty];
     let points = 0;
     let text = "";
-    if (bee.type === "normal") { points = 1; text = "+1"; }
-    else if (bee.type === "fast") { points = 3; text = "⚡ +3"; }
-    else if (bee.type === "fuchsia") { points = 5; text = "💖 +5"; }
-    else if (bee.type === "bomb") { points = -2; text = "💥 -2"; }
+    if (bee.type === "normal") { points = pointsTable.normal; text = `+${points}`; }
+    else if (bee.type === "fast") { points = pointsTable.fast; text = `⚡ +${points}`; }
+    else if (bee.type === "fuchsia") { points = pointsTable.fuchsia; text = `💖 +${points}`; }
+    else if (bee.type === "bomb") { points = pointsTable.bomb; text = `💥 ${points}`; }
     else if (bee.type === "super") {
-      points = 1;
+      points = pointsTable.super;
       text = "💜 +100K BF";
       const bonusUsdc = SUPER_BEE_BONUS_BF / bfPerUsdc;
       bonusRef.current = parseFloat((bonusRef.current + bonusUsdc).toFixed(6));
@@ -194,7 +187,7 @@ export default function GameScreen({ user, difficulty, onGameEnd }: Props) {
     const nextScore = scoreRef.current + points;
     scoreRef.current = Math.max(0, Math.min(nextScore, capScoreRef.current));
     setScore(scoreRef.current);
-  }, [addHitEffect, bfPerUsdc]);
+  }, [addHitEffect, bfPerUsdc, difficulty]);
 
   useEffect(() => {
     if (gameStartedRef.current) return;
@@ -207,7 +200,7 @@ export default function GameScreen({ user, difficulty, onGameEnd }: Props) {
         capScoreRef.current = created.capScore;
         setCapScore(created.capScore);
         setCapInfo({ icon: created.capIcon, label: created.capLabel });
-        shouldSpawnSuperRef.current = Math.random() < SUPER_BEE_CHANCE_PER_GAME * (created.capMultiplier >= 3 ? 3 : 1);
+        shouldSpawnSuperRef.current = Math.random() < getSuperChance(created.capMultiplier);
         setFeeStatus("paying");
         const payment = await payGameFee(cfg.fee);
         if (!payment.success || !payment.txHash) {
@@ -259,6 +252,7 @@ export default function GameScreen({ user, difficulty, onGameEnd }: Props) {
         score: shownScore,
         hitStats,
       });
+      setTicketCount(Number(finished.ticketCount || 0));
       const prize = Number(finished.prizeUsdc || 0);
       if (prize <= 0) {
         setPaymentStatus("paid");
@@ -287,43 +281,33 @@ export default function GameScreen({ user, difficulty, onGameEnd }: Props) {
   }, [hitStats, session]);
 
   useEffect(() => {
-    if (gameState !== "playing") return;
-    if (timeLeft <= 0) {
-      const finish = setTimeout(() => {
-        setGameState("ended");
-        void handleGameEnd();
-      }, 0);
-      return () => clearTimeout(finish);
-    }
-    const t = setTimeout(() => setTimeLeft((value) => value - 1), 1000);
+    if (gameState !== "playing" || !session) return;
+    if (currentWave >= cfg.waves) return;
+    const delay = getWaveDelayMs(difficulty, currentWave);
+    const t = setTimeout(() => {
+      const count = getWaveSpawnCount(difficulty, session.capMultiplier);
+      spawnBees(count, true);
+      setCurrentWave((value) => value + 1);
+    }, currentWave === 0 ? 180 : delay);
     return () => clearTimeout(t);
-  }, [gameState, handleGameEnd, timeLeft]);
+  }, [cfg.waves, currentWave, difficulty, gameState, session, spawnBees]);
 
   useEffect(() => {
-    if (gameState !== "playing" || !session) return;
-    const elapsed = cfg.time - timeLeft;
-    const { base, min, step } = SPAWN_CONFIG[difficulty];
-    const interval = Math.max(min, base - elapsed * step);
-    const t = setTimeout(() => {
-      const r = Math.random();
-      let count = 2;
-      if (difficulty === "medium") count = r < 0.10 ? 3 : r < 0.40 ? 2 : 1;
-      if (difficulty === "hard") {
-        if (r < 0.15) count = 1;
-        else if (r < 0.40) count = 2;
-        else if (r < 0.70) count = 3;
-        else if (r < 0.90) count = 4;
-        else count = 5;
-      }
-      count = Math.max(2, Math.round(count * session.capMultiplier));
-      spawnBees(count, true);
-    }, interval);
-    return () => clearTimeout(t);
-  }, [cfg.time, difficulty, gameState, session, spawnBees, timeLeft]);
+    if (gameState !== "playing") return;
+    if (currentWave < cfg.waves) return;
+    if (bees.length > 0) return;
+    if (endTriggeredRef.current) return;
+    endTriggeredRef.current = true;
+    const finish = setTimeout(() => {
+      setGameState("ended");
+      void handleGameEnd();
+    }, 150);
+    return () => clearTimeout(finish);
+  }, [bees.length, cfg.waves, currentWave, gameState, handleGameEnd]);
 
-  const timerPercent = (timeLeft / cfg.time) * 100;
-  const timerColor = timeLeft > 8 ? "#fbbf24" : "#ef4444";
-  const prize = parseFloat(((score * PRIZE_PER_POINT[difficulty]) + superBonus).toFixed(4));
+  const progressPercent = Math.min(100, Math.round((currentWave / cfg.waves) * 100));
+  const prize = calculatePrizeUsdc(score, difficulty, superBonus);
+  const effectivePoints = getEffectivePayoutPoints(score, difficulty);
   const prizeBfGross = Math.round(prize * bfPerUsdc);
   const prizeBfNet = Math.round(prizeBfGross * 0.945);
   const shortPaymentError = paymentError
@@ -331,11 +315,12 @@ export default function GameScreen({ user, difficulty, onGameEnd }: Props) {
       ? "Network busy. Please try again later."
       : paymentError.split("\n")[0].slice(0, 220))
     : null;
-  const ticketEstimate = paymentStatus === "paid" && prize > 0 ? 1 : 0;
+  const ticketEstimate = paymentStatus === "paid" ? ticketCount : 0;
   const appUrl = process.env.NEXT_PUBLIC_APP_URL || "https://whack-a-bee.vercel.app";
   const pct = Math.round((score / capScore) * 100);
-  const shareImage = `${appUrl}/api/share-image?score=${score}&pct=${pct}&prizeBf=${prizeBfNet}&fee=${cfg.fee}&difficulty=${cfg.label}&tickets=${ticketEstimate}&v=3`;
-  const shareText = `I just ended a game on Whack-a-bee by @Thec1, I entered a ${cfg.fee} game, had a ${pct}% and won ${prizeBfNet} BF and ${ticketEstimate} tickets for the weekly pot! can you do better?`;
+  const displayedWave = Math.min(currentWave + 1, cfg.waves);
+  const shareImage = `${appUrl}/api/share-image?score=${score}&pct=${pct}&prizeBf=${prizeBfNet}&fee=${cfg.fee}&difficulty=${cfg.label}&tickets=${ticketEstimate}&waves=${cfg.waves}&v=4`;
+  const shareText = `I just cleared ${cfg.waves} waves on Whack-a-Butterfly by @Thec1, entered a ${cfg.fee} USDC ${cfg.label} run, hit ${pct}% of the cap and won ${prizeBfNet} BF plus ${ticketEstimate} weekly tickets. Can you beat it?`;
 
   if (["waiting", "preparing", "paying"].includes(feeStatus)) {
     return (
@@ -346,7 +331,7 @@ export default function GameScreen({ user, difficulty, onGameEnd }: Props) {
           <div className="text-center">
             <div className="text-amber-500 text-xs uppercase tracking-widest mb-1">Game Fee</div>
             <div className="text-4xl font-black text-amber-400">{cfg.fee} USDC</div>
-            <div className="text-amber-700 text-xs mt-1">{cfg.emoji} {cfg.label} Mode · {cfg.time}s</div>
+            <div className="text-amber-700 text-xs mt-1">{cfg.emoji} {cfg.label} Mode · {cfg.waves} waves</div>
           </div>
         </div>
         <div className="text-amber-400 text-sm animate-pulse">
@@ -380,6 +365,7 @@ export default function GameScreen({ user, difficulty, onGameEnd }: Props) {
         <div className="text-amber-500 text-sm font-bold uppercase tracking-widest">{cfg.emoji} {cfg.label} Mode</div>
         <div className="text-amber-400 text-sm">✅ Fee verified · Secure game ID active</div>
         <div className="text-amber-400 text-xs">{capInfo.icon} Max prize was {capInfo.label}</div>
+        <div className="text-amber-500 text-xs">{cfg.waves} waves · full-value band up to {getFullValueThreshold(difficulty)} pts</div>
         <div className="text-9xl font-black text-amber-400 animate-pulse">{countdown || "GO!"}</div>
       </div>
     );
@@ -393,6 +379,7 @@ export default function GameScreen({ user, difficulty, onGameEnd }: Props) {
         <div className="text-6xl font-black text-amber-400">{score}</div>
         <div className="text-amber-600 text-sm">points out of {capScore} max</div>
         <div className="text-amber-500 text-xs mt-1">{cfg.emoji} {cfg.label} difficulty</div>
+        <div className="text-amber-500 text-xs mt-1">Waves cleared: {cfg.waves}/{cfg.waves}</div>
         <div className="text-amber-400 text-xs mt-1">{capInfo.icon} Max prize was {capInfo.label}</div>
 
         <div className="w-full max-w-xs mt-3">
@@ -414,8 +401,10 @@ export default function GameScreen({ user, difficulty, onGameEnd }: Props) {
         <div className="w-full max-w-xs rounded-2xl p-4 border border-amber-800" style={{ background: "#2a1500" }}>
           <div className="text-xs text-amber-600 uppercase tracking-widest mb-2">Prize</div>
           <div className="text-3xl font-black text-amber-400">{prizeBfNet.toLocaleString()} BF</div>
-          <div className="text-xs text-amber-700 mt-1">{score} pt × {PRIZE_PER_POINT[difficulty].toFixed(6)} USDC</div>
+          <div className="text-xs text-amber-700 mt-1">{effectivePoints.toFixed(2)} effective payout points after bands</div>
           <div className="text-[11px] text-amber-600 mt-1">Gross: {prizeBfGross.toLocaleString()} BF · 5.5% split to pot/burn</div>
+          <div className="text-[11px] text-amber-500 mt-1">Bands: full value to {getFullValueThreshold(difficulty)} pts, then reduced payout weight</div>
+          {ticketCount > 0 && <div className="text-[11px] text-amber-400 mt-1">Weekly tickets earned: {ticketCount}</div>}
           {superBonus > 0 && (
             <div className="text-xs text-purple-300 mt-1">Prizefly bonus +{Math.round(superBonus * bfPerUsdc)} BF</div>
           )}
@@ -471,9 +460,9 @@ export default function GameScreen({ user, difficulty, onGameEnd }: Props) {
 
         <div className="flex-1">
           <div className="h-4 bg-amber-950 rounded-full overflow-hidden border border-amber-900">
-            <div className="h-full rounded-full transition-all duration-1000" style={{ width: `${timerPercent}%`, background: timerColor }} />
+            <div className="h-full rounded-full transition-all duration-700" style={{ width: `${progressPercent}%`, background: cfg.color }} />
           </div>
-          <div className="text-center text-xs mt-0.5" style={{ color: timerColor }}>{timeLeft}s</div>
+          <div className="text-center text-xs mt-0.5" style={{ color: cfg.color }}>Wave {displayedWave} / {cfg.waves}</div>
         </div>
 
         <div className="text-center min-w-[60px]">

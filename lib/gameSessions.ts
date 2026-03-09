@@ -24,14 +24,16 @@ import {
 } from "@/lib/contracts";
 import { getBfPerUsdc } from "@/lib/pricing";
 import {
+  calculatePrizeUsdc,
   DIFFICULTY_CONFIG,
-  HIT_BOUNDS,
-  PRIZE_PER_POINT,
   SUPER_BEE_BONUS_BF,
   type Difficulty,
   capLabel,
   clampLiveScore,
   deriveScoreFromHits,
+  estimateMinimumGameDurationMs,
+  getFullValueThreshold,
+  getHitBounds,
   pickCapMultiplier,
 } from "@/lib/gameRules";
 import { logTxRecord } from "@/lib/txLedger";
@@ -386,7 +388,11 @@ async function readPrizeWalletBalanceBfUnits() {
 
 // ── hitStats validation ───────────────────────────────────────────────────────
 
-function normalizeHitStats(input: Partial<HitStats> | undefined, difficulty: Difficulty): HitStats {
+function normalizeHitStats(
+  input: Partial<HitStats> | undefined,
+  difficulty: Difficulty,
+  capMultiplier: number
+): HitStats {
   const safe = {
     normal: Math.max(0, Math.floor(Number(input?.normal || 0))),
     fast:   Math.max(0, Math.floor(Number(input?.fast   || 0))),
@@ -395,7 +401,7 @@ function normalizeHitStats(input: Partial<HitStats> | undefined, difficulty: Dif
     super:  Math.max(0, Math.floor(Number(input?.super  || 0))),
   };
 
-  const bounds = HIT_BOUNDS[difficulty];
+  const bounds = getHitBounds(difficulty, capMultiplier);
 
   // Per-type upper bound check (score injection prevention)
   const types = ["normal", "fast", "fuchsia", "bomb", "super"] as const;
@@ -428,12 +434,13 @@ function calculateTickets(params: {
   fee: number;
   prize: number;
   winStreak: number;
+  difficulty: Difficulty;
 }): number {
-  let tickets = 1; // base ticket per completed game
-  tickets += Math.floor(params.score / 1000);
-  tickets += Math.floor(params.fee / 0.25);
+  let tickets = 1;
+  if (params.score >= getFullValueThreshold(params.difficulty)) tickets += 1;
+  if (params.prize > params.fee) tickets += 1;
   const isWin = params.prize > params.fee;
-  if (isWin && params.winStreak > 0 && params.winStreak % 25 === 0) {
+  if (isWin && params.winStreak > 0 && params.winStreak % 10 === 0) {
     tickets += 1;
   }
   return Math.max(1, tickets);
@@ -587,7 +594,7 @@ export async function finishGameSession(params: {
   }
 
   const now = Date.now();
-  const minDurationMs = DIFFICULTY_CONFIG[game.difficulty].time * 1000;
+  const minDurationMs = estimateMinimumGameDurationMs(game.difficulty);
   if (!game.startedAt || now - game.startedAt < minDurationMs) {
     throw new Error("Game finished too early");
   }
@@ -596,7 +603,7 @@ export async function finishGameSession(params: {
   }
 
   // Validate hitStats per-type bounds (B-2 fix: score injection prevention)
-  const hitStats = normalizeHitStats(params.hitStats, game.difficulty);
+  const hitStats = normalizeHitStats(params.hitStats, game.difficulty, game.capMultiplier);
   if (!params.finishMessage || !params.finishSignature) {
     throw new Error("Missing finish authorization");
   }
@@ -625,8 +632,9 @@ export async function finishGameSession(params: {
 
   const bfPerUsdc = await getBfPerUsdc();
   const bonusUsdc = (hitStats.super * SUPER_BEE_BONUS_BF) / bfPerUsdc;
-  const prizeUsdc = Number((realizedScore * PRIZE_PER_POINT[game.difficulty] + bonusUsdc).toFixed(6));
-  const grossUnits = toBFUnits(prizeUsdc * bfPerUsdc / bfPerUsdc);
+  const prizeUsdc = calculatePrizeUsdc(realizedScore, game.difficulty, bonusUsdc);
+  const grossBf = prizeUsdc * bfPerUsdc;
+  const grossUnits = toBFUnits(grossBf);
   const prizeBfGross = fromBFUnits(grossUnits);
   const potUnits = (grossUnits * BigInt(450)) / BigInt(10000);
   const burnUnits = (grossUnits * BigInt(100)) / BigInt(10000);
@@ -649,6 +657,7 @@ export async function finishGameSession(params: {
     fee: game.feeExpectedUsdc,
     prize: prizeUsdc,
     winStreak,
+    difficulty: game.difficulty,
   });
 
   game.finishedAt = now;

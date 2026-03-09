@@ -1,6 +1,13 @@
 "use client";
 import { PRIZE_WALLET } from "@/lib/contracts";
-import { DIFFICULTY_CONFIG, PRIZE_PER_POINT } from "@/lib/gameRules";
+import {
+  BEE_LABELS,
+  calculatePrizeUsdc,
+  DIFFICULTY_CONFIG,
+  getFullValueThreshold,
+  LIVE_POINT_VALUES,
+  PRIZE_PER_POINT,
+} from "@/lib/gameRules";
 import { BF_PER_USDC_FALLBACK } from "@/lib/pricing";
 
 export default function RulesScreen({ onBack }: { onBack: () => void }) {
@@ -19,15 +26,15 @@ export default function RulesScreen({ onBack }: { onBack: () => void }) {
         {/* Come si gioca */}
         <Section title="🎮 How to Play">
           <p className="text-amber-200 text-sm leading-relaxed">
-            Butterflies appear randomly on a 3×3 grid. Tap them before they disappear to score points.
-            Watch out for Bombs — they cost you points!
+            Each run is a fixed number of waves on a 3×3 grid. Tap butterflies before they disappear, survive the forced Bombfly in every wave,
+            and push your score into the best payout band.
           </p>
           <div className="mt-3 space-y-2">
-            <BeeRule emoji="🦋" label="Butterfly" desc="Visible for 800–1200ms" points="+1 point" color="#fbbf24" />
-            <BeeRule emoji="🦋" label="Triplefly" desc="Visible for 600–1050ms, faster scorer" points="+3 points" color="#3b82f6" fast />
-            <BeeRule emoji="💖" label="Quickfly" desc="Very fast, rare" points="+5 points" color="#ec4899" fast />
-            <BeeRule emoji="🔴" label="Bomb" desc="Avoid it! Costs you points, and double-bomb waves always include at least one extra butterfly" points="-2 points" color="#dc2626" />
-            <BeeRule emoji="💜" label="Prizefly" desc="Rare bonus Prizefly" points="+100000 BF" color="#a855f7" />
+            <BeeRule emoji="🦋" label={BEE_LABELS.normal} desc="Core scorer in every wave" points="+1 point" color="#fbbf24" />
+            <BeeRule emoji="🔵" label={BEE_LABELS.fast} desc={`Quick scorer, worth +${LIVE_POINT_VALUES.medium.fast} in Medium`} points="+2 / +3 / +4" color="#3b82f6" fast />
+            <BeeRule emoji="💖" label={BEE_LABELS.fuchsia} desc="Rare burst scorer, doubled chance in Mega" points="+3 / +5 / +7" color="#ec4899" fast />
+            <BeeRule emoji="🔴" label={BEE_LABELS.bomb} desc="Forced once per wave. Hit it and you lose points." points="-1 / -2 / -3" color="#dc2626" />
+            <BeeRule emoji="💜" label={BEE_LABELS.super} desc="One per run max. Adds 100,000 BF on top of score payout." points="+100000 BF" color="#a855f7" />
           </div>
         </Section>
 
@@ -44,10 +51,11 @@ export default function RulesScreen({ onBack }: { onBack: () => void }) {
                   <span className="font-black text-lg" style={{ color: cfg.color }}>{cfg.fee} USDC</span>
                 </div>
                 <div className="grid grid-cols-3 gap-2 text-center">
-                  <Stat label="Duration" value={`${cfg.time}s`} />
-                  <Stat label="Max points" value={`${cfg.maxPts} pts`} />
-                  <Stat label="Max prize" value={`${(cfg.maxPts * PRIZE_PER_POINT[key as keyof typeof PRIZE_PER_POINT]).toFixed(3)} USDC`} />
+                  <Stat label="Waves" value={`${cfg.waves}`} />
+                  <Stat label="Point cap" value={`${cfg.maxPts} pts`} />
+                  <Stat label="Max prize" value={`${calculatePrizeUsdc(cfg.maxPts, key as keyof typeof DIFFICULTY_CONFIG).toFixed(3)} USDC`} />
                 </div>
+                <div className="text-amber-700 text-xs mt-2 text-center">Full value until {getFullValueThreshold(key as keyof typeof DIFFICULTY_CONFIG)} pts, then payout weight drops.</div>
               </div>
             ))}
           </div>
@@ -59,12 +67,12 @@ export default function RulesScreen({ onBack }: { onBack: () => void }) {
             <div className="rounded-xl p-3 border border-green-900" style={{ background: "#0a1f0a" }}>
               <div className="text-green-400 font-bold text-sm mb-1">Reward per point</div>
               <div className="text-green-300 text-2xl font-black">{(PRIZE_PER_POINT.medium * BF_PER_USDC_FALLBACK).toFixed(0)} BF</div>
-              <div className="text-green-700 text-xs mt-1">per point (approx, based on BF/USDC rate)</div>
+              <div className="text-green-700 text-xs mt-1">base value for each full-value point</div>
             </div>
 
             <p className="text-amber-300 text-xs leading-relaxed">
-              The prize is calculated at the end of each game and claimed in BF tokens based on the current BF/USDC rate.
-              Claims are executed on-chain from your connected Farcaster wallet.
+              Prize payout is banded. Early points pay full value, then the payout weight drops to 70% and 40% on higher score bands.
+              Claims are executed on-chain in BF from your connected Farcaster wallet.
             </p>
 
             <div className="rounded-xl p-3 border border-amber-900" style={{ background: "#1f1000" }}>
@@ -77,10 +85,14 @@ export default function RulesScreen({ onBack }: { onBack: () => void }) {
                 ].map(ex => (
                   <div key={ex.pts} className="flex justify-between text-sm">
                     <span className="text-amber-200">{ex.pts} pts ({ex.mode})</span>
-                    <span className="text-amber-400 font-bold">{Math.round(ex.pts * PRIZE_PER_POINT[ex.diff.toLowerCase() as keyof typeof PRIZE_PER_POINT] * BF_PER_USDC_FALLBACK)} BF</span>
+                    <span className="text-amber-400 font-bold">{Math.round(calculatePrizeUsdc(ex.pts, ex.diff.toLowerCase() as keyof typeof PRIZE_PER_POINT) * BF_PER_USDC_FALLBACK)} BF</span>
                   </div>
                 ))}
               </div>
+            </div>
+            <div className="rounded-xl p-3 border border-amber-900" style={{ background: "#1f1000" }}>
+              <div className="text-amber-500 text-xs uppercase tracking-widest mb-2">Weekly tickets</div>
+              <div className="text-amber-200 text-sm">1 base ticket, +1 for reaching the full-value band, +1 for a profitable run, +1 every 10th claimed win.</div>
             </div>
           </div>
         </Section>
