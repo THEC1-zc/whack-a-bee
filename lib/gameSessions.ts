@@ -8,6 +8,7 @@ import {
   http,
   keccak256,
   parseEventLogs,
+  recoverMessageAddress,
 } from "viem";
 import { privateKeyToAccount } from "viem/accounts";
 import { base } from "viem/chains";
@@ -24,6 +25,7 @@ import {
 import { getBfPerUsdc } from "@/lib/pricing";
 import {
   DIFFICULTY_CONFIG,
+  HIT_BOUNDS,
   PRIZE_PER_POINT,
   SUPER_BEE_BONUS_BF,
   type Difficulty,
@@ -54,7 +56,11 @@ const GAME_INDEX_KEY = "games:index";
 const GAME_RECORD_KEY = "games:record:";
 const GAME_FEE_TX_KEY = "games:fee:";
 const GAME_CLAIM_TX_KEY = "games:claim:";
+// Track how many sessions a wallet has created without paying (anti-spam)
+const GAME_CREATE_COUNT_KEY = "games:creates:";
 const MAX_GAMES = 5000;
+// Max unpaid sessions per wallet before rate-limit kicks in
+const MAX_UNPAID_SESSIONS_PER_WALLET = 10;
 
 const BFPAYOUT_ABI = [
   {
@@ -176,6 +182,7 @@ const memoryGames = new Map<string, GameRecord>();
 const memoryIndex: string[] = [];
 const memoryFeeTxMap = new Map<string, string>();
 const memoryClaimTxMap = new Map<string, string>();
+const memoryCreateCounts = new Map<string, number>();
 
 function getRedis() {
   if (redis) return redis;
@@ -308,6 +315,42 @@ async function getClaimTxOwner(txHash: string) {
   return memoryClaimTxMap.get(key) || null;
 }
 
+// ── Anti-spam: track unpaid session count per wallet ─────────────────────────
+
+async function getCreateCount(address: string): Promise<number> {
+  const key = `${GAME_CREATE_COUNT_KEY}${address.toLowerCase()}`;
+  const client = getRedis();
+  if (client) {
+    const raw = await client.get(key);
+    return raw ? Number(raw) : 0;
+  }
+  return memoryCreateCounts.get(key) || 0;
+}
+
+async function incrementCreateCount(address: string) {
+  const key = `${GAME_CREATE_COUNT_KEY}${address.toLowerCase()}`;
+  const client = getRedis();
+  if (client) {
+    // TTL 24h — resets daily
+    await client.incr(key);
+    await client.expire(key, 86400);
+    return;
+  }
+  memoryCreateCounts.set(key, (memoryCreateCounts.get(key) || 0) + 1);
+}
+
+async function resetCreateCount(address: string) {
+  const key = `${GAME_CREATE_COUNT_KEY}${address.toLowerCase()}`;
+  const client = getRedis();
+  if (client) {
+    await client.del(key);
+    return;
+  }
+  memoryCreateCounts.delete(key);
+}
+
+// ── Claim hash (mirrors BFPayout.sol _buildHash) ─────────────────────────────
+
 function buildClaimHash(player: `0x${string}`, bfGross: bigint, nonce: `0x${string}`, expiry: bigint) {
   return keccak256(
     encodePacked(
@@ -330,7 +373,7 @@ async function readPrizeWalletBalanceBfUnits() {
     const [availableBalance] = realtime as readonly [bigint, bigint, bigint];
     if (availableBalance > BigInt(0)) return availableBalance;
   } catch {
-    // fall through
+    // fall through to balanceOf
   }
   const raw = await publicClient.readContract({
     address: BF_ADDRESS,
@@ -341,20 +384,73 @@ async function readPrizeWalletBalanceBfUnits() {
   return raw as bigint;
 }
 
-function normalizeHitStats(input: Partial<HitStats> | undefined): HitStats {
+// ── hitStats validation ───────────────────────────────────────────────────────
+
+function normalizeHitStats(input: Partial<HitStats> | undefined, difficulty: Difficulty): HitStats {
   const safe = {
     normal: Math.max(0, Math.floor(Number(input?.normal || 0))),
-    fast: Math.max(0, Math.floor(Number(input?.fast || 0))),
-    fuchsia: Math.max(0, Math.floor(Number(input?.fuchsia || 0))),
-    bomb: Math.max(0, Math.floor(Number(input?.bomb || 0))),
-    super: Math.max(0, Math.floor(Number(input?.super || 0))),
+    fast:   Math.max(0, Math.floor(Number(input?.fast   || 0))),
+    fuchsia:Math.max(0, Math.floor(Number(input?.fuchsia|| 0))),
+    bomb:   Math.max(0, Math.floor(Number(input?.bomb   || 0))),
+    super:  Math.max(0, Math.floor(Number(input?.super  || 0))),
   };
-  if (safe.super > 1) throw new Error("Invalid Prizefly count");
-  if (safe.fuchsia > 3) throw new Error("Invalid Quickfly count");
+
+  const bounds = HIT_BOUNDS[difficulty];
+
+  // Per-type upper bound check (score injection prevention)
+  const types = ["normal", "fast", "fuchsia", "bomb", "super"] as const;
+  for (const t of types) {
+    if (safe[t] > bounds[t]) {
+      throw new Error(`Invalid ${t} hit count: ${safe[t]} exceeds max ${bounds[t]} for ${difficulty}`);
+    }
+  }
+
   return safe;
 }
 
-export async function createGameSession(difficulty: Difficulty) {
+function buildFinishAuthMessage(params: {
+  gameId: string;
+  score: number;
+  hitStats: HitStats;
+}) {
+  return [
+    "Whack-a-Butterfly Game Finish",
+    `Game: ${params.gameId}`,
+    `Score: ${params.score}`,
+    `Hits: normal=${params.hitStats.normal},fast=${params.hitStats.fast},fuchsia=${params.hitStats.fuchsia},bomb=${params.hitStats.bomb},super=${params.hitStats.super}`,
+  ].join("\n");
+}
+
+// ── Ticket calculation ────────────────────────────────────────────────────────
+
+function calculateTickets(params: {
+  score: number;
+  fee: number;
+  prize: number;
+  winStreak: number;
+}): number {
+  let tickets = 1; // base ticket per completed game
+  tickets += Math.floor(params.score / 1000);
+  tickets += Math.floor(params.fee / 0.25);
+  const isWin = params.prize > params.fee;
+  if (isWin && params.winStreak > 0 && params.winStreak % 25 === 0) {
+    tickets += 1;
+  }
+  return Math.max(1, tickets);
+}
+
+// ── Public API ────────────────────────────────────────────────────────────────
+
+export async function createGameSession(difficulty: Difficulty, callerAddress?: string) {
+  // Anti-spam: if a wallet address is provided, check unpaid session count
+  if (callerAddress) {
+    const count = await getCreateCount(callerAddress);
+    if (count >= MAX_UNPAID_SESSIONS_PER_WALLET) {
+      throw new Error("Too many open sessions. Please complete or pay for an existing game first.");
+    }
+    await incrementCreateCount(callerAddress);
+  }
+
   const cfg = DIFFICULTY_CONFIG[difficulty];
   const capMultiplier = pickCapMultiplier();
   const capInfo = capLabel(capMultiplier);
@@ -452,6 +548,10 @@ export async function verifyGameFee(params: {
 
   await saveGame(game);
   await setFeeTxOwner(params.txHash, game.gameId);
+
+  // Fee paid — reset the anti-spam counter for this wallet
+  await resetCreateCount(from);
+
   await logTxRecord({
     kind: "game_fee_in",
     status: "ok",
@@ -474,10 +574,13 @@ export async function finishGameSession(params: {
   gameSecret: string;
   score: number;
   hitStats: Partial<HitStats>;
+  finishMessage: string;
+  finishSignature: string;
 }) {
   const game = await getGameById(params.gameId);
   if (!game) throw new Error("Game not found");
   if (!verifySecret(game, params.gameSecret)) throw new Error("Invalid game secret");
+  if (!game.playerAddress) throw new Error("Game has no player wallet");
   if (game.status !== "fee_verified") {
     if (game.status === "finished" || game.status === "claim_signed" || game.status === "claimed") return game;
     throw new Error("Game not activated");
@@ -492,7 +595,27 @@ export async function finishGameSession(params: {
     throw new Error("Game finish window expired");
   }
 
-  const hitStats = normalizeHitStats(params.hitStats);
+  // Validate hitStats per-type bounds (B-2 fix: score injection prevention)
+  const hitStats = normalizeHitStats(params.hitStats, game.difficulty);
+  if (!params.finishMessage || !params.finishSignature) {
+    throw new Error("Missing finish authorization");
+  }
+  const expectedMessage = buildFinishAuthMessage({
+    gameId: game.gameId,
+    score: Math.max(0, Math.floor(Number(params.score || 0))),
+    hitStats,
+  });
+  if (params.finishMessage !== expectedMessage) {
+    throw new Error("Finish authorization message mismatch");
+  }
+  const signer = await recoverMessageAddress({
+    message: params.finishMessage,
+    signature: params.finishSignature as `0x${string}`,
+  }).catch(() => null);
+  if (!signer || signer.toLowerCase() !== game.playerAddress.toLowerCase()) {
+    throw new Error("Finish authorization signature invalid");
+  }
+
   const rawScore = deriveScoreFromHits(game.difficulty, hitStats);
   const realizedScore = clampLiveScore(rawScore, game.difficulty, game.capMultiplier);
   const reportedScore = Math.max(0, Math.floor(Number(params.score || 0)));
@@ -509,6 +632,25 @@ export async function finishGameSession(params: {
   const burnUnits = (grossUnits * BigInt(100)) / BigInt(10000);
   const playerUnits = grossUnits - potUnits - burnUnits;
 
+  // M-3 fix: calculate ticket bonus based on score + fee + win streak
+  const playerAddr = game.playerAddress?.toLowerCase() || "";
+  let winStreak = 0;
+  if (playerAddr) {
+    const allGames = await listAllGames();
+    const prevWins = allGames.filter(
+      (g) => g.playerAddress?.toLowerCase() === playerAddr &&
+             g.status === "claimed" &&
+             (g.prizeUsdc || 0) > g.feeExpectedUsdc
+    );
+    winStreak = prevWins.length;
+  }
+  const ticketCount = calculateTickets({
+    score: realizedScore,
+    fee: game.feeExpectedUsdc,
+    prize: prizeUsdc,
+    winStreak,
+  });
+
   game.finishedAt = now;
   game.status = "finished";
   game.scoreRealized = realizedScore;
@@ -520,6 +662,7 @@ export async function finishGameSession(params: {
   game.playerBfUnits = playerUnits.toString();
   game.potBfUnits = potUnits.toString();
   game.burnBfUnits = burnUnits.toString();
+  game.ticketCount = ticketCount;
 
   await saveGame(game);
   return game;
@@ -543,7 +686,8 @@ export async function issueClaimForGame(params: { gameId: string; gameSecret: st
 
   const normalizedKey = SIGNER_PRIVATE_KEY.startsWith("0x") ? SIGNER_PRIVATE_KEY : `0x${SIGNER_PRIVATE_KEY}`;
   const account = privateKeyToAccount(normalizedKey as `0x${string}`);
-  const nonce = game.claimNonce || (`0x${crypto.randomBytes(32).toString("hex")}` as `0x${string}`);
+  // Always regenerate nonce + expiry (10 min window) — idempotent: replaces old signed state
+  const nonce = `0x${crypto.randomBytes(32).toString("hex")}` as `0x${string}`;
   const expiry = BigInt(Math.floor(Date.now() / 1000) + 10 * 60);
   const rawHash = buildClaimHash(game.playerAddress as `0x${string}`, grossUnits, nonce, expiry);
   const signature = await account.signMessage({ message: { raw: rawHash } });
@@ -604,7 +748,7 @@ export async function confirmClaimForGame(params: { gameId: string; gameSecret: 
   game.claimTxHash = params.txHash;
   game.claimConfirmedAt = Date.now();
   game.ticketAssigned = true;
-  game.ticketCount = 1;
+  // ticketCount already calculated in finishGameSession; preserve it
   await saveGame(game);
   await setClaimTxOwner(params.txHash, game.gameId);
 

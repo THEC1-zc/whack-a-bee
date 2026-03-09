@@ -3,7 +3,6 @@ import {
   acquireWeeklyPayoutLock,
   getWeeklyConfig,
   getWeeklyMeta,
-  getWeeklyState,
   logWeeklyPayout,
   markWeeklyPayoutDone,
   mergePendingTicketsIntoClaimed,
@@ -19,10 +18,8 @@ import { createPublicClient, createWalletClient, http } from "viem";
 import { base } from "viem/chains";
 import { privateKeyToAccount } from "viem/accounts";
 
-// Vercel Cron — viene chiamato ogni domenica a mezzanotte CET
-// Configurato in vercel.json: { "crons": [{ "path": "/api/cron/weekly-payout", "schedule": "0 23 * * 0" }] }
-// (domenica 23:00 UTC = domenica 00:00 CET in inverno / 01:00 CEST in estate)
-// Per ora usiamo il Sunday midnight CET standard = domenica 23:00 UTC
+// Vercel Cron — domenica 23:00 UTC = domenica 00:00 CET
+// configurato in vercel.json: { "crons": [{ "path": "/api/cron/weekly-payout", "schedule": "0 23 * * 0" }] }
 
 const CRON_SECRET = process.env.CRON_SECRET;
 const POT_PRIVATE_KEY = process.env.POT_WALLET_PRIVATE_KEY;
@@ -47,7 +44,7 @@ function weightedPick(map: Record<string, number>, count: number, exclude: Set<s
   return winners;
 }
 
-async function sendTransfers(transfers: { to: string; amountBf: number; group: string }[]): Promise<WeeklyTransferResult[]> {
+async function sendTransfers(transfers: { to: string; amountBf: number; group: string; playerUsername?: string }[]): Promise<WeeklyTransferResult[]> {
   const key = normalizeKey(POT_PRIVATE_KEY);
   if (!/^0x[0-9a-fA-F]{64}$/.test(key)) throw new Error("POT_WALLET_PRIVATE_KEY invalid");
   const account = privateKeyToAccount(key as `0x${string}`);
@@ -71,9 +68,12 @@ async function sendTransfers(transfers: { to: string; amountBf: number; group: s
 }
 
 export async function GET(req: NextRequest) {
-  // Vercel cron calls GET with Authorization header
+  // C-2 fix: CRON_SECRET must be explicitly configured — open endpoint otherwise
+  if (!CRON_SECRET) {
+    return NextResponse.json({ error: "CRON_SECRET not configured — cron endpoint disabled" }, { status: 503 });
+  }
   const authHeader = req.headers.get("authorization");
-  if (CRON_SECRET && authHeader !== `Bearer ${CRON_SECRET}`) {
+  if (authHeader !== `Bearer ${CRON_SECRET}`) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
 
@@ -90,9 +90,9 @@ export async function GET(req: NextRequest) {
   try {
     if (!POT_PRIVATE_KEY) return NextResponse.json({ error: "POT_WALLET_PRIVATE_KEY not set" }, { status: 503 });
 
-    // Merge pending → claimed before extraction
     await mergePendingTicketsIntoClaimed();
-    const weekly = await getWeeklyState();
+    const { getCurrentWeekTicketState } = await import("@/lib/gameSessions");
+    const weekly = await getCurrentWeekTicketState();
     const potBf = Number(weekly.potBf || 0);
 
     if (potBf <= 0) {
@@ -100,8 +100,8 @@ export async function GET(req: NextRequest) {
     }
 
     const stats = await getAdminStats();
-    const profiles = new Map(stats.players.filter(p => p.address).map(p => [p.address!.toLowerCase(), p]));
-    const top3 = stats.players.filter(p => p.address).slice(0, 3).map(p => p.address!.toLowerCase());
+    const profiles = new Map(stats.players.filter((p: { address?: string }) => p.address).map((p: { address?: string; username?: string }) => [p.address!.toLowerCase(), p]));
+    const top3 = stats.players.filter((p: { address?: string }) => p.address).slice(0, 3).map((p: { address?: string }) => p.address!.toLowerCase());
 
     const topShare = potBf * 0.6;
     const lotteryShare = potBf * 0.4;
@@ -109,8 +109,8 @@ export async function GET(req: NextRequest) {
     const lotteryWinners = weightedPick(weekly.tickets || {}, 7, exclude);
 
     const transfers = [
-      ...top3.map((addr, i) => ({ to: addr, amountBf: topShare * [0.5, 0.3, 0.2][i], group: "top3", playerUsername: profiles.get(addr)?.username })),
-      ...lotteryWinners.map(addr => ({ to: addr, amountBf: lotteryShare / 7, group: "lottery", playerUsername: profiles.get(addr)?.username })),
+      ...top3.map((addr, i) => ({ to: addr, amountBf: topShare * [0.5, 0.3, 0.2][i], group: "top3", playerUsername: (profiles.get(addr) as { username?: string } | undefined)?.username })),
+      ...lotteryWinners.map(addr => ({ to: addr, amountBf: lotteryShare / 7, group: "lottery", playerUsername: (profiles.get(addr) as { username?: string } | undefined)?.username })),
     ];
 
     if (!transfers.length) return NextResponse.json({ skipped: true, reason: "no eligible winners" });

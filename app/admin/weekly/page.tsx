@@ -1,9 +1,8 @@
 "use client";
 import Link from "next/link";
-import { useCallback, useEffect, useState } from "react";
-import { sdk } from "@farcaster/miniapp-sdk";
-import { stringToHex } from "viem";
+import { useEffect, useState } from "react";
 import { useFarcaster } from "@/hooks/useFarcaster";
+import { adminFetch, signAdminAction } from "@/lib/adminClient";
 
 const ADMIN_WALLET = (
   process.env.NEXT_PUBLIC_ADMIN_WALLET || "0xd29c790466675153A50DF7860B9EFDb689A21cDe"
@@ -55,26 +54,27 @@ export default function AdminWeekly() {
   const [savingCfg, setSavingCfg] = useState(false);
   const [resetting, setResetting] = useState(false);
 
-  const hdrs = useCallback(
-    () => ({ "Content-Type": "application/json", "x-admin-wallet": address }),
-    [address]
-  );
-
-  const refresh = useCallback(async () => {
-    const [w, cfgRes, lbRes] = await Promise.all([
-      fetch("/api/weekly").then((r) => r.json()),
-      fetch("/api/admin/weekly-config", { headers: hdrs() }).then((r) => r.json()),
-      fetch("/api/admin/leaderboard", { headers: hdrs() }).then((r) => r.json()),
-    ]);
-    setWeekly(w);
-    setCfg(cfgRes.config);
-    setLogs(Array.isArray(cfgRes.logs) ? cfgRes.logs : []);
-    setStats(lbRes.stats);
-  }, [hdrs]);
-
   useEffect(() => {
-    if (authorized) refresh();
-  }, [authorized, refresh]);
+    if (!authorized) return;
+    let cancelled = false;
+    void (async () => {
+      const [w, cfgRes, lbRes] = await Promise.all([
+        fetch("/api/weekly").then((r) => r.json()),
+        adminFetch(address, "/api/admin/weekly-config").then((r) => r.json()),
+        adminFetch(address, "/api/admin/leaderboard").then((r) => r.json()),
+      ]);
+      if (cancelled) return;
+      setWeekly(w);
+      setCfg(cfgRes.config);
+      setLogs(Array.isArray(cfgRes.logs) ? cfgRes.logs : []);
+      setStats(lbRes.stats);
+    })().catch((error) => {
+      if (!cancelled) setMsg({ type: "err", text: error instanceof Error ? error.message : String(error) });
+    });
+    return () => {
+      cancelled = true;
+    };
+  }, [address, authorized]);
 
   if (!authorized)
     return (
@@ -91,7 +91,15 @@ export default function AdminWeekly() {
       const data = await res.json().catch(() => ({}));
       if (!res.ok) setMsg({ type: "err", text: data?.error || "Failed" });
       else setMsg({ type: "ok", text: `${label} completato ✓` });
-      await refresh();
+      const [w, cfgRes, lbRes] = await Promise.all([
+        fetch("/api/weekly").then((r) => r.json()),
+        adminFetch(address, "/api/admin/weekly-config").then((r) => r.json()),
+        adminFetch(address, "/api/admin/leaderboard").then((r) => r.json()),
+      ]);
+      setWeekly(w);
+      setCfg(cfgRes.config);
+      setLogs(Array.isArray(cfgRes.logs) ? cfgRes.logs : []);
+      setStats(lbRes.stats);
     } catch (e) {
       setMsg({ type: "err", text: String(e) });
     }
@@ -99,14 +107,18 @@ export default function AdminWeekly() {
   }
 
   async function payout(force: boolean) {
+    const signed = await signAdminAction(address, "weekly_payout");
     await act(force ? "Force Payout" : "Run Payout", () =>
-      fetch("/api/admin/weekly-payout", {
+      adminFetch(address, "/api/admin/weekly-payout", {
         method: "POST",
-        headers: hdrs(),
+        headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           force,
           mode: "manual",
           autoClaimPendingTickets: cfg?.autoClaimPendingTickets ?? true,
+          payoutChallenge: signed.challenge,
+          payoutMessage: signed.message,
+          payoutSignature: signed.signature,
         }),
       })
     );
@@ -114,11 +126,17 @@ export default function AdminWeekly() {
 
   async function resetWeeklyState() {
     if (!confirm("Reset weekly state? Azzera pot counter, ticket e storico wins.")) return;
+    const signed = await signAdminAction(address, "weekly_reset");
     await act("Reset Weekly", () =>
-      fetch("/api/admin/leaderboard", {
+      adminFetch(address, "/api/admin/leaderboard", {
         method: "POST",
-        headers: hdrs(),
-        body: JSON.stringify({ action: "weekly_reset" }),
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          action: "weekly_reset",
+          challenge: signed.challenge,
+          message: signed.message,
+          signature: signed.signature,
+        }),
       })
     );
   }
@@ -127,24 +145,23 @@ export default function AdminWeekly() {
     setResetting(true);
     setMsg({ type: "ok", text: "Firma richiesta…" });
     try {
-      const challengeRes = await fetch("/api/admin/auth/challenge", {
+      const signed = await signAdminAction(address, "reset_leaderboard");
+      const res = await adminFetch(address, "/api/admin/leaderboard", {
         method: "POST",
-        headers: hdrs(),
-        body: JSON.stringify({ action: "reset_leaderboard", address }),
-      });
-      const { message, token: challenge } = await challengeRes.json();
-      const sig = await sdk.wallet.ethProvider.request({
-        method: "personal_sign",
-        params: [stringToHex(message), address as `0x${string}`],
-      });
-      const res = await fetch("/api/admin/leaderboard", {
-        method: "POST",
-        headers: hdrs(),
-        body: JSON.stringify({ action: "reset", challenge, message, signature: String(sig) }),
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ action: "reset", challenge: signed.challenge, message: signed.message, signature: signed.signature }),
       });
       if (res.ok) {
         setMsg({ type: "ok", text: "Leaderboard resettata ✓" });
-        await refresh();
+        const [w, cfgRes, lbRes] = await Promise.all([
+          fetch("/api/weekly").then((r) => r.json()),
+          adminFetch(address, "/api/admin/weekly-config").then((r) => r.json()),
+          adminFetch(address, "/api/admin/leaderboard").then((r) => r.json()),
+        ]);
+        setWeekly(w);
+        setCfg(cfgRes.config);
+        setLogs(Array.isArray(cfgRes.logs) ? cfgRes.logs : []);
+        setStats(lbRes.stats);
       } else {
         const d = await res.json().catch(() => ({}));
         setMsg({ type: "err", text: d?.error || "Reset failed" });
@@ -157,9 +174,9 @@ export default function AdminWeekly() {
 
   async function updateCfg(partial: Partial<WeeklyConfig>) {
     setSavingCfg(true);
-    const res = await fetch("/api/admin/weekly-config", {
+    const res = await adminFetch(address, "/api/admin/weekly-config", {
       method: "POST",
-      headers: hdrs(),
+      headers: { "Content-Type": "application/json" },
       body: JSON.stringify(partial),
     });
     const data = await res.json().catch(() => ({}));

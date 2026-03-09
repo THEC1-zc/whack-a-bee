@@ -2,6 +2,7 @@
 
 import { sdk } from "@farcaster/miniapp-sdk";
 import { stringToHex } from "viem";
+import type { AdminAction } from "@/lib/adminAuth";
 
 export async function ensureAdminSession(address: string) {
   const normalized = address.toLowerCase();
@@ -44,4 +45,37 @@ export async function ensureAdminSession(address: string) {
   }
 
   return true;
+}
+
+export async function adminFetch(address: string, input: RequestInfo | URL, init?: RequestInit) {
+  await ensureAdminSession(address);
+  return fetch(input, {
+    ...init,
+    credentials: "include",
+  });
+}
+
+export async function signAdminAction(address: string, action: Extract<AdminAction, "reset_leaderboard" | "weekly_payout" | "weekly_reset">) {
+  await ensureAdminSession(address);
+  const normalized = address.toLowerCase();
+  const challengeRes = await fetch("/api/admin/auth/challenge", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    credentials: "include",
+    body: JSON.stringify({ action, address: normalized }),
+  });
+  const challenge = await challengeRes.json().catch(() => ({}));
+  if (!challengeRes.ok || !challenge?.message || !challenge?.token) {
+    throw new Error(challenge?.error || "Admin challenge failed");
+  }
+  const sig = await sdk.wallet.ethProvider.request({
+    method: "personal_sign",
+    params: [stringToHex(String(challenge.message)), normalized as `0x${string}`],
+  });
+
+  return {
+    challenge: String(challenge.token),
+    message: String(challenge.message),
+    signature: String(sig || ""),
+  };
 }

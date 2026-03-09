@@ -4,7 +4,11 @@ import { NextRequest, NextResponse } from "next/server";
 
 const ADMIN_WALLET = (process.env.ADMIN_WALLET || process.env.NEXT_PUBLIC_ADMIN_WALLET || "0xd29c790466675153A50DF7860B9EFDb689A21cDe").toLowerCase();
 const ADMIN_API_KEY = process.env.ADMIN_API_KEY || "";
-const ADMIN_SESSION_SECRET = process.env.ADMIN_SESSION_SECRET || ADMIN_API_KEY || process.env.ADMIN_SIGNING_SECRET || "";
+
+// Session secret must be explicitly set — no silent fallback to API key.
+// If not configured the admin cookie auth is disabled (header token still works).
+const ADMIN_SESSION_SECRET = process.env.ADMIN_SESSION_SECRET || "";
+
 const COOKIE_NAME = "wab_admin";
 
 type AdminCookiePayload = {
@@ -20,6 +24,7 @@ function sign(value: string) {
 function encode(payload: AdminCookiePayload) {
   const body = Buffer.from(JSON.stringify(payload), "utf8").toString("base64url");
   const sig = sign(body);
+  if (!sig) return null;
   return `${body}.${sig}`;
 }
 
@@ -27,7 +32,13 @@ function decode(token: string | undefined | null): AdminCookiePayload | null {
   if (!token || !ADMIN_SESSION_SECRET) return null;
   const [body, sig] = token.split(".");
   if (!body || !sig) return null;
-  if (sign(body) !== sig) return null;
+  // Constant-time comparison to prevent timing attacks
+  const expected = sign(body);
+  if (!expected) return null;
+  if (
+    expected.length !== sig.length ||
+    !crypto.timingSafeEqual(Buffer.from(expected), Buffer.from(sig))
+  ) return null;
   try {
     const payload = JSON.parse(Buffer.from(body, "base64url").toString("utf8")) as AdminCookiePayload;
     if (payload.address.toLowerCase() !== ADMIN_WALLET) return null;
@@ -40,6 +51,10 @@ function decode(token: string | undefined | null): AdminCookiePayload | null {
 
 export function getAdminWallet() {
   return ADMIN_WALLET;
+}
+
+export function hasAdminSessionSecret() {
+  return Boolean(ADMIN_SESSION_SECRET);
 }
 
 export function createAdminSessionCookie(address: string) {
@@ -66,7 +81,9 @@ export async function requireAdminRequest(req: NextRequest) {
 }
 
 export function setAdminCookie(res: NextResponse, address: string) {
-  res.cookies.set(COOKIE_NAME, createAdminSessionCookie(address), {
+  const token = createAdminSessionCookie(address);
+  if (!token) return; // session secret not configured — skip cookie
+  res.cookies.set(COOKIE_NAME, token, {
     httpOnly: true,
     sameSite: "lax",
     secure: true,

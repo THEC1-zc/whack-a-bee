@@ -202,7 +202,7 @@ export default function GameScreen({ user, difficulty, onGameEnd }: Props) {
     void (async () => {
       try {
         setFeeStatus("preparing");
-        const created = await createGameSession(difficulty);
+        const created = await createGameSession(difficulty, user.address);
         setSession(created);
         capScoreRef.current = created.capScore;
         setCapScore(created.capScore);

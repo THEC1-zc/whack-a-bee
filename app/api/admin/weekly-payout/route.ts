@@ -1,9 +1,10 @@
 import { NextRequest, NextResponse } from "next/server";
-import { createPublicClient, createWalletClient, http } from "viem";
+import { createPublicClient, createWalletClient, http, recoverMessageAddress } from "viem";
 import { base } from "viem/chains";
 import { privateKeyToAccount } from "viem/accounts";
 import { BF_ADDRESS, ERC20_ABI, toBFUnits } from "@/lib/contracts";
-import { requireAdminRequest } from "@/lib/adminSession";
+import { requireAdminRequest, getAdminWallet } from "@/lib/adminSession";
+import { createAdminChallenge, buildAdminChallengeMessage, verifyAdminChallenge } from "@/lib/adminAuth";
 import {
   acquireWeeklyPayoutLock,
   getWeeklyConfig,
@@ -21,11 +22,16 @@ import { getAdminStats, resetLeaderboard } from "@/lib/leaderboard";
 import { logTxRecord } from "@/lib/txLedger";
 
 const POT_PRIVATE_KEY = process.env.POT_WALLET_PRIVATE_KEY;
+const ADMIN_WALLET = getAdminWallet();
 
 type WeeklyPayoutRequest = {
   force?: boolean;
   autoClaimPendingTickets?: boolean;
   mode?: "manual" | "auto";
+  // Wallet signature fields — required for manual payout (2FA)
+  payoutChallenge?: string;
+  payoutMessage?: string;
+  payoutSignature?: string;
 };
 
 type TransferPlan = {
@@ -96,6 +102,18 @@ async function sendBfTransfers(transfers: TransferPlan[]): Promise<WeeklyTransfe
   return results;
 }
 
+// GET — issue a payout challenge (used by admin UI before calling POST)
+export async function GET(req: NextRequest) {
+  if (!(await requireAdminRequest(req))) {
+    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  }
+  const challenge = createAdminChallenge("weekly_payout", ADMIN_WALLET);
+  if (!challenge) {
+    return NextResponse.json({ error: "Admin signing secret missing" }, { status: 503 });
+  }
+  return NextResponse.json({ ok: true, ...challenge });
+}
+
 export async function POST(req: NextRequest) {
   const meta = getWeeklyMeta();
   const lock = await acquireWeeklyPayoutLock(meta.weekId, 180000);
@@ -115,8 +133,37 @@ export async function POST(req: NextRequest) {
     const cfg = await getWeeklyConfig();
     const mode = body.mode || "manual";
     const isAutoMode = mode === "auto";
+
     if (isAutoMode && !cfg.autoPayoutEnabled) {
       return NextResponse.json({ error: "Auto payout is disabled" }, { status: 403 });
+    }
+
+    // C-1 fix: manual payout requires a wallet signature as second factor
+    // Auto mode (internal) is exempted since it runs server-side via cron
+    if (!isAutoMode) {
+      const challenge = String(body?.payoutChallenge || "");
+      const message = String(body?.payoutMessage || "");
+      const signature = String(body?.payoutSignature || "");
+
+      if (!challenge || !message || !signature) {
+        return NextResponse.json({ error: "Payout requires wallet signature — call GET first to obtain a challenge" }, { status: 400 });
+      }
+
+      const verification = verifyAdminChallenge(challenge, "weekly_payout", ADMIN_WALLET);
+      if (!verification.ok) {
+        return NextResponse.json({ error: verification.reason }, { status: 401 });
+      }
+      if (message !== buildAdminChallengeMessage(verification.payload)) {
+        return NextResponse.json({ error: "Challenge message mismatch" }, { status: 401 });
+      }
+
+      const signer = await recoverMessageAddress({
+        message,
+        signature: signature as `0x${string}`,
+      }).catch(() => null);
+      if (!signer || signer.toLowerCase() !== ADMIN_WALLET) {
+        return NextResponse.json({ error: "Invalid wallet signature for payout authorization" }, { status: 401 });
+      }
     }
 
     const force = Boolean(body.force) || (isAutoMode && cfg.forceBypassSchedule);

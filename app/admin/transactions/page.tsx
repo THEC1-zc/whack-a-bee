@@ -1,9 +1,8 @@
 "use client";
 import Link from "next/link";
-import { useCallback, useEffect, useMemo, useState } from "react";
-import { sdk } from "@farcaster/miniapp-sdk";
-import { stringToHex } from "viem";
+import { useEffect, useMemo, useState } from "react";
 import { useFarcaster } from "@/hooks/useFarcaster";
+import { adminFetch, signAdminAction } from "@/lib/adminClient";
 
 const ADMIN_WALLET = (
   process.env.NEXT_PUBLIC_ADMIN_WALLET || "0xd29c790466675153A50DF7860B9EFDb689A21cDe"
@@ -44,51 +43,43 @@ export default function AdminTransactions() {
   const [msg, setMsg] = useState<Msg>(null);
   const [resetting, setResetting] = useState(false);
   const [filter, setFilter] = useState<"all" | "easy" | "medium" | "hard">("all");
-
-  const hdrs = useCallback(
-    () => ({ "Content-Type": "application/json", "x-admin-wallet": address }),
-    [address]
-  );
-
-  const loadStats = useCallback(async () => {
-    setLoading(true);
-    try {
-      const res = await fetch("/api/admin/leaderboard", { headers: hdrs() });
-      const data = await res.json();
-      setStats(data.stats);
-    } catch {
-      setMsg({ type: "err", text: "Caricamento fallito" });
-    }
-    setLoading(false);
-  }, [hdrs]);
+  const totals = useMemo(() => {
+    if (!stats) return null;
+    return {
+      house: (stats.totalFees - stats.totalPrizes).toFixed(3),
+      roi: stats.totalFees > 0 ? ((stats.totalPrizes / stats.totalFees) * 100).toFixed(1) : "0",
+    };
+  }, [stats]);
 
   useEffect(() => {
-    if (authorized) loadStats();
-  }, [authorized, loadStats]);
-
-  if (!authorized)
-    return (
-      <Unauth />
-    );
+    if (!authorized) return;
+    let cancelled = false;
+    setLoading(true);
+    void (async () => {
+      try {
+        const res = await adminFetch(address, "/api/admin/leaderboard");
+        const data = await res.json();
+        if (!cancelled) setStats(data.stats);
+      } catch {
+        if (!cancelled) setMsg({ type: "err", text: "Caricamento fallito" });
+      } finally {
+        if (!cancelled) setLoading(false);
+      }
+    })();
+    return () => {
+      cancelled = true;
+    };
+  }, [address, authorized]);
 
   async function resetLeaderboard() {
     setResetting(true);
     setMsg({ type: "ok", text: "Firma richiesta…" });
     try {
-      const chalRes = await fetch("/api/admin/auth/challenge", {
+      const signed = await signAdminAction(address, "reset_leaderboard");
+      const res = await adminFetch(address, "/api/admin/leaderboard", {
         method: "POST",
-        headers: hdrs(),
-        body: JSON.stringify({ action: "reset_leaderboard", address }),
-      });
-      const { message, token: challenge } = await chalRes.json();
-      const sig = await sdk.wallet.ethProvider.request({
-        method: "personal_sign",
-        params: [stringToHex(message), address as `0x${string}`],
-      });
-      const res = await fetch("/api/admin/leaderboard", {
-        method: "POST",
-        headers: hdrs(),
-        body: JSON.stringify({ action: "reset", challenge, message, signature: String(sig) }),
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ action: "reset", challenge: signed.challenge, message: signed.message, signature: signed.signature }),
       });
       if (res.ok) {
         setMsg({ type: "ok", text: "Leaderboard resettata ✓" });
@@ -103,13 +94,10 @@ export default function AdminTransactions() {
     setResetting(false);
   }
 
-  const totals = useMemo(() => {
-    if (!stats) return null;
-    return {
-      house: (stats.totalFees - stats.totalPrizes).toFixed(3),
-      roi: stats.totalFees > 0 ? ((stats.totalPrizes / stats.totalFees) * 100).toFixed(1) : "0",
-    };
-  }, [stats]);
+  if (!authorized)
+    return (
+      <Unauth />
+    );
 
   const BTN =
     "w-full py-4 rounded-2xl text-base font-black text-black disabled:opacity-40 transition-all active:scale-95 shadow-lg";

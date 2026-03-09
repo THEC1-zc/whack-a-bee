@@ -1,6 +1,6 @@
 "use client";
 
-import { createPublicClient, createWalletClient, custom, http } from "viem";
+import { createPublicClient, createWalletClient, custom, http, stringToHex } from "viem";
 import { base } from "viem/chains";
 import { sdk } from "@farcaster/miniapp-sdk";
 import {
@@ -53,6 +53,19 @@ type FinishGameResponse = {
 function getErrorMessage(error: unknown, fallback: string) {
   if (error instanceof Error && error.message) return error.message;
   return fallback;
+}
+
+function buildFinishAuthMessage(params: {
+  gameId: string;
+  score: number;
+  hitStats: { normal: number; fast: number; fuchsia: number; bomb: number; super: number };
+}) {
+  return [
+    "Whack-a-Butterfly Game Finish",
+    `Game: ${params.gameId}`,
+    `Score: ${params.score}`,
+    `Hits: normal=${params.hitStats.normal},fast=${params.hitStats.fast},fuchsia=${params.hitStats.fuchsia},bomb=${params.hitStats.bomb},super=${params.hitStats.super}`,
+  ].join("\n");
 }
 
 async function parseJson(res: Response) {
@@ -159,11 +172,15 @@ export async function payGameFee(
   }
 }
 
-export async function createGameSession(difficulty: Difficulty): Promise<CreateGameResponse> {
+export async function createGameSession(
+  difficulty: Difficulty,
+  playerAddress?: string
+): Promise<CreateGameResponse> {
   const res = await fetch("/api/game/create", {
     method: "POST",
     headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ difficulty }),
+    // Pass address for server-side anti-spam rate limiting
+    body: JSON.stringify({ difficulty, address: playerAddress }),
   });
   const data = await parseJson(res);
   if (!res.ok || !data?.ok) {
@@ -199,10 +216,29 @@ export async function finishGameSession(params: {
   score: number;
   hitStats: { normal: number; fast: number; fuchsia: number; bomb: number; super: number };
 }) {
+  const walletClient = getWalletClient();
+  const [address] = await walletClient.requestAddresses();
+  if (!address) {
+    throw new Error("No wallet connected");
+  }
+  const finishMessage = buildFinishAuthMessage({
+    gameId: params.gameId,
+    score: params.score,
+    hitStats: params.hitStats,
+  });
+  const finishSignature = await sdk.wallet.ethProvider.request({
+    method: "personal_sign",
+    params: [stringToHex(finishMessage), address],
+  });
+
   const res = await fetch("/api/game/finish", {
     method: "POST",
     headers: { "Content-Type": "application/json" },
-    body: JSON.stringify(params),
+    body: JSON.stringify({
+      ...params,
+      finishMessage,
+      finishSignature,
+    }),
   });
   const data = await parseJson(res);
   if (!res.ok || !data?.ok) {
@@ -226,7 +262,8 @@ export async function claimPrize(
   errorCode?: string;
 }> {
   try {
-    const signRes = await fetch("/api/payout", {
+    // Step 1: request a signed claim from the server via the dedicated route
+    const signRes = await fetch("/api/game/claim-issue", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ gameId, gameSecret }),
@@ -244,11 +281,13 @@ export async function claimPrize(
       };
     }
 
+    // Step 2: ensure player is on Base
     const chainCheck = await ensureBaseChain();
     if (!chainCheck.ok) {
       return { success: false, error: chainCheck.error, errorCode: "WRONG_CHAIN", prizeStatus: "notpaid", potStatus: "notadded" };
     }
 
+    // Step 3: player calls claimPrize on-chain (signed by server signer)
     const walletClient = getWalletClient();
     const [address] = await walletClient.requestAddresses();
     if (!address) {
@@ -272,6 +311,7 @@ export async function claimPrize(
     const publicClient = getPublicClient();
     await publicClient.waitForTransactionReceipt({ hash: txHash });
 
+    // Step 4: confirm on-chain claim to server
     const confirmRes = await fetch("/api/game/claim-confirm", {
       method: "POST",
       headers: { "Content-Type": "application/json" },

@@ -3,7 +3,7 @@ import { recoverMessageAddress } from "viem";
 import { getAdminStats, resetLeaderboard } from "@/lib/leaderboard";
 import { getWeeklyState, resetWeeklyState } from "@/lib/weekly";
 import { getAdminWallet, requireAdminRequest } from "@/lib/adminSession";
-import { verifyAdminChallenge } from "@/lib/adminAuth";
+import { buildAdminChallengeMessage, verifyAdminChallenge } from "@/lib/adminAuth";
 
 const ADMIN_WALLET = getAdminWallet();
 
@@ -34,6 +34,9 @@ export async function POST(req: NextRequest) {
     if (!verification.ok) {
       return NextResponse.json({ error: verification.reason }, { status: 401 });
     }
+    if (message !== buildAdminChallengeMessage(verification.payload)) {
+      return NextResponse.json({ error: "Challenge message mismatch" }, { status: 401 });
+    }
 
     const signer = await recoverMessageAddress({
       message,
@@ -47,6 +50,26 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ ok: true });
   }
   if (body?.action === "weekly_reset") {
+    const challenge = String(body?.challenge || "");
+    const message = String(body?.message || "");
+    const signature = String(body?.signature || "");
+    if (!challenge || !message || !signature) {
+      return NextResponse.json({ error: "Missing signed authorization" }, { status: 400 });
+    }
+    const verification = verifyAdminChallenge(challenge, "weekly_reset", ADMIN_WALLET);
+    if (!verification.ok) {
+      return NextResponse.json({ error: verification.reason }, { status: 401 });
+    }
+    if (message !== buildAdminChallengeMessage(verification.payload)) {
+      return NextResponse.json({ error: "Challenge message mismatch" }, { status: 401 });
+    }
+    const signer = await recoverMessageAddress({
+      message,
+      signature: signature as `0x${string}`,
+    }).catch(() => null);
+    if (!signer || signer.toLowerCase() !== ADMIN_WALLET) {
+      return NextResponse.json({ error: "Invalid wallet signature" }, { status: 401 });
+    }
     await resetWeeklyState();
     return NextResponse.json({ ok: true });
   }

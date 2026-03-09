@@ -1,6 +1,8 @@
 import crypto from "node:crypto";
 
-export type AdminAction = "reset_leaderboard";
+// admin_login is a dedicated action so its challenge token cannot be replayed
+// to authorize other admin operations (e.g. reset_leaderboard).
+export type AdminAction = "reset_leaderboard" | "admin_login" | "weekly_payout" | "weekly_reset";
 
 type ChallengePayload = {
   action: AdminAction;
@@ -10,6 +12,7 @@ type ChallengePayload = {
 };
 
 function getSecret() {
+  // Prefer a dedicated signing secret; fallback to API key only if explicitly set
   return process.env.ADMIN_SIGNING_SECRET || process.env.ADMIN_API_KEY || "";
 }
 
@@ -30,6 +33,16 @@ function signPayload(payload: ChallengePayload) {
     .digest("hex");
 }
 
+export function buildAdminChallengeMessage(payload: ChallengePayload) {
+  return [
+    "Whack-a-butterfly Admin Authorization",
+    `Action: ${payload.action}`,
+    `Wallet: ${payload.address}`,
+    `Nonce: ${payload.nonce}`,
+    `Expires: ${new Date(payload.exp).toISOString()}`,
+  ].join("\n");
+}
+
 export function createAdminChallenge(action: AdminAction, address: string) {
   const normalized = address.toLowerCase();
   const payload: ChallengePayload = {
@@ -42,13 +55,7 @@ export function createAdminChallenge(action: AdminAction, address: string) {
   if (!sig) return null;
 
   const token = toB64(JSON.stringify({ payload, sig }));
-  const message = [
-    "Whack-a-butterfly Admin Authorization",
-    `Action: ${action}`,
-    `Wallet: ${normalized}`,
-    `Nonce: ${payload.nonce}`,
-    `Expires: ${new Date(payload.exp).toISOString()}`,
-  ].join("\n");
+  const message = buildAdminChallengeMessage(payload);
 
   return { token, message, expiresAt: payload.exp };
 }
@@ -68,6 +75,7 @@ export function verifyAdminChallenge(token: string, expectedAction: AdminAction,
     if (Date.now() > payload.exp) {
       return { ok: false, reason: "Challenge expired" } as const;
     }
+    // Strict action check — an admin_login token cannot authorize reset_leaderboard
     if (payload.action !== expectedAction) {
       return { ok: false, reason: "Invalid action in challenge" } as const;
     }

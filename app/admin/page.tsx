@@ -2,6 +2,7 @@
 import Link from "next/link";
 import { useEffect, useState } from "react";
 import { useFarcaster } from "@/hooks/useFarcaster";
+import { adminFetch } from "@/lib/adminClient";
 
 const ADMIN_WALLET = (
   process.env.NEXT_PUBLIC_ADMIN_WALLET || "0xd29c790466675153A50DF7860B9EFDb689A21cDe"
@@ -55,7 +56,7 @@ export default function AdminHome() {
   useEffect(() => {
     if (!authorized) return;
     Promise.all([
-      fetch("/api/admin/leaderboard", { headers: { "x-admin-wallet": address } }).then((r) =>
+      adminFetch(address, "/api/admin/leaderboard").then((r) =>
         r.json()
       ),
       fetch("/api/weekly").then((r) => r.json()),

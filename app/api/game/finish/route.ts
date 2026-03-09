@@ -9,6 +9,8 @@ export async function POST(req: NextRequest) {
       gameSecret: String(body?.gameSecret || ""),
       score: Number(body?.score || 0),
       hitStats: body?.hitStats || {},
+      finishMessage: String(body?.finishMessage || ""),
+      finishSignature: String(body?.finishSignature || ""),
     });
     return NextResponse.json({
       ok: true,

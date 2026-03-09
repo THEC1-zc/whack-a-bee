@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react";
 import Link from "next/link";
 import { useFarcaster } from "@/hooks/useFarcaster";
+import { adminFetch } from "@/lib/adminClient";
 
 const ADMIN_WALLET = (process.env.NEXT_PUBLIC_ADMIN_WALLET || "0xd29c790466675153A50DF7860B9EFDb689A21cDe").toLowerCase();
 
@@ -71,9 +72,7 @@ export default function AdminTxRecordsPage() {
 
   useEffect(() => {
     if (!authorized) return;
-    fetch("/api/admin/tx-records?limit=300", {
-      headers: { "x-admin-wallet": address },
-    })
+    adminFetch(address, "/api/admin/tx-records?limit=300")
       .then((r) => r.json())
       .then((d) => setRecords(Array.isArray(d.records) ? d.records : []))
       .catch(() => setError("Failed to load tx records"))

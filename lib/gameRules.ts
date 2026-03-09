@@ -27,6 +27,18 @@ export const LIVE_POINT_VALUES: Record<Difficulty, Record<"normal" | "fast" | "f
 
 export const SUPER_BEE_BONUS_BF = 100000;
 
+// Maximum plausible hit counts per game per difficulty.
+// Based on: waves × per-wave spawn limits from the balance sheet.
+// Used server-side to reject stat-inflated game submissions.
+export const HIT_BOUNDS: Record<Difficulty, Record<"normal" | "fast" | "fuchsia" | "bomb" | "super", number>> = {
+  // Easy: 10 waves, board max 9, ~2.76 spawns/wave
+  easy:   { normal: 60, fast: 20, fuchsia: 3, bomb: 25, super: 1 },
+  // Medium: 9 waves, board max 9, ~2.5 spawns/wave
+  medium: { normal: 50, fast: 18, fuchsia: 3, bomb: 20, super: 1 },
+  // Hard: 8 waves, board max 9, ~4.2 spawns/wave
+  hard:   { normal: 50, fast: 16, fuchsia: 3, bomb: 30, super: 1 },
+};
+
 const CAP_DISTRIBUTION = [
   { mult: 0.95, pct: 21.0 },
   { mult: 1.2, pct: 29.0 },

@@ -83,9 +83,29 @@ DIFFICULTY_CONFIG:
 ## Ultimi cambiamenti (sessione corrente)
 - Ribilanciamento economia: fee medium 0.03→0.025, fee hard 0.045→0.035, maxPts easy 48→40, maxPts medium 64→60, PRIZE_PER_POINT 0.001→0.0008
 - Cap moltiplicatore ora visibile nella schermata di conferma pagamento (prima che il giocatore approvi la fee)
+- Hardening follow-up post session redesign:
+  - `finishGameSession` ora richiede una firma wallet del player sul payload di fine partita, e il server verifica che il signer coincida con il wallet che ha pagato la fee.
+  - `createGameSession` frontend passa il wallet address, quindi il rate-limit server-side sulle sessioni unpaid ora e' realmente attivo.
+  - Admin challenge system separato per azioni: `admin_login`, `reset_leaderboard`, `weekly_reset`, `weekly_payout`.
+  - Le route admin che richiedono firma ora validano anche che il `message` firmato coincida esattamente con il challenge token emesso, evitando riuso di firme/challenge su azioni diverse.
+  - Le pagine admin ora usano sessione cookie tramite `lib/adminClient.ts` invece di chiamare le API admin senza bootstrap di sessione.
+  - `weekly_reset` ora richiede anch'esso firma wallet admin.
+  - `ADMIN_SESSION_SECRET` mancante ora produce errore esplicito in login admin invece di fallire in modo silenzioso.
+  - Rimosso il check locale su `claimExpiry` in `confirmClaimForGame`, per non rifiutare una tx on-chain gia' valida ma confermata dal server dopo la scadenza wall-clock.
+
+## Verifiche recenti
+- `npm run build` ✅
+- `npm run lint -- <file toccati>` ✅, resta solo la warning nota `@next/next/no-img-element` su `components/GameScreen.tsx`
+- Smoke runtime locale sulla build:
+  - Home fuori Farcaster renderizza correttamente la fallback screen
+  - `POST /api/game/create` ✅
+  - `POST /api/admin/auth/challenge` con wallet non autorizzato → `401 Unauthorized wallet` ✅
+  - Rate limit unpaid sessions attivo: 11a creazione consecutiva per lo stesso wallet → errore `Too many open sessions...` ✅
 
 ## TODO prossima sessione
 - [ ] Confermare causa root del revert payout (analizzare txHash fallita su BaseScan)
 - [ ] Verificare se `realtimeBalanceOf` risolve il check saldo disponibile
 - [ ] Rimuovere banner "fixing txs issues" quando payout funziona
 - [ ] Valutare se rendere Super Bee bonus fisso in USDC invece che in BF (per stabilità con variazioni di prezzo)
+- [ ] Valutare se sostituire gli `<img>` principali con `next/image` dove non rompe il rendering miniapp
+- [ ] Valutare cleanup/expiry dei game record `created` abbandonati oltre al rate-limit per wallet

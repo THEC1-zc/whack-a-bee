@@ -2,6 +2,7 @@
 import Link from "next/link";
 import { useCallback, useEffect, useState } from "react";
 import { useFarcaster } from "@/hooks/useFarcaster";
+import { adminFetch } from "@/lib/adminClient";
 
 const ADMIN_WALLET = (
   process.env.NEXT_PUBLIC_ADMIN_WALLET || "0xd29c790466675153A50DF7860B9EFDb689A21cDe"
@@ -50,16 +51,11 @@ export default function AdminWallets() {
   const [lastRefresh, setLastRefresh] = useState<number | null>(null);
   const [error, setError] = useState<string | null>(null);
 
-  const hdrs = useCallback(
-    () => ({ "x-admin-wallet": address }),
-    [address]
-  );
-
   const refresh = useCallback(async () => {
     setLoading(true);
     setError(null);
     try {
-      const res = await fetch("/api/admin/wallets", { headers: hdrs() });
+      const res = await adminFetch(address, "/api/admin/wallets");
       const data = await res.json();
       if (!res.ok) throw new Error(data?.error || "Failed");
       setWallets(data.wallets);
@@ -68,10 +64,11 @@ export default function AdminWallets() {
       setError(String(e));
     }
     setLoading(false);
-  }, [hdrs]);
+  }, [address]);
 
   useEffect(() => {
-    if (authorized) refresh();
+    if (!authorized) return;
+    void refresh();
   }, [authorized, refresh]);
 
   if (!authorized)
