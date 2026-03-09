@@ -337,7 +337,6 @@ export default function GameScreen({ user, difficulty, onGameEnd }: Props) {
   const weeklyBf = Math.floor(prizeBfGross * 0.045);
   const burnBf = Math.floor(prizeBfGross * 0.01);
   const payoutRows = [
-    { label: "Game ID", value: session?.gameId || "—", tone: "#fef3c7", mono: true },
     { label: "Game Difficulty", value: `${cfg.emoji} ${cfg.label}`, tone: cfg.color },
     { label: "Game Type", value: `${capInfo.icon} ${capInfo.label}`, tone: "#c084fc" },
     { label: "Win", value: `${prizeBfNet.toLocaleString()} BF`, tone: "#34d399" },
@@ -401,15 +400,15 @@ export default function GameScreen({ user, difficulty, onGameEnd }: Props) {
       <div className="user-page-bg min-h-dvh p-4">
         <div className="max-w-sm mx-auto flex flex-col gap-4 pb-6">
           <div className="user-page-chrome rounded-[28px] px-5 py-5 text-center">
-            <div className="text-5xl">{prizeBfNet > 0 ? "🎉" : "😔"}</div>
-            <div className="mt-2 text-[11px] uppercase tracking-[0.35em] text-amber-300">Payout Summary</div>
-            <h2 className="mt-2 text-3xl font-black text-white">Game Over</h2>
-            <div className="mt-4 text-6xl font-black text-amber-300">{prizeBfNet.toLocaleString()}</div>
-            <div className="text-sm font-bold text-emerald-300">BF won</div>
-            <div className="mt-3 text-amber-100 text-sm">
+            <div className="text-4xl">{prizeBfNet > 0 ? "🎉" : "😔"}</div>
+            <div className="mt-2 text-[10px] uppercase tracking-[0.24em] text-amber-300">Payout Summary</div>
+            <h2 className="mt-2 text-[2.1rem] leading-none font-black text-white">Game Over</h2>
+            <div className="mt-4 text-[4.6rem] leading-[0.9] font-black text-amber-300 sm:text-[5.1rem]">{prizeBfNet.toLocaleString()}</div>
+            <div className="mt-1 text-sm font-bold text-emerald-300">BF won</div>
+            <div className="mt-3 text-amber-100 text-sm leading-5">
               {score} points · {effectivePoints.toFixed(2)} effective payout points
             </div>
-            <div className="mt-1 text-amber-200/80 text-xs">
+            <div className="mt-1 text-amber-200/80 text-xs leading-5">
               {cfg.waves}/{cfg.waves} waves cleared · {pct}% of cap
             </div>
             <div className="mt-4 h-2 rounded-full bg-amber-950/80 border border-amber-900 overflow-hidden">
@@ -423,6 +422,16 @@ export default function GameScreen({ user, difficulty, onGameEnd }: Props) {
             </div>
           </div>
 
+          <div
+            className="user-page-chrome rounded-2xl px-4 py-3 border"
+            style={{ borderColor: "rgba(251,191,36,0.18)" }}
+          >
+            <div className="text-[10px] uppercase tracking-[0.18em] text-amber-400/80">Game ID</div>
+            <div className="mt-2 font-mono text-[13px] leading-5 text-amber-50 break-all">
+              {session?.gameId || "—"}
+            </div>
+          </div>
+
           <div className="grid grid-cols-2 gap-3">
             {payoutRows.map((row) => (
               <div
@@ -430,11 +439,8 @@ export default function GameScreen({ user, difficulty, onGameEnd }: Props) {
                 className="user-page-chrome rounded-2xl px-4 py-3 border"
                 style={{ borderColor: "rgba(251,191,36,0.18)" }}
               >
-                <div className="text-[10px] uppercase tracking-[0.24em] text-amber-400/80">{row.label}</div>
-                <div
-                  className={`mt-2 text-sm font-black ${row.mono ? "font-mono break-all text-[12px] leading-4" : ""}`}
-                  style={{ color: row.tone }}
-                >
+                <div className="text-[10px] uppercase tracking-[0.18em] text-amber-400/80">{row.label}</div>
+                <div className="mt-2 text-[15px] leading-5 font-black" style={{ color: row.tone }}>
                   {row.value}
                 </div>
               </div>
@@ -442,35 +448,35 @@ export default function GameScreen({ user, difficulty, onGameEnd }: Props) {
           </div>
 
           <div className="user-page-chrome rounded-[24px] px-4 py-4">
-            <div className="text-[11px] uppercase tracking-[0.3em] text-amber-300">Run Details</div>
+            <div className="text-[11px] uppercase tracking-[0.22em] text-amber-300">Run Details</div>
             <div className="mt-3 grid grid-cols-3 gap-3">
               <MetricTile label="Gross" value={`${prizeBfGross.toLocaleString()} BF`} tone="#fbbf24" />
               <MetricTile label="Tickets" value={`${ticketCount}`} tone="#fde68a" />
               <MetricTile label="Fee" value={`${cfg.fee} USDC`} tone="#c4b5fd" />
             </div>
-            <div className="mt-3 text-[11px] text-amber-200/80">
+            <div className="mt-3 text-[11px] leading-5 text-amber-200/80">
               Bands: full value to {getFullValueThreshold(difficulty)} pts, then payout weight drops. Split: 94.5% win / 4.5% weekly / 1% burn.
             </div>
             {superBonus > 0 && (
-              <div className="mt-2 text-xs text-purple-200">Prizefly bonus +{Math.round(superBonus * bfPerUsdc)} BF</div>
+              <div className="mt-2 text-xs leading-5 text-purple-200">Prizefly bonus +{Math.round(superBonus * bfPerUsdc)} BF</div>
             )}
             {prizeBfNet > 0 && (
-              <div className={`mt-3 text-xs font-bold rounded-xl px-3 py-2 ${paymentStatus === "paid" ? "bg-green-900/80 text-green-300" : paymentStatus === "failed" ? "bg-red-900/80 text-red-300" : "bg-amber-900/80 text-amber-300"}`}>
+              <div className={`mt-3 text-sm font-bold rounded-xl px-3 py-2.5 leading-5 ${paymentStatus === "paid" ? "bg-green-900/80 text-green-300" : paymentStatus === "failed" ? "bg-red-900/80 text-red-300" : "bg-amber-900/80 text-amber-300"}`}>
                 {paymentStatus === "paid" ? `✅ ${paymentNote || "Payment sent"}` : paymentStatus === "failed" ? "❌ Payment error" : "⏳ Processing..."}
               </div>
             )}
             {paymentStatus === "failed" && paymentError && (
-              <div className="mt-2 text-[11px] text-red-200 whitespace-pre-wrap break-words">
+              <div className="mt-2 text-[12px] leading-5 text-red-200 whitespace-pre-wrap break-words">
                 {paymentErrorCode ? `[${paymentErrorCode}] ` : ""}{shortPaymentError}
               </div>
             )}
             {paymentStatus === "failed" && paymentNote && (
-              <div className="mt-1 text-[11px] text-amber-200">{paymentNote}</div>
+              <div className="mt-1 text-[11px] leading-5 text-amber-200">{paymentNote}</div>
             )}
           </div>
 
           <div className="user-page-chrome rounded-[24px] px-4 py-4">
-            <div className="text-[11px] uppercase tracking-[0.3em] text-amber-300">Hit Counter</div>
+            <div className="text-[11px] uppercase tracking-[0.22em] text-amber-300">Hit Counter</div>
             <div className="mt-3 grid grid-cols-2 gap-2 text-xs">
               <CounterRow label={BEE_DISPLAY_NAMES.normal} value={hitStats.normal} />
               <CounterRow label={BEE_DISPLAY_NAMES.fast} value={hitStats.fast} />
@@ -606,17 +612,17 @@ export default function GameScreen({ user, difficulty, onGameEnd }: Props) {
 function MetricTile({ label, value, tone }: { label: string; value: string; tone: string }) {
   return (
     <div className="rounded-2xl px-3 py-3 border border-amber-900/50" style={{ background: "rgba(20, 10, 0, 0.42)" }}>
-      <div className="text-[10px] uppercase tracking-[0.2em] text-amber-400/80">{label}</div>
-      <div className="mt-2 text-sm font-black" style={{ color: tone }}>{value}</div>
+      <div className="text-[10px] uppercase tracking-[0.16em] text-amber-400/80">{label}</div>
+      <div className="mt-2 text-[15px] leading-5 font-black" style={{ color: tone }}>{value}</div>
     </div>
   );
 }
 
 function CounterRow({ label, value }: { label: string; value: number }) {
   return (
-    <div className="rounded-xl px-3 py-2 border border-amber-900/45" style={{ background: "rgba(20, 10, 0, 0.34)" }}>
-      <div className="text-amber-200">{label}</div>
-      <div className="mt-1 text-amber-300 font-black">{value}</div>
+    <div className="rounded-xl px-3 py-2.5 border border-amber-900/45" style={{ background: "rgba(20, 10, 0, 0.34)" }}>
+      <div className="text-[13px] leading-5 text-amber-200">{label}</div>
+      <div className="mt-1 text-lg leading-none text-amber-300 font-black">{value}</div>
     </div>
   );
 }

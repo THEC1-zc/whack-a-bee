@@ -141,3 +141,12 @@ Payout bands:
   - gameplay is wave-based instead of countdown-based (`easy 10`, `medium 9`, `hard 8`)
 - Updated `components/GameScreen.tsx`, `lib/gameRules.ts`, `lib/gameSessions.ts`, `components/App.tsx`, `components/RulesScreen.tsx`, `app/api/share-image/route.tsx`, `app/weekly/page.tsx`, and `README.md` to use the promoted live balance and terminology.
 - Weekly ticket copy + calculation now match the actual post-promote rules: `1 base + 1 full-value run + 1 profitable run + 1 every 10th claimed win`.
+
+### 2026-03-09 18:58:00 +0100
+- Hardened payout claim confirmation in `lib/payments.ts` by retrying `claim-confirm` on transient "transaction not found" RPC lag after the on-chain receipt is already mined.
+- Updated `app/admin/transactions/page.tsx` to load and display recent transaction records directly, instead of only showing leaderboard stats plus a link out.
+- Fixed admin tx loading UX in `app/admin/tx-records/page.tsx` by surfacing non-OK API responses as visible errors.
+- Rebalanced the mobile payout summary layout in `components/GameScreen.tsx`:
+  - `Game ID` is now full-width to avoid broken wrapping.
+  - label tracking and card typography are tighter for small screens.
+  - payment/error copy uses cleaner spacing and line-height so failed payouts remain readable.

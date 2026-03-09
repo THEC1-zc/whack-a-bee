@@ -73,6 +73,10 @@ async function parseJson(res: Response) {
   return res.json().catch(() => ({}));
 }
 
+async function sleep(ms: number) {
+  await new Promise((resolve) => setTimeout(resolve, ms));
+}
+
 export function getPublicClient() {
   return createPublicClient({
     chain: base,
@@ -312,30 +316,50 @@ export async function claimPrize(
     const publicClient = getPublicClient();
     await publicClient.waitForTransactionReceipt({ hash: txHash });
 
-    // Step 4: confirm on-chain claim to server
-    const confirmRes = await fetch("/api/game/claim-confirm", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ gameId, gameSecret, txHash }),
-    });
-    const confirmData = await parseJson(confirmRes);
-    if (!confirmRes.ok || !confirmData?.ok) {
+    // Step 4: confirm on-chain claim to server.
+    // Some public RPCs lag a bit on fresh tx lookups, so retry briefly on "tx not found".
+    let confirmData: Record<string, unknown> | null = null;
+    let confirmError = "Claim confirmation failed";
+    let confirmCode = "CLAIM_CONFIRM_FAILED";
+    let confirmed = false;
+    for (let attempt = 0; attempt < 6; attempt += 1) {
+      const confirmRes = await fetch("/api/game/claim-confirm", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ gameId, gameSecret, txHash }),
+      });
+      confirmData = await parseJson(confirmRes);
+      if (confirmRes.ok && confirmData?.ok) {
+        confirmed = true;
+        break;
+      }
+
+      confirmError = String(confirmData?.error || "Claim confirmation failed");
+      confirmCode = String(confirmData?.errorCode || "CLAIM_CONFIRM_FAILED");
+      const retryableNotFound =
+        confirmCode === "CLAIM_CONFIRM_FAILED" &&
+        /could not be found|not found|unknown transaction/i.test(confirmError);
+      if (!retryableNotFound || attempt === 5) break;
+      await sleep(1200 * (attempt + 1));
+    }
+
+    if (!confirmed) {
       return {
         success: false,
         txHash,
-        error: confirmData?.error || "Claim confirmation failed",
-        errorCode: confirmData?.errorCode || "CLAIM_CONFIRM_FAILED",
+        error: confirmError,
+        errorCode: confirmCode,
         prizeStatus: "notpaid",
         potStatus: "notadded",
-        prizeReason: confirmData?.error || null,
-        potReason: confirmData?.error || null,
+        prizeReason: confirmError,
+        potReason: confirmError,
       };
     }
 
     return {
       success: true,
       txHash,
-      bfAmount: Number(confirmData.prizeBfGross || 0),
+      bfAmount: Number(confirmData?.prizeBfGross || 0),
       prizeStatus: "paid",
       potStatus: "added",
       prizeReason: null,

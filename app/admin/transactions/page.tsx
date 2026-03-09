@@ -31,7 +31,31 @@ type AdminStats = {
   gamesByDifficulty: Record<string, number>;
   players: Player[];
 };
+type TxPreview = {
+  id: string;
+  at: number;
+  kind: string;
+  status: "ok" | "failed";
+  playerUsername?: string;
+  playerAddress?: string;
+  amountUsdc?: number;
+  amountBf?: number;
+  txHash?: string;
+  stage?: string;
+  reason?: string;
+  basescanUrl?: string;
+};
 type Msg = { type: "ok" | "err"; text: string } | null;
+
+function short(addr?: string) {
+  if (!addr) return "-";
+  return `${addr.slice(0, 6)}...${addr.slice(-4)}`;
+}
+
+function shortTx(hash?: string) {
+  if (!hash) return "-";
+  return `${hash.slice(0, 10)}...${hash.slice(-6)}`;
+}
 
 export default function AdminTransactions() {
   const { user } = useFarcaster();
@@ -39,6 +63,7 @@ export default function AdminTransactions() {
   const authorized = address === ADMIN_WALLET;
 
   const [stats, setStats] = useState<AdminStats | null>(null);
+  const [recentTx, setRecentTx] = useState<TxPreview[]>([]);
   const [loading, setLoading] = useState(false);
   const [msg, setMsg] = useState<Msg>(null);
   const [resetting, setResetting] = useState(false);
@@ -57,11 +82,32 @@ export default function AdminTransactions() {
     setLoading(true);
     void (async () => {
       try {
-        const res = await adminFetch(address, "/api/admin/leaderboard");
-        const data = await res.json();
-        if (!cancelled) setStats(data.stats);
-      } catch {
-        if (!cancelled) setMsg({ type: "err", text: "Caricamento fallito" });
+        const [statsRes, txRes] = await Promise.all([
+          adminFetch(address, "/api/admin/leaderboard"),
+          adminFetch(address, "/api/admin/tx-records?limit=12"),
+        ]);
+        const [statsData, txData] = await Promise.all([
+          statsRes.json().catch(() => ({})),
+          txRes.json().catch(() => ({})),
+        ]);
+        if (!statsRes.ok) {
+          throw new Error(statsData?.error || "Leaderboard load failed");
+        }
+        if (!txRes.ok) {
+          throw new Error(txData?.error || "Transaction log load failed");
+        }
+        if (!cancelled) {
+          setStats(statsData.stats || null);
+          setRecentTx(Array.isArray(txData.records) ? txData.records : []);
+          setMsg(null);
+        }
+      } catch (error) {
+        if (!cancelled) {
+          setMsg({
+            type: "err",
+            text: error instanceof Error ? error.message : "Caricamento fallito",
+          });
+        }
       } finally {
         if (!cancelled) setLoading(false);
       }
@@ -126,24 +172,83 @@ export default function AdminTransactions() {
           </div>
         )}
 
-        {/* Accesso rapido tx log */}
-        <Link
-          href="/admin/tx-records"
-          className="flex items-center gap-4 rounded-2xl p-5 border border-amber-900 active:scale-95 transition-transform"
-          style={{ background: "#140a00" }}
-        >
+        <div className="grid gap-3 sm:grid-cols-[1.25fr,0.75fr]">
           <div
-            className="w-14 h-14 rounded-xl flex items-center justify-center text-3xl shrink-0"
-            style={{ background: "linear-gradient(135deg,#f472b6,#ec4899)" }}
+            className="rounded-2xl border border-amber-900 p-4"
+            style={{ background: "#140a00" }}
           >
-            🔍
+            <div className="flex items-start justify-between gap-3">
+              <div>
+                <div className="text-amber-400 text-xs uppercase tracking-[0.22em]">Recent Transactions</div>
+                <div className="text-amber-600 text-sm mt-1">Fee in, payouts, weekly, errors</div>
+              </div>
+              <Link href="/admin/tx-records" className="text-amber-300 text-xs font-bold underline underline-offset-4">
+                Open full log
+              </Link>
+            </div>
+            <div className="mt-4 space-y-2">
+              {loading ? (
+                <div className="text-amber-600 text-sm">Caricamento transazioni…</div>
+              ) : recentTx.length === 0 ? (
+                <div className="text-amber-600 text-sm">Nessuna transazione trovata.</div>
+              ) : recentTx.map((tx) => (
+                <div
+                  key={tx.id}
+                  className="rounded-xl border border-amber-900/60 px-3 py-3"
+                  style={{ background: "rgba(36, 19, 0, 0.7)" }}
+                >
+                  <div className="flex items-start justify-between gap-3">
+                    <div className="min-w-0">
+                      <div className="text-white text-sm font-black truncate">
+                        {tx.kind.replaceAll("_", " ")}
+                      </div>
+                      <div className="text-amber-600 text-[11px] mt-0.5">
+                        {new Date(tx.at).toLocaleString("en-GB", { timeZone: "Europe/Rome" })}
+                      </div>
+                    </div>
+                    <div className={`text-[11px] font-black uppercase ${tx.status === "ok" ? "text-green-400" : "text-red-400"}`}>
+                      {tx.status}
+                    </div>
+                  </div>
+                  <div className="mt-2 flex flex-wrap gap-x-3 gap-y-1 text-[11px] text-amber-200">
+                    <span>{tx.playerUsername ? `@${tx.playerUsername}` : short(tx.playerAddress)}</span>
+                    <span>USDC {typeof tx.amountUsdc === "number" ? tx.amountUsdc.toFixed(4) : "-"}</span>
+                    <span>BF {typeof tx.amountBf === "number" ? Math.round(tx.amountBf).toLocaleString() : "-"}</span>
+                  </div>
+                  <div className="mt-2 flex flex-wrap items-center gap-3 text-[11px]">
+                    <span className="text-amber-500">{tx.stage || "stage n/a"}</span>
+                    {tx.txHash && tx.basescanUrl ? (
+                      <a href={tx.basescanUrl} target="_blank" rel="noreferrer" className="text-amber-300 underline underline-offset-4">
+                        {shortTx(tx.txHash)}
+                      </a>
+                    ) : null}
+                  </div>
+                  {tx.reason ? (
+                    <div className="mt-2 text-[11px] text-red-300 break-words">{tx.reason}</div>
+                  ) : null}
+                </div>
+              ))}
+            </div>
           </div>
-          <div className="flex-1">
-            <div className="text-white font-black text-lg">Tx Log completo</div>
-            <div className="text-amber-600 text-sm">Tutte le transazioni, fee in, premi out, errori</div>
-          </div>
-          <div className="text-amber-700 text-2xl">›</div>
-        </Link>
+
+          <Link
+            href="/admin/tx-records"
+            className="flex items-center gap-4 rounded-2xl p-5 border border-amber-900 active:scale-95 transition-transform"
+            style={{ background: "#140a00" }}
+          >
+            <div
+              className="w-14 h-14 rounded-xl flex items-center justify-center text-3xl shrink-0"
+              style={{ background: "linear-gradient(135deg,#f472b6,#ec4899)" }}
+            >
+              🔍
+            </div>
+            <div className="flex-1">
+              <div className="text-white font-black text-lg">Tx Log completo</div>
+              <div className="text-amber-600 text-sm">Audit completo delle transazioni</div>
+            </div>
+            <div className="text-amber-700 text-2xl">›</div>
+          </Link>
+        </div>
 
         {/* Totali */}
         {stats && (

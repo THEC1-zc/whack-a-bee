@@ -72,11 +72,29 @@ export default function AdminTxRecordsPage() {
 
   useEffect(() => {
     if (!authorized) return;
-    adminFetch(address, "/api/admin/tx-records?limit=300")
-      .then((r) => r.json())
-      .then((d) => setRecords(Array.isArray(d.records) ? d.records : []))
-      .catch(() => setError("Failed to load tx records"))
-      .finally(() => setLoading(false));
+    let cancelled = false;
+    void (async () => {
+      setError(null);
+      const r = await adminFetch(address, "/api/admin/tx-records?limit=300");
+      const data = await r.json().catch(() => ({}));
+      if (cancelled) return;
+      if (!r.ok) {
+        setError(data?.error || "Failed to load tx records");
+        setRecords([]);
+        setLoading(false);
+        return;
+      }
+      setRecords(Array.isArray(data.records) ? data.records : []);
+      setLoading(false);
+    })().catch((error) => {
+      if (cancelled) return;
+      setError(error instanceof Error ? error.message : "Failed to load tx records");
+      setRecords([]);
+      setLoading(false);
+    });
+    return () => {
+      cancelled = true;
+    };
   }, [authorized, address]);
 
   if (!user?.address) {
