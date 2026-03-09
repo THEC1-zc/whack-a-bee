@@ -81,3 +81,19 @@ Original prompt: end game: aggiungiamo pulsante share to farcaster, che pubblich
   - Winner payout now prefers BF but automatically falls back to USDC when BF path reverts or BF pool is not eligible.
   - Added clearer structured failure message when both BF and USDC fallback fail.
   - Added payout token indicator (`payoutToken`) in API response and richer warning aggregation.
+
+- Recovery/resume pass on 2026-03-09:
+  - Inspected interrupted uncommitted session-auth redesign and avoided redoing the implemented game-session architecture.
+  - Completed the unfinished integration step: updated remaining imports after moving shared gameplay constants to `lib/gameRules` and admin auth/session checks to `lib/adminSession`.
+  - Fixed the broken build caused by stale `./App` imports in `LeaderboardScreen` and `RulesScreen`.
+  - Fixed the broken build/type path caused by `requireAdminRequest` being used but not imported in admin weekly routes.
+  - Cleaned the resumed React session flow in `GameScreen`/`App` so targeted ESLint no longer has errors.
+  - Verification completed:
+    - `npm run build` ✅
+    - `npm run lint -- <touched session/game/admin files>` ✅ with only existing `@next/next/no-img-element` warnings on current image tags.
+  - Local runtime follow-up completed:
+    - Confirmed the app was hanging on the loading bee outside Farcaster because `sdk.context` never resolved in `hooks/useFarcaster.ts`.
+    - Added a guarded timeout fallback so non-miniapp/browser access resolves to the disconnected screen instead of hanging forever.
+    - Added a clearer local fallback message in `components/App.tsx`: outside Farcaster the screen now says to open the app inside Farcaster, instead of showing a dead-ended wallet connect.
+    - Runtime screenshot evidence saved in `output/playwright/runtime-home-local-fallback.png`.
+    - Re-verified with `npm run build` ✅ and `npm run lint -- components/App.tsx hooks/useFarcaster.ts` ✅ except the existing `no-img-element` warning.

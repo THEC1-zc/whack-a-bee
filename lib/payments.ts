@@ -1,4 +1,5 @@
 "use client";
+
 import { createPublicClient, createWalletClient, custom, http } from "viem";
 import { base } from "viem/chains";
 import { sdk } from "@farcaster/miniapp-sdk";
@@ -9,15 +10,55 @@ import {
   toUSDCUnits,
   fromUSDCUnits,
 } from "./contracts";
+import type { Difficulty } from "@/lib/gameRules";
 
-const DEFAULT_APP_URL = "https://whack-a-bee.vercel.app";
+const BFPAYOUT_ABI = [
+  {
+    name: "claimPrize",
+    type: "function",
+    stateMutability: "nonpayable",
+    inputs: [
+      { name: "player", type: "address" },
+      { name: "bfGross", type: "uint256" },
+      { name: "nonce", type: "bytes32" },
+      { name: "expiry", type: "uint256" },
+      { name: "signature", type: "bytes" },
+    ],
+    outputs: [],
+  },
+] as const;
+
+type CreateGameResponse = {
+  ok: true;
+  gameId: string;
+  gameSecret: string;
+  difficulty: Difficulty;
+  feeExpectedUsdc: number;
+  capMultiplier: number;
+  capLabel: string;
+  capIcon: string;
+  capScore: number;
+  expiresAt: number;
+};
+
+type FinishGameResponse = {
+  ok: true;
+  gameId: string;
+  scoreRealized: number;
+  scorePossible: number;
+  prizeUsdc: number;
+  prizeBfGross: number;
+};
 
 function getErrorMessage(error: unknown, fallback: string) {
   if (error instanceof Error && error.message) return error.message;
   return fallback;
 }
 
-// Public client for read-only calls (balance check)
+async function parseJson(res: Response) {
+  return res.json().catch(() => ({}));
+}
+
 export function getPublicClient() {
   return createPublicClient({
     chain: base,
@@ -25,7 +66,6 @@ export function getPublicClient() {
   });
 }
 
-// Wallet client using Farcaster injected provider
 export function getWalletClient() {
   return createWalletClient({
     chain: base,
@@ -39,58 +79,21 @@ function baseChainHex() {
 
 async function ensureBaseChain(): Promise<{ ok: boolean; error?: string }> {
   const provider = sdk.wallet.ethProvider;
-
   try {
     const current = await provider.request({ method: "eth_chainId" });
-    const currentId =
-      typeof current === "string" ? parseInt(current, 16) : Number(current);
+    const currentId = typeof current === "string" ? parseInt(current, 16) : Number(current);
+    if (currentId === base.id) return { ok: true };
 
-    if (currentId === base.id) {
-      return { ok: true };
-    }
-
-    try {
-      await provider.request({
-        method: "wallet_switchEthereumChain",
-        params: [{ chainId: baseChainHex() }],
-      });
-      return { ok: true };
-    } catch (e: unknown) {
-      const code = typeof e === "object" && e && "code" in e ? (e as { code?: unknown }).code : undefined;
-      if (code === 4902) {
-        const blockExplorerUrl = base.blockExplorers?.default?.url;
-        const blockExplorerUrls = blockExplorerUrl ? [blockExplorerUrl] : [];
-
-        await provider.request({
-          method: "wallet_addEthereumChain",
-          params: [
-            {
-              chainId: baseChainHex(),
-              chainName: base.name,
-              rpcUrls: base.rpcUrls.default.http,
-              nativeCurrency: base.nativeCurrency,
-              blockExplorerUrls,
-            },
-          ],
-        });
-
-        return { ok: true };
-      }
-
-      return {
-        ok: false,
-        error: "Switch your wallet network to Base (chain id 8453) and try again.",
-      };
-    }
+    await provider.request({
+      method: "wallet_switchEthereumChain",
+      params: [{ chainId: baseChainHex() }],
+    });
+    return { ok: true };
   } catch {
-    return {
-      ok: false,
-      error: "Switch your wallet network to Base (chain id 8453) and try again.",
-    };
+    return { ok: false, error: "Switch your wallet network to Base (chain id 8453) and try again." };
   }
 }
 
-// Get connected wallet address
 export async function getAddress(): Promise<`0x${string}` | null> {
   try {
     const walletClient = getWalletClient();
@@ -101,7 +104,6 @@ export async function getAddress(): Promise<`0x${string}` | null> {
   }
 }
 
-// Get USDC balance of an address (returns human-readable number)
 export async function getUSDCBalance(address: `0x${string}`): Promise<number> {
   try {
     const client = getPublicClient();
@@ -117,24 +119,17 @@ export async function getUSDCBalance(address: `0x${string}`): Promise<number> {
   }
 }
 
-// Pay game fee: player sends USDC to prize wallet
 export async function payGameFee(
   feeAmount: number
 ): Promise<{ success: boolean; txHash?: string; error?: string }> {
   try {
     const chainCheck = await ensureBaseChain();
-    if (!chainCheck.ok) {
-      return { success: false, error: chainCheck.error };
-    }
+    if (!chainCheck.ok) return { success: false, error: chainCheck.error };
 
     const walletClient = getWalletClient();
     const [address] = await walletClient.requestAddresses();
+    if (!address) return { success: false, error: "No wallet connected" };
 
-    if (!address) {
-      return { success: false, error: "No wallet connected" };
-    }
-
-    // Check balance first
     const balance = await getUSDCBalance(address);
     if (balance < feeAmount) {
       return {
@@ -144,7 +139,6 @@ export async function payGameFee(
     }
 
     const amount = toUSDCUnits(feeAmount);
-
     const txHash = await walletClient.writeContract({
       address: USDC_ADDRESS,
       abi: USDC_ABI,
@@ -153,15 +147,11 @@ export async function payGameFee(
       account: address,
     });
 
-    // Wait for confirmation
     const publicClient = getPublicClient();
     await publicClient.waitForTransactionReceipt({ hash: txHash });
-
     return { success: true, txHash };
   } catch (e: unknown) {
-    console.error("payGameFee error:", e);
     const msg = getErrorMessage(e, "Transaction failed");
-    // User rejected
     if (msg.includes("rejected") || msg.includes("denied") || msg.includes("cancel")) {
       return { success: false, error: "Transaction cancelled" };
     }
@@ -169,70 +159,91 @@ export async function payGameFee(
   }
 }
 
-// ABI minimo per BFPayout.claimPrize
-const BFPAYOUT_ABI = [
-  {
-    name: "claimPrize",
-    type: "function",
-    stateMutability: "nonpayable",
-    inputs: [
-      { name: "player",    type: "address" },
-      { name: "bfGross",   type: "uint256" },
-      { name: "nonce",     type: "bytes32" },
-      { name: "expiry",    type: "uint256" },
-      { name: "signature", type: "bytes"   },
-    ],
-    outputs: [],
-  },
-] as const;
+export async function createGameSession(difficulty: Difficulty): Promise<CreateGameResponse> {
+  const res = await fetch("/api/game/create", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ difficulty }),
+  });
+  const data = await parseJson(res);
+  if (!res.ok || !data?.ok) {
+    throw new Error(data?.error || "Failed to create game session");
+  }
+  return data as CreateGameResponse;
+}
 
-/**
- * Step 1: chiama /api/payout per ottenere la firma server-side
- * Step 2: chiama claimPrize() sul contratto BFPayout — player paga gas
- * Il contratto splitta automaticamente: 94.5% player / 4.5% pot / 1% burn
- */
+export async function verifyGameFeeSession(params: {
+  gameId: string;
+  gameSecret: string;
+  txHash: `0x${string}`;
+  fid: number;
+  username: string;
+  displayName: string;
+  pfpUrl: string;
+}) {
+  const res = await fetch("/api/game/fee-verify", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(params),
+  });
+  const data = await parseJson(res);
+  if (!res.ok || !data?.ok) {
+    throw new Error(data?.error || "Fee verification failed");
+  }
+  return data;
+}
+
+export async function finishGameSession(params: {
+  gameId: string;
+  gameSecret: string;
+  score: number;
+  hitStats: { normal: number; fast: number; fuchsia: number; bomb: number; super: number };
+}) {
+  const res = await fetch("/api/game/finish", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(params),
+  });
+  const data = await parseJson(res);
+  if (!res.ok || !data?.ok) {
+    throw new Error(data?.error || "Game finish failed");
+  }
+  return data as FinishGameResponse;
+}
+
 export async function claimPrize(
-  recipientAddress: `0x${string}`,
-  prizeAmount: number
+  gameId: string,
+  gameSecret: string
 ): Promise<{
   success: boolean;
   txHash?: string;
   error?: string;
   bfAmount?: number;
-  payoutToken?: "BF" | "USDC";
   prizeStatus?: "paid" | "notpaid";
   potStatus?: "added" | "notadded";
   prizeReason?: string | null;
   potReason?: string | null;
   errorCode?: string;
-  details?: unknown;
 }> {
   try {
-    // Step 1 — chiedi firma al backend
-    const response = await fetch("/api/payout", {
+    const signRes = await fetch("/api/payout", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ recipient: recipientAddress, amount: prizeAmount }),
+      body: JSON.stringify({ gameId, gameSecret }),
     });
-
-    const data = await response.json().catch(() => ({}));
-
-    if (!response.ok || !data.ok) {
+    const signData = await parseJson(signRes);
+    if (!signRes.ok || !signData?.ok) {
       return {
         success: false,
-        error: data?.error || `Payout signing failed (${response.status})`,
-        errorCode: data?.errorCode || "SIGN_FAILED",
-        payoutToken: "BF",
+        error: signData?.error || `Payout signing failed (${signRes.status})`,
+        errorCode: signData?.errorCode || "SIGN_FAILED",
         prizeStatus: "notpaid",
         potStatus: "notadded",
-        prizeReason: data?.error || null,
+        prizeReason: signData?.error || null,
         potReason: null,
       };
     }
 
-    const { bfGross, nonce, expiry, signature, contractAddress } = data;
-
-    // Step 2 — chiama claimPrize() on-chain (player paga gas)
     const chainCheck = await ensureBaseChain();
     if (!chainCheck.ok) {
       return { success: false, error: chainCheck.error, errorCode: "WRONG_CHAIN", prizeStatus: "notpaid", potStatus: "notadded" };
@@ -245,62 +256,60 @@ export async function claimPrize(
     }
 
     const txHash = await walletClient.writeContract({
-      address: contractAddress as `0x${string}`,
+      address: signData.contractAddress as `0x${string}`,
       abi: BFPAYOUT_ABI,
       functionName: "claimPrize",
       args: [
-        recipientAddress,
-        BigInt(bfGross),
-        nonce as `0x${string}`,
-        BigInt(expiry),
-        signature as `0x${string}`,
+        signData.recipient as `0x${string}`,
+        BigInt(signData.bfGross),
+        signData.nonce as `0x${string}`,
+        BigInt(signData.expiry),
+        signData.signature as `0x${string}`,
       ],
       account: address,
     });
 
-    // Step 3 — aspetta conferma on-chain
     const publicClient = getPublicClient();
-    const receipt = await publicClient.waitForTransactionReceipt({ hash: txHash });
+    await publicClient.waitForTransactionReceipt({ hash: txHash });
 
-    if (receipt.status === "reverted") {
+    const confirmRes = await fetch("/api/game/claim-confirm", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ gameId, gameSecret, txHash }),
+    });
+    const confirmData = await parseJson(confirmRes);
+    if (!confirmRes.ok || !confirmData?.ok) {
       return {
         success: false,
         txHash,
-        error: "Transaction reverted on-chain",
-        errorCode: "TX_REVERTED",
+        error: confirmData?.error || "Claim confirmation failed",
+        errorCode: confirmData?.errorCode || "CLAIM_CONFIRM_FAILED",
         prizeStatus: "notpaid",
         potStatus: "notadded",
+        prizeReason: confirmData?.error || null,
+        potReason: confirmData?.error || null,
       };
     }
 
     return {
       success: true,
       txHash,
-      payoutToken: "BF",
+      bfAmount: Number(confirmData.prizeBfGross || 0),
       prizeStatus: "paid",
       potStatus: "added",
-      bfAmount: data.split?.playerBf,
       prizeReason: null,
       potReason: null,
     };
-
   } catch (e: unknown) {
     const msg = getErrorMessage(e, "Claim failed");
-    if (msg.includes("rejected") || msg.includes("denied") || msg.includes("cancel")) {
-      return {
-        success: false,
-        error: "Transaction cancelled",
-        errorCode: "USER_REJECTED",
-        prizeStatus: "notpaid",
-        potStatus: "notadded",
-      };
-    }
     return {
       success: false,
       error: msg,
-      errorCode: "CLAIM_ERROR",
+      errorCode: "CLAIM_FAILED",
       prizeStatus: "notpaid",
       potStatus: "notadded",
+      prizeReason: msg,
+      potReason: msg,
     };
   }
 }

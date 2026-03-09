@@ -1,20 +1,13 @@
 import { NextRequest, NextResponse } from "next/server";
-import { getAdminWallet, getWeeklyPayoutHistory } from "@/lib/weekly";
-
-const ADMIN_WALLET = getAdminWallet();
-const ADMIN_API_KEY = process.env.ADMIN_API_KEY;
-
-function isAuthorized(req: NextRequest) {
-  const token = req.headers.get("x-admin-token");
-  return Boolean(ADMIN_API_KEY && token === ADMIN_API_KEY);
-}
+import { getWeeklyPayoutHistory } from "@/lib/weekly";
+import { requireAdminRequest } from "@/lib/adminSession";
 
 function unique<T>(arr: T[]) {
   return [...new Set(arr)];
 }
 
 export async function GET(req: NextRequest) {
-  if (!isAuthorized(req)) {
+  if (!(await requireAdminRequest(req))) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
 

@@ -3,9 +3,9 @@ import { createPublicClient, createWalletClient, http } from "viem";
 import { base } from "viem/chains";
 import { privateKeyToAccount } from "viem/accounts";
 import { BF_ADDRESS, ERC20_ABI, toBFUnits } from "@/lib/contracts";
+import { requireAdminRequest } from "@/lib/adminSession";
 import {
   acquireWeeklyPayoutLock,
-  getAdminWallet,
   getWeeklyConfig,
   getWeeklyMeta,
   getWeeklyState,
@@ -20,8 +20,6 @@ import {
 import { getAdminStats, resetLeaderboard } from "@/lib/leaderboard";
 import { logTxRecord } from "@/lib/txLedger";
 
-const ADMIN_WALLET = getAdminWallet();
-const ADMIN_API_KEY = process.env.ADMIN_API_KEY;
 const POT_PRIVATE_KEY = process.env.POT_WALLET_PRIVATE_KEY;
 
 type WeeklyPayoutRequest = {
@@ -46,11 +44,6 @@ function normalizePrivateKey(value: string | undefined) {
     return `0x${compact}`;
   }
   return compact;
-}
-
-function isAuthorized(req: NextRequest) {
-  const token = req.headers.get("x-admin-token");
-  return Boolean(ADMIN_API_KEY && token === ADMIN_API_KEY);
 }
 
 function weightedPick(map: Record<string, number>, count: number, exclude: Set<string>) {
@@ -111,7 +104,7 @@ export async function POST(req: NextRequest) {
   }
 
   try {
-    if (!isAuthorized(req)) {
+    if (!(await requireAdminRequest(req))) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
     if (!POT_PRIVATE_KEY) {

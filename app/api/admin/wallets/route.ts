@@ -2,21 +2,13 @@ import { NextRequest, NextResponse } from "next/server";
 import { createPublicClient, http, fallback, formatEther } from "viem";
 import { base } from "viem/chains";
 import { BF_ADDRESS, USDC_ADDRESS, ERC20_ABI, USDC_ABI, fromBFUnits, fromUSDCUnits } from "@/lib/contracts";
-import { getAdminWallet } from "@/lib/weekly";
-
-const ADMIN_WALLET = getAdminWallet();
-const ADMIN_API_KEY = process.env.ADMIN_API_KEY;
+import { requireAdminRequest } from "@/lib/adminSession";
 
 const WALLETS = {
   prize:  (process.env.NEXT_PUBLIC_PRIZE_WALLET_ADDRESS || "0xFd144C774582a450a3F578ae742502ff11Ff92Df") as `0x${string}`,
   pot:    "0x468d066995A4C09209c9c165F30Bd76A4FDB88e0" as `0x${string}`,
   burn:   "0x5c29b12A731789182012D769B734D77eE15e530F" as `0x${string}`,
 };
-
-function isAuthorized(req: NextRequest) {
-  const token = req.headers.get("x-admin-token");
-  return Boolean(ADMIN_API_KEY && token === ADMIN_API_KEY);
-}
 
 function client() {
   return createPublicClient({
@@ -29,7 +21,7 @@ function client() {
 }
 
 export async function GET(req: NextRequest) {
-  if (!isAuthorized(req)) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  if (!(await requireAdminRequest(req))) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
 
   const pub = client();
   const walletKeys = Object.keys(WALLETS) as (keyof typeof WALLETS)[];

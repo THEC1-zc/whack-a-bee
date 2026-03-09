@@ -1,5 +1,6 @@
 "use client";
-import { DIFFICULTY_CONFIG, PRIZE_PER_POINT, PRIZE_WALLET } from "./App";
+import { PRIZE_WALLET } from "@/lib/contracts";
+import { DIFFICULTY_CONFIG, PRIZE_PER_POINT } from "@/lib/gameRules";
 import { BF_PER_USDC_FALLBACK } from "@/lib/pricing";
 
 export default function RulesScreen({ onBack }: { onBack: () => void }) {

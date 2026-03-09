@@ -1,6 +1,6 @@
 "use client";
 import { useEffect, useState } from "react";
-import { DIFFICULTY_CONFIG, type Difficulty } from "./App";
+import { DIFFICULTY_CONFIG, type Difficulty } from "@/lib/gameRules";
 
 interface Entry {
   fid: number;

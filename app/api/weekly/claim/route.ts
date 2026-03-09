@@ -1,6 +1,8 @@
-import { NextRequest, NextResponse } from "next/server";
+import { NextResponse } from "next/server";
 
-export async function POST(req: NextRequest) {
-  void req;
-  return NextResponse.json({ error: "Weekly ticket claim temporarily disabled pending wallet-authenticated session hardening", errorCode: "WEEKLY_AUTH_DISABLED" }, { status: 503 });
+export async function POST() {
+  return NextResponse.json({
+    error: "Tickets are assigned automatically when a claimed game is confirmed",
+    errorCode: "WEEKLY_TICKETS_AUTO_ASSIGNED",
+  }, { status: 400 });
 }

@@ -4,7 +4,7 @@ import { privateKeyToAccount } from "viem/accounts";
 import { base } from "viem/chains";
 import { BF_ADDRESS, ERC20_ABI, fromBFUnits, toBFUnits } from "@/lib/contracts";
 import { usdcToBf } from "@/lib/pricing";
-import { getAdminWallet } from "@/lib/weekly";
+import { getAdminWallet, requireAdminRequest } from "@/lib/adminSession";
 
 const ADMIN_WALLET = getAdminWallet();
 const ADMIN_API_KEY = process.env.ADMIN_API_KEY;
@@ -55,7 +55,7 @@ function baseTransport() {
 }
 
 export async function GET(req: NextRequest) {
-  if (!isAuthorized(req)) {
+  if (!(await requireAdminRequest(req))) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
 

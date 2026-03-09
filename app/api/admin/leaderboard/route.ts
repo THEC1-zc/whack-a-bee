@@ -1,19 +1,15 @@
 import { NextRequest, NextResponse } from "next/server";
 import { recoverMessageAddress } from "viem";
 import { getAdminStats, resetLeaderboard } from "@/lib/leaderboard";
-import { getAdminWallet, getWeeklyState, resetWeeklyState } from "@/lib/weekly";
+import { getWeeklyState, resetWeeklyState } from "@/lib/weekly";
+import { getAdminWallet, requireAdminRequest } from "@/lib/adminSession";
 import { verifyAdminChallenge } from "@/lib/adminAuth";
 
 const ADMIN_WALLET = getAdminWallet();
-const ADMIN_API_KEY = process.env.ADMIN_API_KEY;
 
-function isAuthorized(req: NextRequest) {
-  const token = req.headers.get("x-admin-token");
-  return Boolean(ADMIN_API_KEY && token === ADMIN_API_KEY);
-}
 
 export async function GET(req: NextRequest) {
-  if (!isAuthorized(req)) {
+  if (!(await requireAdminRequest(req))) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
   const stats = await getAdminStats();
@@ -22,7 +18,7 @@ export async function GET(req: NextRequest) {
 }
 
 export async function POST(req: NextRequest) {
-  if (!isAuthorized(req)) {
+  if (!(await requireAdminRequest(req))) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
   const body = await req.json().catch(() => ({}));

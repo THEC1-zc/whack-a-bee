@@ -14,15 +14,27 @@ export function useFarcaster() {
   const [user, setUser] = useState<FarcasterUser | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [isConnected, setIsConnected] = useState(false);
+  const [isMiniApp, setIsMiniApp] = useState(false);
 
   useEffect(() => {
     let cancelled = false;
     const cachedWalletKey = "farcaster_wallet_address";
+    const CONTEXT_TIMEOUT_MS = 1500;
+
+    function timeoutContext() {
+      return new Promise<null>((resolve) => {
+        const id = window.setTimeout(() => {
+          window.clearTimeout(id);
+          resolve(null);
+        }, CONTEXT_TIMEOUT_MS);
+      });
+    }
 
     async function init() {
       try {
-        const ctx = await sdk.context;
+        const ctx = await Promise.race([sdk.context, timeoutContext()]);
         if (cancelled) return;
+        setIsMiniApp(Boolean(ctx));
 
         if (ctx?.user) {
           const baseUser: FarcasterUser = {
@@ -54,7 +66,9 @@ export function useFarcaster() {
           setIsConnected(true);
         }
 
-        await sdk.actions.ready();
+        if (ctx) {
+          await sdk.actions.ready();
+        }
       } catch (e) {
         console.error("Farcaster init error:", e);
       } finally {
@@ -69,6 +83,7 @@ export function useFarcaster() {
   async function connectWallet() {
     try {
       const provider = sdk.wallet.ethProvider;
+      if (!provider) return null;
       const result = await provider.request({ method: "eth_requestAccounts" });
       const address = (result as string[])[0];
       if (address && user) {
@@ -88,5 +103,5 @@ export function useFarcaster() {
     setIsConnected(false);
   }
 
-  return { user, isLoading, isConnected, connectWallet, logout };
+  return { user, isLoading, isConnected, isMiniApp, connectWallet, logout };
 }
