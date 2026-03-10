@@ -17,6 +17,7 @@ import {
   getFuchsiaChance,
   getFullValueThreshold,
   getWaveSpawnCount,
+  getWaveTimeoutMs,
   LIVE_POINT_VALUES,
   SUPER_BEE_BONUS_BF,
   getSuperChance,
@@ -35,6 +36,7 @@ import {
 interface Bee {
   id: number;
   slot: number;
+  wave: number;
   type: "normal" | "fast" | "fuchsia" | "bomb" | "super";
   visible: boolean;
   hit: boolean;
@@ -125,7 +127,7 @@ export default function GameScreen({ user, difficulty, onGameEnd }: Props) {
     return session.waveMultipliers?.[waveIndex] ?? session.capMultiplier;
   }, [session]);
 
-  const spawnBees = useCallback((count: number, ensureRed: boolean, waveMultiplier: number) => {
+  const spawnBees = useCallback((count: number, ensureRed: boolean, waveMultiplier: number, waveIndex: number) => {
     setBees((prev) => {
       let next = prev.filter((bee) => bee.visible);
       const usedSlots = new Set(next.filter((bee) => bee.visible && !bee.hit).map((bee) => bee.slot));
@@ -166,11 +168,17 @@ export default function GameScreen({ user, difficulty, onGameEnd }: Props) {
         const duration = BEE_DURATIONS[difficulty][type];
 
         setTimeout(() => setBees((current) => current.filter((bee) => bee.id !== id)), duration);
-        next = [...next, { id, slot, type, visible: true, hit: false }];
+        next = [...next, { id, slot, wave: waveIndex, type, visible: true, hit: false }];
         usedSlots.add(slot);
       }
       return next;
     });
+    const waveTimeoutMs = getWaveTimeoutMs(difficulty);
+    if (waveTimeoutMs) {
+      setTimeout(() => {
+        setBees((current) => current.filter((bee) => bee.wave !== waveIndex || bee.hit));
+      }, waveTimeoutMs);
+    }
   }, [difficulty]);
 
   const whackBee = useCallback((bee: Bee) => {
@@ -309,7 +317,7 @@ export default function GameScreen({ user, difficulty, onGameEnd }: Props) {
       nextWaveQueuedRef.current = false;
       const waveMultiplier = getWaveMultiplierForIndex(currentWave);
       const count = getWaveSpawnCount(difficulty, waveMultiplier);
-      spawnBees(count, true, waveMultiplier);
+      spawnBees(count, true, waveMultiplier, currentWave);
       setCurrentWave((value) => value + 1);
     }, 0);
     return () => {

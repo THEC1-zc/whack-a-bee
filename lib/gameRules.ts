@@ -60,6 +60,10 @@ export const BEE_DURATIONS: Record<Difficulty, Record<HitType, number>> = {
   hard: { normal: 1800, fast: 1600, fuchsia: 1500, bomb: 1800, super: 1800 },
 };
 
+export const WAVE_TIMEOUT_MS: Partial<Record<Difficulty, number>> = {
+  hard: 1050,
+};
+
 const BASE_WAVE_MAX: Record<Difficulty, number> = {
   easy: 2,
   medium: 3,
@@ -158,6 +162,10 @@ export function getWaveDelayMs(difficulty: Difficulty, waveIndex: number) {
   const totalWaves = DIFFICULTY_CONFIG[difficulty].waves;
   const cfg = SPAWN_CONFIG[difficulty];
   return Math.max(cfg.min, cfg.base - waveIndex * cfg.step * Math.max(1, Math.floor(10 / totalWaves)));
+}
+
+export function getWaveTimeoutMs(difficulty: Difficulty) {
+  return WAVE_TIMEOUT_MS[difficulty] ?? null;
 }
 
 export function getHitBounds(difficulty: Difficulty, capMultiplier: number): Record<HitType, number> {

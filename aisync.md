@@ -234,3 +234,9 @@ Payout bands:
 - Validation:
   - `npm run lint -- lib/gameRules.ts lib/gameSessions.ts lib/payments.ts components/GameScreen.tsx components/RulesScreen.tsx app/api/game/fee-verify/route.ts` ✅ with only the known gameplay sprite `<img>` warning
   - `npm run build` ✅
+
+### 2026-03-10 19:30:00 +0100
+- Rolled back the mistaken hard butterfly duration change.
+- Tightened hard wave timing instead:
+  - restored hard butterfly durations to `1800 / 1600 / 1500 / 1800 / 1800`
+  - added a hard-only wave timeout of `1050ms`, so each hard board closes `750ms` earlier without redefining the butterfly type timings themselves
