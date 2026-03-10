@@ -1,5 +1,6 @@
 "use client";
 import { PRIZE_WALLET } from "@/lib/contracts";
+import type { FarcasterUser } from "@/hooks/useFarcaster";
 import {
   BEE_LABELS,
   calculatePrizeUsdc,
@@ -9,16 +10,31 @@ import {
   PRIZE_PER_POINT,
 } from "@/lib/gameRules";
 import { BF_PER_USDC_FALLBACK } from "@/lib/pricing";
+import UserPageHeader from "./UserPageHeader";
 
-export default function RulesScreen({ onBack }: { onBack: () => void }) {
+export default function RulesScreen({
+  user,
+  isAdmin,
+  onBack,
+  onLeaderboard,
+}: {
+  user: FarcasterUser;
+  isAdmin: boolean;
+  onBack: () => void;
+  onLeaderboard: () => void;
+}) {
   return (
     <div className="user-page-bg min-h-dvh flex flex-col">
-
-      {/* Header */}
-      <div className="user-page-chrome mx-4 mt-4 rounded-2xl flex items-center gap-3 px-4 py-3">
-        <button onClick={onBack} className="text-amber-400 font-bold text-sm">← Back</button>
-        <h2 className="text-xl font-black text-white flex-1 text-center">📖 Rules & Pricing</h2>
-        <div className="w-12" />
+      <div className="mx-4 mt-4">
+        <UserPageHeader
+          user={user}
+          isAdmin={isAdmin}
+          showBack
+          onBack={onBack}
+          leaderboardHref="/?screen=leaderboard"
+          onLeaderboard={onLeaderboard}
+          active="rules"
+        />
       </div>
 
       <div className="flex-1 overflow-y-auto px-4 py-4 space-y-4">

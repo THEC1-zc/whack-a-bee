@@ -1,6 +1,11 @@
 "use client";
-import Link from "next/link";
 import { useEffect, useState } from "react";
+import { useFarcaster } from "@/hooks/useFarcaster";
+import UserPageHeader from "@/components/UserPageHeader";
+
+const ADMIN_WALLET = (
+  process.env.NEXT_PUBLIC_ADMIN_WALLET || "0xd29c790466675153A50DF7860B9EFDb689A21cDe"
+).toLowerCase();
 
 type WeeklyState = {
   potBf: number;
@@ -11,6 +16,7 @@ type WeeklyState = {
 };
 
 export default function WeeklyPage() {
+  const { user } = useFarcaster();
   const [state, setState] = useState<WeeklyState | null>(null);
   const [now, setNow] = useState<number | null>(null);
 
@@ -29,10 +35,17 @@ export default function WeeklyPage() {
   return (
     <div className="user-page-bg min-h-dvh p-6">
       <div className="max-w-xl mx-auto space-y-4">
-        <div className="user-page-chrome rounded-2xl flex items-center gap-3 px-4 py-3">
-          <Link href="/" className="text-amber-200 font-bold text-sm">← Back</Link>
-          <h1 className="text-2xl font-black text-white">Weekly Pot</h1>
-        </div>
+        {user && (
+          <UserPageHeader
+            user={user}
+            isAdmin={user.address?.toLowerCase() === ADMIN_WALLET}
+            showBack
+            backHref="/"
+            rulesHref="/?screen=rules"
+            leaderboardHref="/?screen=leaderboard"
+            active="weekly"
+          />
+        )}
 
         <div className="rounded-xl border border-amber-900 p-4 text-center" style={{ background: "#140a00" }}>
           <div className="text-amber-500 text-xs uppercase tracking-widest">Current Pot</div>

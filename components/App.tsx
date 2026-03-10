@@ -7,6 +7,7 @@ import { useFarcaster } from "@/hooks/useFarcaster";
 import GameScreen from "./GameScreen";
 import LeaderboardScreen from "./LeaderboardScreen";
 import RulesScreen from "./RulesScreen";
+import UserPageHeader from "./UserPageHeader";
 import { BF_PER_USDC_FALLBACK } from "@/lib/pricing";
 import {
   calculatePrizeUsdc,
@@ -22,9 +23,18 @@ const ADMIN_WALLET = (process.env.NEXT_PUBLIC_ADMIN_WALLET || "0xd29c79046667515
 
 type Screen = "home" | "game" | "leaderboard" | "rules";
 
+function getInitialScreen(): Screen {
+  if (typeof window === "undefined") return "home";
+  const requested = new URLSearchParams(window.location.search).get("screen");
+  if (requested === "leaderboard" || requested === "rules" || requested === "home") {
+    return requested;
+  }
+  return "home";
+}
+
 export default function App() {
   const { user, isLoading, isConnected, isMiniApp, logout, connectWallet } = useFarcaster();
-  const [screen, setScreen] = useState<Screen>("home");
+  const [screen, setScreen] = useState<Screen>(getInitialScreen);
   const [difficulty, setDifficulty] = useState<Difficulty>("medium");
   const [lastResult, setLastResult] = useState<{ score: number; prize: number } | null>(null);
   const [poolBalanceBf, setPoolBalanceBf] = useState<number>(0);
@@ -35,6 +45,17 @@ export default function App() {
   const [nextReset, setNextReset] = useState<number | null>(null);
   const [myTickets, setMyTickets] = useState<{ pending: number; claimed: number } | null>(null);
   const [shareError, setShareError] = useState<string | null>(null);
+
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+    const url = new URL(window.location.href);
+    if (screen === "home") {
+      url.searchParams.delete("screen");
+    } else if (screen === "leaderboard" || screen === "rules") {
+      url.searchParams.set("screen", screen);
+    }
+    window.history.replaceState({}, "", url);
+  }, [screen]);
 
   useEffect(() => {
     fetch("/api/payout")
@@ -105,8 +126,26 @@ export default function App() {
       />
     );
   }
-  if (screen === "leaderboard") return <LeaderboardScreen onBack={() => setScreen("home")} />;
-  if (screen === "rules") return <RulesScreen onBack={() => setScreen("home")} />;
+  if (screen === "leaderboard") {
+    return (
+      <LeaderboardScreen
+        user={user}
+        isAdmin={user.address?.toLowerCase() === ADMIN_WALLET}
+        onBack={() => setScreen("home")}
+        onRules={() => setScreen("rules")}
+      />
+    );
+  }
+  if (screen === "rules") {
+    return (
+      <RulesScreen
+        user={user}
+        isAdmin={user.address?.toLowerCase() === ADMIN_WALLET}
+        onBack={() => setScreen("home")}
+        onLeaderboard={() => setScreen("leaderboard")}
+      />
+    );
+  }
 
   const cfg = DIFFICULTY_CONFIG[difficulty];
   const poolEmpty = !poolLoading && poolConfigured && poolBalanceBf < MIN_POOL_BALANCE_BF;
@@ -120,23 +159,16 @@ export default function App() {
 
   return (
     <div className="user-page-bg min-h-dvh flex flex-col items-center p-5 gap-4">
-      <div className="user-page-chrome w-full max-w-sm rounded-2xl flex items-center gap-3 px-3 py-3 mt-2">
-        {user.pfpUrl && <img src={user.pfpUrl} alt={user.username} className="w-9 h-9 rounded-full border-2 border-amber-400" />}
-        <div>
-          <div className="text-white font-bold text-sm">{user.displayName}</div>
-          <div className="text-amber-400 text-xs">@{user.username}</div>
-          <button onClick={logout} className="text-[10px] text-amber-300 hover:text-amber-100 underline mt-1">Logout</button>
-          {!user.address && (
-            <button onClick={connectWallet} className="text-[10px] text-amber-300 hover:text-amber-100 underline mt-1 block">Connect wallet</button>
-          )}
-        </div>
-        <div className="ml-auto flex items-start gap-3">
-          {user.address && user.address.toLowerCase() === ADMIN_WALLET && (
-            <Link href="/admin" className="text-3xl leading-none" title="Admin">⚙️</Link>
-          )}
-          <button onClick={() => setScreen("rules")} className="text-2xl" title="Rules">📖</button>
-          <button onClick={() => setScreen("leaderboard")} className="text-2xl" title="Leaderboard">🏆</button>
-        </div>
+      <div className="mt-2 w-full max-w-sm">
+        <UserPageHeader
+          user={user}
+          isAdmin={user.address?.toLowerCase() === ADMIN_WALLET}
+          rulesHref="/?screen=rules"
+          onRules={() => setScreen("rules")}
+          leaderboardHref="/?screen=leaderboard"
+          onLeaderboard={() => setScreen("leaderboard")}
+          active="home"
+        />
       </div>
 
       <div className="user-page-chrome w-full max-w-sm rounded-2xl px-4 py-5 text-center">
@@ -152,6 +184,12 @@ export default function App() {
           Share app to Farcaster
         </button>
         {shareError && <div className="text-red-400 text-xs mt-1">{shareError}</div>}
+        <div className="mt-3 flex justify-center gap-4 text-[11px] text-amber-200">
+          <button onClick={logout} className="underline underline-offset-4">Logout</button>
+          {!user.address && (
+            <button onClick={connectWallet} className="underline underline-offset-4">Connect wallet</button>
+          )}
+        </div>
       </div>
 
       <div className="w-full max-w-sm rounded-2xl p-4 border" style={{ background: "#2a1500", borderColor: poolEmpty ? "#dc2626" : "#92400e" }}>

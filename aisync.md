@@ -150,3 +150,20 @@ Payout bands:
   - `Game ID` is now full-width to avoid broken wrapping.
   - label tracking and card typography are tighter for small screens.
   - payment/error copy uses cleaner spacing and line-height so failed payouts remain readable.
+
+### 2026-03-10 15:50:00 +0100
+- Added shared non-game header component `components/UserPageHeader.tsx` and reused it across home, rules, leaderboard, weekly, and payout summary.
+- Header now follows the requested structure:
+  - left: player pfp, display name, tag, abbreviated wallet
+  - center: scaled game icon from `public/icon.png`
+  - right: back button plus Rulebook / Leaderboard / Admin actions
+- Added `/?screen=rules` and `/?screen=leaderboard` routing support in `components/App.tsx` so header links work from route-driven pages like `/weekly`.
+- Reworked payout summary visual structure in `components/GameScreen.tsx`:
+  - darkened image background via `.payout-page-bg`
+  - simplified summary copy to `BF won`, `points made`, `waves cleared`
+  - removed effective payout points and the redundant `Win` tile
+  - retained only `Game ID`, `Game Difficulty`, `Game Type`, `Weekly Pot Share`, `Burn Share`, `Tickets`, split card, hit counter, and larger Farcaster share CTA
+- Verification:
+  - `npm run build` ✅
+  - targeted lint ✅ with only existing `@next/next/no-img-element` warnings on current avatar/sprite images
+  - local `npm run dev` + Playwright smoke screenshot saved to `output/web-game/shot-0.png` (still shows fallback outside Farcaster, as expected)

@@ -102,3 +102,21 @@ Original prompt: end game: aggiungiamo pulsante share to farcaster, che pubblich
     - Added a clearer local fallback message in `components/App.tsx`: outside Farcaster the screen now says to open the app inside Farcaster, instead of showing a dead-ended wallet connect.
     - Runtime screenshot evidence saved in `output/playwright/runtime-home-local-fallback.png`.
     - Re-verified with `npm run build` ✅ and `npm run lint -- components/App.tsx hooks/useFarcaster.ts` ✅ except the existing `no-img-element` warning.
+
+- 2026-03-10 UI header/payout pass:
+  - Added shared `components/UserPageHeader.tsx` for non-game pages and payout summary.
+  - Header layout now matches the requested structure: player pfp/name/tag/wallet on the left, centered game icon from `public/icon.png`, nav/back/admin actions on the right.
+  - Home, rules, leaderboard, weekly, and payout summary now use the shared header pattern.
+  - Added query-param support in `components/App.tsx` for `/?screen=rules` and `/?screen=leaderboard` so route-based header buttons can land in the correct view.
+  - Payout summary layout reworked:
+    - darkened image background via new `.payout-page-bg`
+    - removed effective payout points / win tile
+    - kept BF won, points made, waves cleared, game id, difficulty, type, weekly share, burn share, tickets, split info, hit counter
+    - enlarged Farcaster share icon/button and moved primary back navigation into the header
+  - Static verification:
+    - `npm run build` ✅
+    - `npm run lint -- components/App.tsx components/GameScreen.tsx components/RulesScreen.tsx components/LeaderboardScreen.tsx components/UserPageHeader.tsx app/weekly/page.tsx` ✅ with only existing `no-img-element` warnings on avatar/sprite images
+  - Local smoke:
+    - `npm run dev` ✅
+    - Playwright client run succeeded with screenshot at `output/web-game/shot-0.png`
+    - limitation: outside Farcaster the app still renders the disconnected fallback, so the new authenticated header state needs visual confirmation inside the miniapp host

@@ -11,7 +11,6 @@ import {
   capLabel,
   DIFFICULTY_CONFIG,
   FUCHSIA_MAX_PER_GAME,
-  getEffectivePayoutPoints,
   getFastChance,
   getFastLimit,
   getFuchsiaChance,
@@ -22,6 +21,7 @@ import {
   getSuperChance,
   type Difficulty,
 } from "@/lib/gameRules";
+import UserPageHeader from "./UserPageHeader";
 import {
   claimPrize,
   createGameSession,
@@ -63,6 +63,9 @@ type GameSessionInfo = {
 
 const SLOTS = 9;
 const BEE_DISPLAY_NAMES = BEE_LABELS;
+const ADMIN_WALLET = (
+  process.env.NEXT_PUBLIC_ADMIN_WALLET || "0xd29c790466675153A50DF7860B9EFDb689A21cDe"
+).toLowerCase();
 
 export default function GameScreen({ user, difficulty, onGameEnd }: Props) {
   const cfg = DIFFICULTY_CONFIG[difficulty];
@@ -322,7 +325,6 @@ export default function GameScreen({ user, difficulty, onGameEnd }: Props) {
 
   const progressPercent = Math.min(100, Math.round((currentWave / cfg.waves) * 100));
   const prize = calculatePrizeUsdc(score, difficulty, superBonus);
-  const effectivePoints = getEffectivePayoutPoints(score, difficulty);
   const prizeBfGross = Math.round(prize * bfPerUsdc);
   const prizeBfNet = Math.round(prizeBfGross * 0.945);
   const shortPaymentError = paymentError
@@ -339,9 +341,9 @@ export default function GameScreen({ user, difficulty, onGameEnd }: Props) {
   const payoutRows = [
     { label: "Game Difficulty", value: `${cfg.emoji} ${cfg.label}`, tone: cfg.color },
     { label: "Game Type", value: `${capInfo.icon} ${capInfo.label}`, tone: "#c084fc" },
-    { label: "Win", value: `${prizeBfNet.toLocaleString()} BF`, tone: "#34d399" },
-    { label: "Weekly", value: `${weeklyBf.toLocaleString()} BF`, tone: "#fbbf24" },
-    { label: "Burn", value: `${burnBf.toLocaleString()} BF`, tone: "#f87171" },
+    { label: "Weekly Pot Share", value: `${weeklyBf.toLocaleString()} BF`, tone: "#fbbf24" },
+    { label: "Burn Share", value: `${burnBf.toLocaleString()} BF`, tone: "#f87171" },
+    { label: "Tickets", value: `${ticketCount}`, tone: "#fde68a" },
   ];
   const shareImage = `${appUrl}/api/share-image?score=${score}&pct=${pct}&prizeBf=${prizeBfNet}&fee=${cfg.fee}&difficulty=${cfg.label}&tickets=${ticketEstimate}&waves=${cfg.waves}&v=4`;
   const shareText = `I just cleared ${cfg.waves} waves on Whack-a-Butterfly by @Thec1, entered a ${cfg.fee} USDC ${cfg.label} run, hit ${pct}% of the cap and won ${prizeBfNet} BF plus ${ticketEstimate} weekly tickets. Can you beat it?`;
@@ -397,19 +399,29 @@ export default function GameScreen({ user, difficulty, onGameEnd }: Props) {
 
   if (gameState === "ended") {
     return (
-      <div className="user-page-bg min-h-dvh p-4">
-        <div className="max-w-sm mx-auto flex flex-col gap-4 pb-6">
+      <div className="payout-page-bg min-h-dvh p-4">
+        <div className="mx-auto flex max-w-sm flex-col gap-4 pb-6">
+          <UserPageHeader
+            user={user}
+            isAdmin={user.address?.toLowerCase() === ADMIN_WALLET}
+            showBack
+            onBack={() => onGameEnd(scoreRef.current, prize)}
+            rulesHref="/?screen=rules"
+            leaderboardHref="/?screen=leaderboard"
+            active="payout"
+          />
+
           <div className="user-page-chrome rounded-[28px] px-5 py-5 text-center">
             <div className="text-4xl">{prizeBfNet > 0 ? "🎉" : "😔"}</div>
             <div className="mt-2 text-[10px] uppercase tracking-[0.24em] text-amber-300">Payout Summary</div>
-            <h2 className="mt-2 text-[2.1rem] leading-none font-black text-white">Game Over</h2>
+            <h2 className="mt-2 text-[2.1rem] leading-none font-black text-white">BF Won</h2>
             <div className="mt-4 text-[4.6rem] leading-[0.9] font-black text-amber-300 sm:text-[5.1rem]">{prizeBfNet.toLocaleString()}</div>
-            <div className="mt-1 text-sm font-bold text-emerald-300">BF won</div>
+            <div className="mt-1 text-sm font-bold text-emerald-300">Claimed payout</div>
             <div className="mt-3 text-amber-100 text-sm leading-5">
-              {score} points · {effectivePoints.toFixed(2)} effective payout points
+              {score} points made
             </div>
             <div className="mt-1 text-amber-200/80 text-xs leading-5">
-              {cfg.waves}/{cfg.waves} waves cleared · {pct}% of cap
+              {cfg.waves}/{cfg.waves} waves cleared
             </div>
             <div className="mt-4 h-2 rounded-full bg-amber-950/80 border border-amber-900 overflow-hidden">
               <div
@@ -448,14 +460,13 @@ export default function GameScreen({ user, difficulty, onGameEnd }: Props) {
           </div>
 
           <div className="user-page-chrome rounded-[24px] px-4 py-4">
-            <div className="text-[11px] uppercase tracking-[0.22em] text-amber-300">Run Details</div>
-            <div className="mt-3 grid grid-cols-3 gap-3">
-              <MetricTile label="Gross" value={`${prizeBfGross.toLocaleString()} BF`} tone="#fbbf24" />
-              <MetricTile label="Tickets" value={`${ticketCount}`} tone="#fde68a" />
-              <MetricTile label="Fee" value={`${cfg.fee} USDC`} tone="#c4b5fd" />
+            <div className="text-[11px] uppercase tracking-[0.22em] text-amber-300">Split</div>
+            <div className="mt-3 grid grid-cols-2 gap-3">
+              <MetricTile label="Weekly" value="4.5%" tone="#fbbf24" />
+              <MetricTile label="Burn" value="1%" tone="#f87171" />
             </div>
             <div className="mt-3 text-[11px] leading-5 text-amber-200/80">
-              Bands: full value to {getFullValueThreshold(difficulty)} pts, then payout weight drops. Split: 94.5% win / 4.5% weekly / 1% burn.
+              Weekly pot share and burn share are derived from the gross payout before the player net amount is sent.
             </div>
             {superBonus > 0 && (
               <div className="mt-2 text-xs leading-5 text-purple-200">Prizefly bonus +{Math.round(superBonus * bfPerUsdc)} BF</div>
@@ -494,19 +505,11 @@ export default function GameScreen({ user, difficulty, onGameEnd }: Props) {
                 console.error("Share error", error);
               }
             }}
-            className="w-full py-3.5 rounded-2xl text-sm font-black text-black flex items-center justify-center gap-2"
+            className="w-full py-3.5 rounded-2xl text-sm font-black text-black flex items-center justify-center gap-3"
             style={{ background: "linear-gradient(135deg, #fbbf24, #f59e0b)" }}
           >
-            <span className="w-5 h-5 rounded-full flex items-center justify-center text-[11px] font-black" style={{ background: "#6d28d9", color: "#fff" }}>f</span>
+            <span className="flex h-10 w-10 items-center justify-center rounded-full text-lg font-black shadow-[0_6px_18px_rgba(76,29,149,0.35)]" style={{ background: "#6d28d9", color: "#fff" }}>f</span>
             Share to Farcaster
-          </button>
-
-          <button
-            onClick={() => onGameEnd(scoreRef.current, prize)}
-            className="w-full py-4 rounded-2xl text-lg font-black text-black"
-            style={{ background: "linear-gradient(135deg, #fbbf24, #f59e0b)" }}
-          >
-            Back
           </button>
         </div>
       </div>

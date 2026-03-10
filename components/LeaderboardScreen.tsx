@@ -1,6 +1,8 @@
 "use client";
 import { useEffect, useState } from "react";
+import type { FarcasterUser } from "@/hooks/useFarcaster";
 import { DIFFICULTY_CONFIG, type Difficulty } from "@/lib/gameRules";
+import UserPageHeader from "./UserPageHeader";
 
 interface Entry {
   fid: number;
@@ -16,7 +18,17 @@ interface Entry {
   lastPlayed: number;
 }
 
-export default function LeaderboardScreen({ onBack }: { onBack: () => void }) {
+export default function LeaderboardScreen({
+  user,
+  isAdmin,
+  onBack,
+  onRules,
+}: {
+  user: FarcasterUser;
+  isAdmin: boolean;
+  onBack: () => void;
+  onRules: () => void;
+}) {
   const [entries, setEntries] = useState<Entry[]>([]);
   const [loading, setLoading] = useState(true);
   const [filter, setFilter] = useState<Difficulty | "all">("all");
@@ -40,11 +52,16 @@ export default function LeaderboardScreen({ onBack }: { onBack: () => void }) {
 
   return (
     <div className="user-page-bg min-h-dvh flex flex-col">
-
-      <div className="user-page-chrome mx-4 mt-4 rounded-2xl flex items-center gap-3 px-4 py-3">
-        <button onClick={onBack} className="text-amber-400 font-bold text-sm">← Back</button>
-        <h2 className="text-xl font-black text-white flex-1 text-center">🏆 Leaderboard</h2>
-        <div className="w-12" />
+      <div className="mx-4 mt-4">
+        <UserPageHeader
+          user={user}
+          isAdmin={isAdmin}
+          showBack
+          onBack={onBack}
+          rulesHref="/?screen=rules"
+          onRules={onRules}
+          active="leaderboard"
+        />
       </div>
 
       {/* Filter */}
