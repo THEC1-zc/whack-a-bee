@@ -20,6 +20,7 @@ import {
   LIVE_POINT_VALUES,
   SUPER_BEE_BONUS_BF,
   getSuperChance,
+  type CapTypeKey,
   type Difficulty,
 } from "@/lib/gameRules";
 import UserPageHeader from "./UserPageHeader";
@@ -56,10 +57,12 @@ type HitStats = {
 type GameSessionInfo = {
   gameId: string;
   gameSecret: string;
+  capType: CapTypeKey;
   capMultiplier: number;
   capLabel: string;
   capIcon: string;
   capScore: number;
+  waveMultipliers: number[];
 };
 
 const SLOTS = 9;
@@ -98,7 +101,6 @@ export default function GameScreen({ user, difficulty, onGameEnd }: Props) {
   const superSpawnedRef = useRef(false);
   const fuchsiaCountRef = useRef(0);
   const capScoreRef = useRef<number>(cfg.maxPts);
-  const shouldSpawnSuperRef = useRef(false);
   const gameStartedRef = useRef(false);
   const endTriggeredRef = useRef(false);
   const nextWaveQueuedRef = useRef(false);
@@ -118,17 +120,22 @@ export default function GameScreen({ user, difficulty, onGameEnd }: Props) {
       .catch(() => {});
   }, []);
 
-  const spawnBees = useCallback((count: number, ensureRed: boolean) => {
+  const getWaveMultiplierForIndex = useCallback((waveIndex: number) => {
+    if (!session) return 1;
+    return session.waveMultipliers?.[waveIndex] ?? session.capMultiplier;
+  }, [session]);
+
+  const spawnBees = useCallback((count: number, ensureRed: boolean, waveMultiplier: number) => {
     setBees((prev) => {
       let next = prev.filter((bee) => bee.visible);
       const usedSlots = new Set(next.filter((bee) => bee.visible && !bee.hit).map((bee) => bee.slot));
       let bombPlaced = 0;
       let fastPlaced = 0;
       let fuchsiaPlaced = false;
-      const capMultiplier = session?.capMultiplier || 1;
-      const fastLimit = getFastLimit(capMultiplier);
-      const fuchsiaChance = getFuchsiaChance(capMultiplier);
-      const fastChance = getFastChance(difficulty, capMultiplier);
+      const shouldSpawnSuper = !superSpawnedRef.current && Math.random() < getSuperChance(waveMultiplier);
+      const fastLimit = getFastLimit(waveMultiplier);
+      const fuchsiaChance = getFuchsiaChance(waveMultiplier);
+      const fastChance = getFastChance(difficulty, waveMultiplier);
       const bombTarget = ensureRed ? 1 : 0;
       const spawnCount = count;
 
@@ -143,7 +150,7 @@ export default function GameScreen({ user, difficulty, onGameEnd }: Props) {
         if (bombPlaced < bombTarget) {
           type = "bomb";
           bombPlaced += 1;
-        } else if (shouldSpawnSuperRef.current && !superSpawnedRef.current) {
+        } else if (shouldSpawnSuper && !superSpawnedRef.current) {
           type = "super";
           superSpawnedRef.current = true;
         } else if (!fuchsiaPlaced && fuchsiaCountRef.current < FUCHSIA_MAX_PER_GAME && rand < fuchsiaChance) {
@@ -164,7 +171,7 @@ export default function GameScreen({ user, difficulty, onGameEnd }: Props) {
       }
       return next;
     });
-  }, [difficulty, session]);
+  }, [difficulty]);
 
   const whackBee = useCallback((bee: Bee) => {
     if (bee.hit || !bee.visible) return;
@@ -204,7 +211,6 @@ export default function GameScreen({ user, difficulty, onGameEnd }: Props) {
         capScoreRef.current = created.capScore;
         setCapScore(created.capScore);
         setCapInfo({ icon: created.capIcon, label: created.capLabel });
-        shouldSpawnSuperRef.current = Math.random() < getSuperChance(created.capMultiplier);
         setFeeStatus("paying");
         const payment = await payGameFee(cfg.fee);
         if (!payment.success || !payment.txHash) {
@@ -301,15 +307,16 @@ export default function GameScreen({ user, difficulty, onGameEnd }: Props) {
     const t = setTimeout(() => {
       fired = true;
       nextWaveQueuedRef.current = false;
-      const count = getWaveSpawnCount(difficulty, session.capMultiplier);
-      spawnBees(count, true);
+      const waveMultiplier = getWaveMultiplierForIndex(currentWave);
+      const count = getWaveSpawnCount(difficulty, waveMultiplier);
+      spawnBees(count, true, waveMultiplier);
       setCurrentWave((value) => value + 1);
     }, 0);
     return () => {
       clearTimeout(t);
       if (!fired) nextWaveQueuedRef.current = false;
     };
-  }, [bees.length, cfg.waves, currentWave, difficulty, gameState, session, spawnBees]);
+  }, [bees.length, cfg.waves, currentWave, difficulty, gameState, getWaveMultiplierForIndex, session, spawnBees]);
 
   useEffect(() => {
     if (gameState !== "playing") return;
@@ -337,6 +344,9 @@ export default function GameScreen({ user, difficulty, onGameEnd }: Props) {
   const appUrl = process.env.NEXT_PUBLIC_APP_URL || "https://whack-a-bee.vercel.app";
   const pct = Math.round((score / capScore) * 100);
   const displayedWave = Math.min(currentWave + 1, cfg.waves);
+  const activeWaveIndex = Math.max(0, Math.min(cfg.waves - 1, currentWave - 1));
+  const activeWaveMultiplier = getWaveMultiplierForIndex(activeWaveIndex);
+  const activeWaveInfo = capLabel(activeWaveMultiplier);
   const weeklyBf = Math.floor(prizeBfGross * 0.045);
   const burnBf = Math.floor(prizeBfGross * 0.01);
   const payoutRows = [
@@ -344,7 +354,6 @@ export default function GameScreen({ user, difficulty, onGameEnd }: Props) {
     { label: "Game Type", value: `${capInfo.icon} ${capInfo.label}`, tone: "#c084fc" },
     { label: "Weekly Pot Share", value: `${weeklyBf.toLocaleString()} BF`, tone: "#fbbf24" },
     { label: "Burn Share", value: `${burnBf.toLocaleString()} BF`, tone: "#f87171" },
-    { label: "Tickets", value: `${ticketCount}`, tone: "#fde68a" },
   ];
   const shareImage = `${appUrl}/api/share-image?score=${score}&pct=${pct}&prizeBf=${prizeBfNet}&fee=${cfg.fee}&difficulty=${cfg.label}&tickets=${ticketEstimate}&waves=${cfg.waves}&v=4`;
   const shareText = `I just cleared ${cfg.waves} waves on Whack-a-Butterfly by @Thec1, entered a ${cfg.fee} USDC ${cfg.label} run, hit ${pct}% of the cap and won ${prizeBfNet} BF plus ${ticketEstimate} weekly tickets. Can you beat it?`;
@@ -458,6 +467,36 @@ export default function GameScreen({ user, difficulty, onGameEnd }: Props) {
                 </div>
               </div>
             ))}
+            <div
+              className="user-page-chrome rounded-2xl px-4 py-3 border"
+              style={{ borderColor: "rgba(251,191,36,0.18)" }}
+            >
+              <div className="text-[10px] uppercase tracking-[0.18em] text-amber-400/80">Tickets</div>
+              <div className="mt-2 text-[15px] leading-5 font-black text-amber-100">
+                {ticketCount}
+              </div>
+            </div>
+            <button
+              onClick={async () => {
+                try {
+                  await sdk.actions.composeCast({ text: `${shareText}\n${appUrl}`, embeds: [shareImage] });
+                } catch (error) {
+                  console.error("Share error", error);
+                }
+              }}
+              className="user-page-chrome rounded-2xl border px-4 py-3 text-left"
+              style={{ borderColor: "rgba(168,85,247,0.35)" }}
+            >
+              <div className="flex items-center gap-3">
+                <span className="relative h-12 w-12 shrink-0 overflow-hidden rounded-full shadow-[0_6px_18px_rgba(76,29,149,0.35)]">
+                  <Image src="/farcaster-share.svg" alt="" fill sizes="48px" className="object-cover" />
+                </span>
+                <span className="min-w-0">
+                  <span className="block text-[10px] uppercase tracking-[0.18em] text-violet-200/80">Share</span>
+                  <span className="mt-1 block text-[15px] leading-5 font-black text-violet-100">Share to Farcaster</span>
+                </span>
+              </div>
+            </button>
           </div>
 
           <div className="user-page-chrome rounded-[24px] px-4 py-4">
@@ -498,22 +537,6 @@ export default function GameScreen({ user, difficulty, onGameEnd }: Props) {
             </div>
           </div>
 
-          <button
-            onClick={async () => {
-              try {
-                await sdk.actions.composeCast({ text: `${shareText}\n${appUrl}`, embeds: [shareImage] });
-              } catch (error) {
-                console.error("Share error", error);
-              }
-            }}
-            className="w-full py-3.5 rounded-2xl text-sm font-black text-black flex items-center justify-center gap-3"
-            style={{ background: "linear-gradient(135deg, #fbbf24, #f59e0b)" }}
-          >
-            <span className="relative h-11 w-11 overflow-hidden rounded-full shadow-[0_6px_18px_rgba(76,29,149,0.35)]">
-              <Image src="/farcaster-share.svg" alt="" fill sizes="44px" className="object-cover" />
-            </span>
-            Share to Farcaster
-          </button>
         </div>
       </div>
     );
@@ -542,9 +565,15 @@ export default function GameScreen({ user, difficulty, onGameEnd }: Props) {
         </div>
       </div>
 
-      {session && session.capMultiplier >= 3 && (
+      {session && activeWaveMultiplier >= 3 && (
         <div className="mx-4 mb-2 rounded-xl border border-purple-700 bg-purple-900/40 text-purple-200 text-xs font-black text-center py-1">
           💥 MEGA JACKPOT ROUND — 3× CAP
+        </div>
+      )}
+
+      {session?.capType === "jolly" && (
+        <div className="mx-4 mb-2 rounded-xl border border-violet-700 bg-violet-900/30 text-violet-200 text-[11px] font-bold text-center py-1.5">
+          🃏 JOLLY WAVE: {activeWaveInfo.icon} {activeWaveInfo.label}
         </div>
       )}
 

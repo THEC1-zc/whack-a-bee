@@ -3,6 +3,7 @@ import { PRIZE_WALLET } from "@/lib/contracts";
 import type { FarcasterUser } from "@/hooks/useFarcaster";
 import {
   BEE_LABELS,
+  CAP_TYPES,
   calculatePrizeUsdc,
   DIFFICULTY_CONFIG,
   getFullValueThreshold,
@@ -48,9 +49,27 @@ export default function RulesScreen({
           <div className="mt-3 space-y-2">
             <BeeRule emoji="🦋" label={BEE_LABELS.normal} desc="Core scorer in every wave" points="+1 point" color="#fbbf24" />
             <BeeRule emoji="🔵" label={BEE_LABELS.fast} desc={`Quick scorer, worth +${LIVE_POINT_VALUES.medium.fast} in Medium`} points="+2 / +3 / +4" color="#3b82f6" fast />
-            <BeeRule emoji="💖" label={BEE_LABELS.fuchsia} desc="Rare burst scorer, doubled chance in Mega" points="+3 / +5 / +7" color="#ec4899" fast />
+            <BeeRule emoji="💖" label={BEE_LABELS.fuchsia} desc="Rare burst scorer, boosted in Mega waves" points="+3 / +5 / +7" color="#ec4899" fast />
             <BeeRule emoji="🔴" label={BEE_LABELS.bomb} desc="Forced once per wave. Hit it and you lose points." points="-1 / -2 / -3" color="#dc2626" />
             <BeeRule emoji="💜" label={BEE_LABELS.super} desc="One per run max. Adds 100,000 BF on top of score payout." points="+100000 BF" color="#a855f7" />
+          </div>
+        </Section>
+
+        <Section title="🎲 Game Types">
+          <div className="space-y-2">
+            {CAP_TYPES.map((item) => (
+              <div key={item.key} className="rounded-xl p-3 border" style={{ background: "#0f0800", borderColor: "#7c3aed44" }}>
+                <div className="flex items-center justify-between">
+                  <div className="text-white font-black">{item.icon} {item.label}</div>
+                  <div className="text-violet-300 text-sm font-bold">{item.pct}% chance</div>
+                </div>
+                <div className="mt-1 text-amber-200 text-xs">
+                  {item.key === "jolly"
+                    ? "Each wave rerolls into one of the standard game types using their current odds."
+                    : `${item.mult}x cap multiplier for the run.`}
+                </div>
+              </div>
+            ))}
           </div>
         </Section>
 

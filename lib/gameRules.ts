@@ -1,5 +1,6 @@
 export type Difficulty = "easy" | "medium" | "hard";
 export type HitType = "normal" | "fast" | "fuchsia" | "bomb" | "super";
+export type CapTypeKey = "low" | "nice" | "average" | "big" | "mega" | "jolly";
 
 type DifficultyConfig = {
   label: string;
@@ -12,8 +13,8 @@ type DifficultyConfig = {
 
 export const DIFFICULTY_CONFIG: Record<Difficulty, DifficultyConfig> = {
   easy: { label: "Easy", emoji: "🟢", waves: 15, maxPts: 45, fee: 0.015, color: "#16a34a" },
-  medium: { label: "Medium", emoji: "🟡", waves: 12, maxPts: 65, fee: 0.025, color: "#ca8a04" },
-  hard: { label: "Hard", emoji: "🔴", waves: 9, maxPts: 85, fee: 0.035, color: "#dc2626" },
+  medium: { label: "Medium", emoji: "🟡", waves: 13, maxPts: 65, fee: 0.025, color: "#ca8a04" },
+  hard: { label: "Hard", emoji: "🔴", waves: 8, maxPts: 85, fee: 0.035, color: "#dc2626" },
 };
 
 export const PRIZE_PER_POINT: Record<Difficulty, number> = {
@@ -56,7 +57,7 @@ export const SPAWN_CONFIG = {
 export const BEE_DURATIONS: Record<Difficulty, Record<HitType, number>> = {
   easy: { normal: 1200, fast: 1050, fuchsia: 750, bomb: 1300, super: 1300 },
   medium: { normal: 1000, fast: 850, fuchsia: 600, bomb: 1000, super: 1000 },
-  hard: { normal: 800, fast: 600, fuchsia: 500, bomb: 800, super: 800 },
+  hard: { normal: 1800, fast: 1600, fuchsia: 1500, bomb: 1800, super: 1800 },
 };
 
 const BASE_WAVE_MAX: Record<Difficulty, number> = {
@@ -65,29 +66,51 @@ const BASE_WAVE_MAX: Record<Difficulty, number> = {
   hard: 5,
 };
 
-const CAP_DISTRIBUTION = [
-  { mult: 0.95, pct: 21.0 },
-  { mult: 1.2, pct: 29.0 },
-  { mult: 1.5, pct: 30.0 },
-  { mult: 2.0, pct: 17.0 },
-  { mult: 3.0, pct: 6.0 },
-] as const;
+export const CAP_TYPES = [
+  { key: "low", icon: "🪫", label: "Low", mult: 0.9, pct: 15.0 },
+  { key: "nice", icon: "✅", label: "Nice", mult: 1.1, pct: 20.0 },
+  { key: "average", icon: "🔥", label: "Average", mult: 1.25, pct: 35.0 },
+  { key: "big", icon: "🌟", label: "Big", mult: 2.0, pct: 15.0 },
+  { key: "mega", icon: "💥", label: "Mega", mult: 3.0, pct: 5.0 },
+  { key: "jolly", icon: "🃏", label: "Jolly", mult: 1.0, pct: 10.0 },
+] as const satisfies readonly { key: CapTypeKey; icon: string; label: string; mult: number; pct: number }[];
 
-export function pickCapMultiplier() {
+const STANDARD_CAP_TYPES = CAP_TYPES.filter((item) => item.key !== "jolly");
+
+export function pickCapProfile() {
   const roll = Math.random() * 100;
   let acc = 0;
-  for (const item of CAP_DISTRIBUTION) {
+  for (const item of CAP_TYPES) {
     acc += item.pct;
-    if (roll <= acc) return item.mult;
+    if (roll <= acc) return item;
   }
-  return 1;
+  return CAP_TYPES[0];
 }
 
-export function capLabel(mult: number) {
+export function pickCapMultiplier() {
+  return pickCapProfile().mult;
+}
+
+export function pickJollyWaveMultipliers(totalWaves: number) {
+  return Array.from({ length: totalWaves }, () => pickStandardCapProfile().mult);
+}
+
+export function pickStandardCapProfile() {
+  const roll = Math.random() * 90;
+  let acc = 0;
+  for (const item of STANDARD_CAP_TYPES) {
+    acc += item.pct;
+    if (roll <= acc) return item;
+  }
+  return STANDARD_CAP_TYPES[0];
+}
+
+export function capLabel(mult: number, capType?: CapTypeKey) {
+  if (capType === "jolly") return { icon: "🃏", label: "Jolly" };
   if (mult >= 3) return { icon: "💥", label: "Mega" };
   if (mult >= 2) return { icon: "🌟", label: "Big" };
-  if (mult >= 1.5) return { icon: "🔥", label: "Average" };
-  if (mult >= 1.2) return { icon: "✅", label: "Nice" };
+  if (mult >= 1.25) return { icon: "🔥", label: "Average" };
+  if (mult >= 1.1) return { icon: "✅", label: "Nice" };
   return { icon: "🪫", label: "Low" };
 }
 
@@ -147,6 +170,22 @@ export function getHitBounds(difficulty: Difficulty, capMultiplier: number): Rec
     bomb: totalWaves,
     super: 1,
   };
+}
+
+export function getHitBoundsForWaveMultipliers(difficulty: Difficulty, waveMultipliers: number[]): Record<HitType, number> {
+  const totals = waveMultipliers.reduce<Record<HitType, number>>(
+    (acc, mult) => {
+      const waveSpawnCount = getWaveSpawnCount(difficulty, mult);
+      acc.normal += waveSpawnCount;
+      acc.fast += getFastLimit(mult);
+      acc.fuchsia += 1;
+      acc.bomb += 1;
+      return acc;
+    },
+    { normal: 0, fast: 0, fuchsia: 0, bomb: 0, super: 1 }
+  );
+  totals.fuchsia = Math.min(FUCHSIA_MAX_PER_GAME, totals.fuchsia);
+  return totals;
 }
 
 export function estimateMinimumGameDurationMs(difficulty: Difficulty) {

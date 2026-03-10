@@ -25,6 +25,7 @@ import {
 import { getBfPerUsdc } from "@/lib/pricing";
 import {
   calculatePrizeUsdc,
+  type CapTypeKey,
   DIFFICULTY_CONFIG,
   SUPER_BEE_BONUS_BF,
   type Difficulty,
@@ -34,7 +35,9 @@ import {
   estimateMinimumGameDurationMs,
   getFullValueThreshold,
   getHitBounds,
-  pickCapMultiplier,
+  getHitBoundsForWaveMultipliers,
+  pickCapProfile,
+  pickJollyWaveMultipliers,
 } from "@/lib/gameRules";
 import { logTxRecord } from "@/lib/txLedger";
 
@@ -108,9 +111,11 @@ export type GameRecord = {
   gameSecretHash: string;
   difficulty: Difficulty;
   feeExpectedUsdc: number;
+  capType: CapTypeKey;
   capMultiplier: number;
   capLabel: string;
   capScore: number;
+  waveMultipliers?: number[];
   createdAt: number;
   weekId: string;
   status: GameStatus;
@@ -391,7 +396,8 @@ async function readPrizeWalletBalanceBfUnits() {
 function normalizeHitStats(
   input: Partial<HitStats> | undefined,
   difficulty: Difficulty,
-  capMultiplier: number
+  capMultiplier: number,
+  waveMultipliers?: number[]
 ): HitStats {
   const safe = {
     normal: Math.max(0, Math.floor(Number(input?.normal || 0))),
@@ -401,7 +407,9 @@ function normalizeHitStats(
     super:  Math.max(0, Math.floor(Number(input?.super  || 0))),
   };
 
-  const bounds = getHitBounds(difficulty, capMultiplier);
+  const bounds = waveMultipliers?.length
+    ? getHitBoundsForWaveMultipliers(difficulty, waveMultipliers)
+    : getHitBounds(difficulty, capMultiplier);
 
   // Per-type upper bound check (score injection prevention)
   const types = ["normal", "fast", "fuchsia", "bomb", "super"] as const;
@@ -459,8 +467,12 @@ export async function createGameSession(difficulty: Difficulty, callerAddress?: 
   }
 
   const cfg = DIFFICULTY_CONFIG[difficulty];
-  const capMultiplier = pickCapMultiplier();
-  const capInfo = capLabel(capMultiplier);
+  const capProfile = pickCapProfile();
+  const waveMultipliers = capProfile.key === "jolly"
+    ? pickJollyWaveMultipliers(cfg.waves)
+    : Array.from({ length: cfg.waves }, () => capProfile.mult);
+  const capMultiplier = Number((waveMultipliers.reduce((sum, mult) => sum + mult, 0) / waveMultipliers.length).toFixed(4));
+  const capInfo = capLabel(capMultiplier, capProfile.key);
   const gameId = crypto.randomUUID();
   const gameSecret = crypto.randomBytes(24).toString("hex");
   const game: GameRecord = {
@@ -468,9 +480,11 @@ export async function createGameSession(difficulty: Difficulty, callerAddress?: 
     gameSecretHash: sha256Hex(gameSecret),
     difficulty,
     feeExpectedUsdc: cfg.fee,
+    capType: capProfile.key,
     capMultiplier,
     capLabel: capInfo.label,
     capScore: Math.max(1, Math.floor(cfg.maxPts * capMultiplier)),
+    waveMultipliers,
     createdAt: Date.now(),
     weekId: getISOWeekId(),
     status: "created",
@@ -483,10 +497,12 @@ export async function createGameSession(difficulty: Difficulty, callerAddress?: 
     gameSecret,
     difficulty,
     feeExpectedUsdc: cfg.fee,
+    capType: capProfile.key,
     capMultiplier,
     capLabel: capInfo.label,
     capIcon: capInfo.icon,
     capScore: game.capScore,
+    waveMultipliers,
     expiresAt: game.createdAt + 30 * 60 * 1000,
   };
 }
@@ -603,7 +619,7 @@ export async function finishGameSession(params: {
   }
 
   // Validate hitStats per-type bounds (B-2 fix: score injection prevention)
-  const hitStats = normalizeHitStats(params.hitStats, game.difficulty, game.capMultiplier);
+  const hitStats = normalizeHitStats(params.hitStats, game.difficulty, game.capMultiplier, game.waveMultipliers);
   if (!params.finishMessage || !params.finishSignature) {
     throw new Error("Missing finish authorization");
   }

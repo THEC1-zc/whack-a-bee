@@ -202,3 +202,35 @@ Payout bands:
   - Easy `73.2%`
   - Medium `73.9%`
   - Hard `75.9%`
+
+### 2026-03-10 18:35:00 +0100
+- Local balancing pass only, not pushed yet:
+  - set `medium` to `13` waves
+  - set `hard` to `8` waves
+  - increased hard butterfly durations by about `+1000ms` per wave to reward reaction skill instead of raw pressure
+- Moved the Farcaster share CTA inside the payout summary grid in `components/GameScreen.tsx`, placing it under `Burn Share` to the right of `Tickets`.
+- Validation:
+  - `npm run lint -- lib/gameRules.ts components/GameScreen.tsx` ✅ with only the known gameplay sprite `<img>` warning
+  - `npm run build` ✅
+- Monte Carlo spot-check (`3000` runs/difficulty, live BF rate, with a modest hard-skill uplift to reflect the longer hard wave timing) landed at:
+  - Easy `74.54%`
+  - Medium `79.13%`
+  - Hard `79.41%`
+
+### 2026-03-10 19:10:00 +0100
+- Reworked game type distribution in `lib/gameRules.ts`:
+  - `Low` `0.9x` at `15%`
+  - `Nice` `1.1x` at `20%`
+  - `Average` `1.25x` at `35%`
+  - `Big` `2x` at `15%`
+  - `Mega` `3x` at `5%`
+  - new `Jolly` at `10%`
+- Added server-backed `Jolly` support:
+  - each Jolly session now stores a wave-by-wave multiplier profile in the game record
+  - client gameplay and server finish validation both use the same stored wave multipliers
+  - payout summary still shows `Jolly` as the run type while live waves can reroll into Low/Nice/Average/Big/Mega
+- Updated `components/GameScreen.tsx` so Jolly waves show their current rolled type during play.
+- Updated `components/RulesScreen.tsx` with a new Game Types section so odds and multipliers are visible in the UI.
+- Validation:
+  - `npm run lint -- lib/gameRules.ts lib/gameSessions.ts lib/payments.ts components/GameScreen.tsx components/RulesScreen.tsx app/api/game/fee-verify/route.ts` ✅ with only the known gameplay sprite `<img>` warning
+  - `npm run build` ✅

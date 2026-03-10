@@ -11,6 +11,7 @@ import {
   fromUSDCUnits,
 } from "./contracts";
 import type { Difficulty } from "@/lib/gameRules";
+import type { CapTypeKey } from "@/lib/gameRules";
 
 const BFPAYOUT_ABI = [
   {
@@ -34,10 +35,12 @@ type CreateGameResponse = {
   gameSecret: string;
   difficulty: Difficulty;
   feeExpectedUsdc: number;
+  capType: CapTypeKey;
   capMultiplier: number;
   capLabel: string;
   capIcon: string;
   capScore: number;
+  waveMultipliers: number[];
   expiresAt: number;
 };
 

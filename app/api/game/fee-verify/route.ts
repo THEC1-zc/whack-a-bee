@@ -18,9 +18,11 @@ export async function POST(req: NextRequest) {
       gameId: game.gameId,
       status: game.status,
       playerAddress: game.playerAddress,
+      capType: game.capType,
       capMultiplier: game.capMultiplier,
       capScore: game.capScore,
       capLabel: game.capLabel,
+      waveMultipliers: game.waveMultipliers || [],
     });
   } catch (error) {
     return NextResponse.json({ ok: false, error: error instanceof Error ? error.message : "Fee verification failed" }, { status: 400 });
