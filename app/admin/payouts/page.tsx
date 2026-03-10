@@ -1,9 +1,9 @@
 "use client";
 
 import { useEffect, useMemo, useState } from "react";
-import Link from "next/link";
 import { useFarcaster } from "@/hooks/useFarcaster";
 import { adminFetch } from "@/lib/adminClient";
+import UserPageHeader from "@/components/UserPageHeader";
 
 const ADMIN_WALLET = (process.env.NEXT_PUBLIC_ADMIN_WALLET || "0xd29c790466675153A50DF7860B9EFDb689A21cDe").toLowerCase();
 
@@ -119,13 +119,18 @@ export default function AdminPayoutsPage() {
   }
 
   return (
-    <div className="min-h-dvh p-5" style={{ background: "#1a0a00" }}>
+    <div className="user-page-bg min-h-dvh p-5">
       <div className="max-w-6xl mx-auto space-y-4">
+        <UserPageHeader
+          user={user!}
+          isAdmin
+          showBack
+          backHref="/admin/weekly"
+          rulesHref="/?screen=rules"
+          leaderboardHref="/?screen=leaderboard"
+        />
         <div className="flex items-center justify-between gap-3 flex-wrap">
-          <div className="flex items-center gap-3">
-            <Link href="/admin/weekly" className="text-amber-400 font-bold text-sm">← Weekly</Link>
-            <h1 className="text-2xl font-black text-white">Weekly Payout History</h1>
-          </div>
+          <div className="text-2xl font-black text-white">Weekly Payout History</div>
           <div className="flex items-center gap-2">
             <label className="text-amber-300 text-xs">Week</label>
             <input

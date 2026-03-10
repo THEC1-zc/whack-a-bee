@@ -4,17 +4,18 @@ import "./globals.css";
 const APP_URL = process.env.NEXT_PUBLIC_APP_URL || "https://whack-a-bee.vercel.app";
 
 export const metadata: Metadata = {
+  metadataBase: new URL(APP_URL),
   title: "🦋 Whack-a-Butterfly",
   description: "Catch butterflies, win prizes! Farcaster Mini App.",
   openGraph: {
     title: "🦋 Whack-a-Butterfly",
-    description: "Catch butterflies, win prizes!",
-    images: [`${APP_URL}/og-image.png`],
+    description: "Tap butterflies, dodge bombs, and win BF on Farcaster.",
+    images: [`${APP_URL}/opengraph-image`],
   },
   other: {
     "fc:frame": JSON.stringify({
       version: "next",
-      imageUrl: `${APP_URL}/og-image.png`,
+      imageUrl: `${APP_URL}/opengraph-image`,
       button: {
         title: "🦋 Play Whack-a-Butterfly",
         action: {

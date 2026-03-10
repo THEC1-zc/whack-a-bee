@@ -1,6 +1,7 @@
 "use client";
 
 import Link from "next/link";
+import Image from "next/image";
 import { useEffect, useState } from "react";
 import { sdk } from "@farcaster/miniapp-sdk";
 import { useFarcaster } from "@/hooks/useFarcaster";
@@ -180,7 +181,9 @@ export default function App() {
           className="mt-3 px-4 py-2 rounded-xl text-xs font-black text-black inline-flex items-center gap-2"
           style={{ background: "linear-gradient(135deg, #fbbf24, #f59e0b)" }}
         >
-          <span className="w-4 h-4 rounded-full flex items-center justify-center text-[10px] font-black" style={{ background: "#6d28d9", color: "#fff" }}>f</span>
+          <span className="relative h-5 w-5 overflow-hidden rounded-full">
+            <Image src="/farcaster-share.svg" alt="" fill sizes="20px" className="object-cover" />
+          </span>
           Share app to Farcaster
         </button>
         {shareError && <div className="text-red-400 text-xs mt-1">{shareError}</div>}
@@ -201,7 +204,7 @@ export default function App() {
         </div>
         {poolEmpty && <div className="text-red-400 text-xs text-center mt-1">Game temporarily suspended</div>}
         {poolUnavailable && <div className="text-red-400 text-xs text-center mt-1">Pool not configured</div>}
-        <div className="text-xs text-amber-700 text-center mt-1">Base reward: {bfPerPoint.toFixed(0)} BF per full-value point</div>
+        <div className="text-xs text-amber-700 text-center mt-1">Base reward: {bfPerPoint.toFixed(0)} BF per point</div>
       </div>
 
       <div className="w-full max-w-sm rounded-2xl p-3 border border-amber-900 text-center text-xs" style={{ background: "#1f1000" }}>
@@ -219,7 +222,7 @@ export default function App() {
       <div className="w-full max-w-sm rounded-2xl p-3 border border-amber-900 text-center text-xs" style={{ background: "#1f1000" }}>
         <div className="text-amber-500 uppercase tracking-widest mb-1">My Weekly Tickets</div>
         <div className="text-amber-200 font-bold">{ticketTotal}</div>
-        <div className="text-amber-700 mt-1">1 base ticket, +1 full-value run, +1 profitable run, +1 every 10th win.</div>
+        <div className="text-amber-700 mt-1">1 base ticket, +1 cap-cleared run, +1 profitable run, +1 every 10th win.</div>
       </div>
 
       {lastResult && (
@@ -249,7 +252,7 @@ export default function App() {
                 <div className="text-white font-black text-lg">{item.label}</div>
                 <div className="text-amber-500 text-xs mt-1">{item.fee} USDC</div>
                 <div className="text-amber-700 text-[11px] mt-1">{item.waves} waves · {item.maxPts}pt cap</div>
-                <div className="text-amber-700 text-[11px] mt-1">Full value to {getFullValueThreshold(key)} pt</div>
+                <div className="text-amber-700 text-[11px] mt-1">Linear payout up to {getFullValueThreshold(key)} pt</div>
               </button>
             );
           })}
@@ -266,7 +269,7 @@ export default function App() {
         PLAY — {cfg.fee} USDC 🦋
       </button>
       <div className="text-[11px] text-amber-600 text-center max-w-sm">
-        {cfg.label}: {cfg.waves} waves, base {bfPerPoint.toFixed(0)} BF per full-value point, up to about {maxPrizeBf.toLocaleString()} BF net before Prizefly bonus.
+        {cfg.label}: {cfg.waves} waves, base {bfPerPoint.toFixed(0)} BF per point, up to about {maxPrizeBf.toLocaleString()} BF net before Prizefly bonus.
       </div>
     </div>
   );

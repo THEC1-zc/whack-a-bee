@@ -43,7 +43,7 @@ export default function RulesScreen({
         <Section title="🎮 How to Play">
           <p className="text-amber-200 text-sm leading-relaxed">
             Each run is a fixed number of waves on a 3×3 grid. Tap butterflies before they disappear, survive the forced Bombfly in every wave,
-            and push your score into the best payout band.
+            and push your score as high as possible before you hit the point cap.
           </p>
           <div className="mt-3 space-y-2">
             <BeeRule emoji="🦋" label={BEE_LABELS.normal} desc="Core scorer in every wave" points="+1 point" color="#fbbf24" />
@@ -71,7 +71,7 @@ export default function RulesScreen({
                   <Stat label="Point cap" value={`${cfg.maxPts} pts`} />
                   <Stat label="Max prize" value={`${calculatePrizeUsdc(cfg.maxPts, key as keyof typeof DIFFICULTY_CONFIG).toFixed(3)} USDC`} />
                 </div>
-                <div className="text-amber-700 text-xs mt-2 text-center">Full value until {getFullValueThreshold(key as keyof typeof DIFFICULTY_CONFIG)} pts, then payout weight drops.</div>
+                <div className="text-amber-700 text-xs mt-2 text-center">Linear payout up to {getFullValueThreshold(key as keyof typeof DIFFICULTY_CONFIG)} pts.</div>
               </div>
             ))}
           </div>
@@ -83,11 +83,11 @@ export default function RulesScreen({
             <div className="rounded-xl p-3 border border-green-900" style={{ background: "#0a1f0a" }}>
               <div className="text-green-400 font-bold text-sm mb-1">Reward per point</div>
               <div className="text-green-300 text-2xl font-black">{(PRIZE_PER_POINT.medium * BF_PER_USDC_FALLBACK).toFixed(0)} BF</div>
-              <div className="text-green-700 text-xs mt-1">base value for each full-value point</div>
+              <div className="text-green-700 text-xs mt-1">base value for each point</div>
             </div>
 
             <p className="text-amber-300 text-xs leading-relaxed">
-              Prize payout is banded. Early points pay full value, then the payout weight drops to 70% and 40% on higher score bands.
+              Prize payout is now linear: every point pays the same base value for that difficulty, up to the current point cap.
               Claims are executed on-chain in BF from your connected Farcaster wallet.
             </p>
 
@@ -108,7 +108,7 @@ export default function RulesScreen({
             </div>
             <div className="rounded-xl p-3 border border-amber-900" style={{ background: "#1f1000" }}>
               <div className="text-amber-500 text-xs uppercase tracking-widest mb-2">Weekly tickets</div>
-              <div className="text-amber-200 text-sm">1 base ticket, +1 for reaching the full-value band, +1 for a profitable run, +1 every 10th claimed win.</div>
+              <div className="text-amber-200 text-sm">1 base ticket, +1 for reaching the point cap, +1 for a profitable run, +1 every 10th claimed win.</div>
             </div>
           </div>
         </Section>

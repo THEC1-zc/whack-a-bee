@@ -178,3 +178,16 @@ Payout bands:
   - Medium `12`
   - Hard `9`
 - Re-verified with `npm run build` ✅ and targeted lint ✅, keeping only the existing `<img>` warnings on current avatar/sprite rendering.
+
+### 2026-03-10 16:40:00 +0100
+- Rebalanced live payout in `lib/gameRules.ts`:
+  - removed `PAYOUT_BANDS` from live calculation
+  - payout is now linear: `score * PRIZE_PER_POINT + bonus`
+  - updated caps to `45 / 65 / 85`
+  - updated PPP to `0.00032 / 0.0005 / 0.0007`
+- Updated UI copy in `components/App.tsx`, `components/GameScreen.tsx`, `components/RulesScreen.tsx`, and `app/weekly/page.tsx` to remove references to payout bands and "full-value" scoring.
+- Added new share asset `public/farcaster-share.svg` and switched share buttons to use it.
+- Added new worksheet `Live Tuning Matrix` to `local-balance/LTM.xml` as the manual balancing source for future syncs.
+- Verification:
+  - `npm run build` ✅
+  - targeted lint ✅ with only the existing gameplay sprite `<img>` warning remaining

@@ -10,45 +10,22 @@ type DifficultyConfig = {
   color: string;
 };
 
-type PayoutBand = {
-  upTo: number;
-  multiplier: number;
-};
-
 export const DIFFICULTY_CONFIG: Record<Difficulty, DifficultyConfig> = {
-  easy: { label: "Easy", emoji: "🟢", waves: 15, maxPts: 40, fee: 0.015, color: "#16a34a" },
-  medium: { label: "Medium", emoji: "🟡", waves: 12, maxPts: 60, fee: 0.025, color: "#ca8a04" },
-  hard: { label: "Hard", emoji: "🔴", waves: 9, maxPts: 80, fee: 0.035, color: "#dc2626" },
+  easy: { label: "Easy", emoji: "🟢", waves: 15, maxPts: 45, fee: 0.015, color: "#16a34a" },
+  medium: { label: "Medium", emoji: "🟡", waves: 12, maxPts: 65, fee: 0.025, color: "#ca8a04" },
+  hard: { label: "Hard", emoji: "🔴", waves: 9, maxPts: 85, fee: 0.035, color: "#dc2626" },
 };
 
 export const PRIZE_PER_POINT: Record<Difficulty, number> = {
-  easy: 0.00025,
-  medium: 0.0004,
-  hard: 0.0006,
+  easy: 0.00032,
+  medium: 0.0005,
+  hard: 0.0007,
 };
 
 export const LIVE_POINT_VALUES: Record<Difficulty, Record<HitType, number>> = {
   easy: { normal: 1, fast: 2, fuchsia: 3, bomb: -1, super: 1 },
   medium: { normal: 1, fast: 3, fuchsia: 5, bomb: -2, super: 1 },
   hard: { normal: 1, fast: 4, fuchsia: 7, bomb: -3, super: 1 },
-};
-
-export const PAYOUT_BANDS: Record<Difficulty, PayoutBand[]> = {
-  easy: [
-    { upTo: 20, multiplier: 1 },
-    { upTo: 35, multiplier: 0.7 },
-    { upTo: Number.POSITIVE_INFINITY, multiplier: 0.4 },
-  ],
-  medium: [
-    { upTo: 30, multiplier: 1 },
-    { upTo: 50, multiplier: 0.7 },
-    { upTo: Number.POSITIVE_INFINITY, multiplier: 0.4 },
-  ],
-  hard: [
-    { upTo: 40, multiplier: 1 },
-    { upTo: 65, multiplier: 0.7 },
-    { upTo: Number.POSITIVE_INFINITY, multiplier: 0.4 },
-  ],
 };
 
 export const SUPER_BEE_BONUS_BF = 100000;
@@ -201,28 +178,17 @@ export function deriveScoreFromHits(
   );
 }
 
-export function getEffectivePayoutPoints(score: number, difficulty: Difficulty) {
-  let remaining = Math.max(0, score);
-  let previousUpper = 0;
-  let effective = 0;
-  for (const band of PAYOUT_BANDS[difficulty]) {
-    if (remaining <= 0) break;
-    const span = Number.isFinite(band.upTo) ? band.upTo - previousUpper : remaining;
-    const applied = Math.min(remaining, span);
-    effective += applied * band.multiplier;
-    remaining -= applied;
-    previousUpper = Number.isFinite(band.upTo) ? band.upTo : previousUpper;
-  }
-  return Number(effective.toFixed(2));
+export function getEffectivePayoutPoints(score: number) {
+  return Number(Math.max(0, score).toFixed(2));
 }
 
 export function calculatePrizeUsdc(score: number, difficulty: Difficulty, bonusUsdc = 0) {
-  const effectivePoints = getEffectivePayoutPoints(score, difficulty);
+  const effectivePoints = getEffectivePayoutPoints(score);
   return Number((effectivePoints * PRIZE_PER_POINT[difficulty] + bonusUsdc).toFixed(6));
 }
 
 export function getFullValueThreshold(difficulty: Difficulty) {
-  return PAYOUT_BANDS[difficulty][0].upTo;
+  return DIFFICULTY_CONFIG[difficulty].maxPts;
 }
 
 export function getMaxPrizeUsdc(difficulty: Difficulty, capMultiplier = 1) {

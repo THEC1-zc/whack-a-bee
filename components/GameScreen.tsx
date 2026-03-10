@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useEffect, useRef, useCallback } from "react";
+import Image from "next/image";
 import { sdk } from "@farcaster/miniapp-sdk";
 import type { FarcasterUser } from "@/hooks/useFarcaster";
 import { BF_PER_USDC_FALLBACK } from "@/lib/pricing";
@@ -391,7 +392,7 @@ export default function GameScreen({ user, difficulty, onGameEnd }: Props) {
         <div className="text-amber-500 text-sm font-bold uppercase tracking-widest">{cfg.emoji} {cfg.label} Mode</div>
         <div className="text-amber-400 text-sm">✅ Fee verified · Secure game ID active</div>
         <div className="text-amber-400 text-xs">{capInfo.icon} Max prize was {capInfo.label}</div>
-        <div className="text-amber-500 text-xs">{cfg.waves} waves · full-value band up to {getFullValueThreshold(difficulty)} pts</div>
+        <div className="text-amber-500 text-xs">{cfg.waves} waves · linear payout up to {getFullValueThreshold(difficulty)} pts</div>
         <div className="text-9xl font-black text-amber-400 animate-pulse">{countdown || "GO!"}</div>
       </div>
     );
@@ -508,15 +509,8 @@ export default function GameScreen({ user, difficulty, onGameEnd }: Props) {
             className="w-full py-3.5 rounded-2xl text-sm font-black text-black flex items-center justify-center gap-3"
             style={{ background: "linear-gradient(135deg, #fbbf24, #f59e0b)" }}
           >
-            <span
-              className="flex h-11 w-11 items-center justify-center rounded-full shadow-[0_6px_18px_rgba(76,29,149,0.35)]"
-              style={{ background: "#6d28d9" }}
-              aria-hidden="true"
-            >
-              <svg width="24" height="24" viewBox="0 0 24 24" fill="none">
-                <path d="M7 5.5h10v13H15.6v-5.5L12 16l-3.6-3v5.5H7v-13Z" fill="white" />
-                <path d="M9.3 8.3h1.9v2H9.3v-2Zm3.5 0h1.9v2h-1.9v-2Z" fill="#6d28d9" />
-              </svg>
+            <span className="relative h-11 w-11 overflow-hidden rounded-full shadow-[0_6px_18px_rgba(76,29,149,0.35)]">
+              <Image src="/farcaster-share.svg" alt="" fill sizes="44px" className="object-cover" />
             </span>
             Share to Farcaster
           </button>

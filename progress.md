@@ -131,3 +131,21 @@ Original prompt: end game: aggiungiamo pulsante share to farcaster, che pubblich
   - Re-verified:
     - `npm run build` ✅
     - targeted lint ✅ with only existing `no-img-element` warnings
+
+- 2026-03-10 payout rebalance pass:
+  - Removed live payout bands from `lib/gameRules.ts`; payout is now linear (`score * PRIZE_PER_POINT + bonus`) up to the point cap.
+  - Updated live caps / PPP:
+    - Easy: `45` maxPts, `0.00032` USDC/pt
+    - Medium: `65` maxPts, `0.0005` USDC/pt
+    - Hard: `85` maxPts, `0.0007` USDC/pt
+  - Updated UI copy in `components/App.tsx`, `components/GameScreen.tsx`, `components/RulesScreen.tsx`, and `app/weekly/page.tsx` to describe linear payout instead of full-value bands.
+  - Added new share icon asset `public/farcaster-share.svg` and switched share CTAs to use it.
+  - Added a new XML worksheet `Live Tuning Matrix` in `local-balance/LTM.xml` containing the tweakable live parameters for:
+    - waves / maxPts / fee / prize_per_point
+    - butterfly point values
+    - spawn chances and limits
+    - durations
+    - pacing / cap distribution notes
+  - Verification:
+    - `npm run build` ✅
+    - targeted lint ✅ with only the existing `@next/next/no-img-element` warning on the gameplay sprite

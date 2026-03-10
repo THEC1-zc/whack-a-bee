@@ -1,9 +1,9 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import Link from "next/link";
 import { useFarcaster } from "@/hooks/useFarcaster";
 import { adminFetch } from "@/lib/adminClient";
+import UserPageHeader from "@/components/UserPageHeader";
 
 const ADMIN_WALLET = (process.env.NEXT_PUBLIC_ADMIN_WALLET || "0xd29c790466675153A50DF7860B9EFDb689A21cDe").toLowerCase();
 
@@ -119,12 +119,17 @@ export default function AdminTxRecordsPage() {
   }
 
   return (
-    <div className="min-h-dvh p-5" style={{ background: "#1a0a00" }}>
+    <div className="user-page-bg min-h-dvh p-5">
       <div className="max-w-7xl mx-auto space-y-4">
-        <div className="flex items-center gap-3">
-          <Link href="/admin/transactions" className="text-amber-400 font-bold text-sm">← Transactions</Link>
-          <h1 className="text-2xl font-black text-white">Transaction Records</h1>
-        </div>
+        <UserPageHeader
+          user={user!}
+          isAdmin
+          showBack
+          backHref="/admin/transactions"
+          rulesHref="/?screen=rules"
+          leaderboardHref="/?screen=leaderboard"
+        />
+        <div className="text-2xl font-black text-white">Transaction Records</div>
 
         <div className="flex items-center gap-2 flex-wrap">
           <button

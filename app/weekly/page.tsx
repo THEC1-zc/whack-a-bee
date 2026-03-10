@@ -70,7 +70,7 @@ export default function WeeklyPage() {
             <li>• Pot = 5% of every win paid</li>
             <li>• Top 3 (overall net gain) split 60% (50/30/20)</li>
             <li>• 7 lottery prizes split 40% equally</li>
-            <li>• Tickets: 1 base, +1 full-value run, +1 profitable run, +1 every 10th claimed win</li>
+            <li>• Tickets: 1 base, +1 cap-cleared run, +1 profitable run, +1 every 10th claimed win</li>
           </ul>
         </div>
 

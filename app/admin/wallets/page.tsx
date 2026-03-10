@@ -3,6 +3,7 @@ import Link from "next/link";
 import { useCallback, useEffect, useState } from "react";
 import { useFarcaster } from "@/hooks/useFarcaster";
 import { adminFetch } from "@/lib/adminClient";
+import UserPageHeader from "@/components/UserPageHeader";
 
 const ADMIN_WALLET = (
   process.env.NEXT_PUBLIC_ADMIN_WALLET || "0xd29c790466675153A50DF7860B9EFDb689A21cDe"
@@ -77,14 +78,17 @@ export default function AdminWallets() {
     );
 
   return (
-    <div className="min-h-dvh p-5" style={{ background: "#1a0a00" }}>
+    <div className="user-page-bg min-h-dvh p-5">
       <div className="max-w-lg mx-auto space-y-4">
-        {/* Header */}
-        <div className="flex items-center gap-3 pt-2">
-          <Link href="/admin" className="text-amber-400 font-bold">
-            ← Admin
-          </Link>
-          <h1 className="text-2xl font-black text-white flex-1">💰 Wallets</h1>
+        <UserPageHeader
+          user={user!}
+          isAdmin
+          showBack
+          backHref="/admin"
+          rulesHref="/?screen=rules"
+          leaderboardHref="/?screen=leaderboard"
+        />
+        <div className="flex justify-end">
           <button
             onClick={refresh}
             disabled={loading}
