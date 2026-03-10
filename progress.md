@@ -149,3 +149,15 @@ Original prompt: end game: aggiungiamo pulsante share to farcaster, che pubblich
   - Verification:
     - `npm run build` ✅
     - targeted lint ✅ with only the existing `@next/next/no-img-element` warning on the gameplay sprite
+
+- 2026-03-10 RTP calibration pass:
+  - Tuned `PRIZE_PER_POINT` toward ~75% net RTP using Monte Carlo.
+  - New PPP:
+    - Easy: `0.00041061`
+    - Medium: `0.00099418`
+    - Hard: `0.00088064`
+  - Updated the same values in `local-balance/LTM.xml`.
+  - Monte Carlo (`1000` runs per difficulty, current DexScreener BF rate, fixed skill model) produced:
+    - Easy: `73.2%` net RTP
+    - Medium: `73.9%` net RTP
+    - Hard: `75.9%` net RTP

@@ -191,3 +191,14 @@ Payout bands:
 - Verification:
   - `npm run build` ✅
   - targeted lint ✅ with only the existing gameplay sprite `<img>` warning remaining
+
+### 2026-03-10 17:05:00 +0100
+- Calibrated `PRIZE_PER_POINT` for approximately 75% net RTP using Monte Carlo:
+  - Easy `0.00041061`
+  - Medium `0.00099418`
+  - Hard `0.00088064`
+- Mirrored the same PPP values into `local-balance/LTM.xml`.
+- Monte Carlo validation (`1000` runs/difficulty, current BF rate fetch, fixed skill assumptions) landed at:
+  - Easy `73.2%`
+  - Medium `73.9%`
+  - Hard `75.9%`

@@ -17,9 +17,9 @@ export const DIFFICULTY_CONFIG: Record<Difficulty, DifficultyConfig> = {
 };
 
 export const PRIZE_PER_POINT: Record<Difficulty, number> = {
-  easy: 0.00032,
-  medium: 0.0005,
-  hard: 0.0007,
+  easy: 0.00041061,
+  medium: 0.00099418,
+  hard: 0.00088064,
 };
 
 export const LIVE_POINT_VALUES: Record<Difficulty, Record<HitType, number>> = {
