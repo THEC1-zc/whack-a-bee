@@ -167,3 +167,14 @@ Payout bands:
   - `npm run build` ✅
   - targeted lint ✅ with only existing `@next/next/no-img-element` warnings on current avatar/sprite images
   - local `npm run dev` + Playwright smoke screenshot saved to `output/web-game/shot-0.png` (still shows fallback outside Farcaster, as expected)
+
+### 2026-03-10 16:05:00 +0100
+- Updated `components/UserPageHeader.tsx`:
+  - `Back` is now a compact icon button on the far right.
+  - removed the separate `Admin` text button from the action row.
+  - the centered game icon now links to `/admin` only for the configured admin wallet.
+- Updated `lib/gameRules.ts` wave counts:
+  - Easy `15`
+  - Medium `12`
+  - Hard `9`
+- Re-verified with `npm run build` ✅ and targeted lint ✅, keeping only the existing `<img>` warnings on current avatar/sprite rendering.

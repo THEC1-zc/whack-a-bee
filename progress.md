@@ -120,3 +120,14 @@ Original prompt: end game: aggiungiamo pulsante share to farcaster, che pubblich
     - `npm run dev` ✅
     - Playwright client run succeeded with screenshot at `output/web-game/shot-0.png`
     - limitation: outside Farcaster the app still renders the disconnected fallback, so the new authenticated header state needs visual confirmation inside the miniapp host
+
+- 2026-03-10 header/gameplay follow-up:
+  - Moved `Back` in `components/UserPageHeader.tsx` to a right-side icon button.
+  - Removed the separate Admin button from the action row; the centered game icon is now the admin entrypoint when the connected wallet matches the admin env.
+  - Updated live wave counts in `lib/gameRules.ts` to:
+    - Easy: 15 waves
+    - Medium: 12 waves
+    - Hard: 9 waves
+  - Re-verified:
+    - `npm run build` ✅
+    - targeted lint ✅ with only existing `no-img-element` warnings

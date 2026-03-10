@@ -12,27 +12,34 @@ function shortWallet(address?: string) {
 type ActionProps = {
   label: string;
   title: string;
+  icon?: string;
   active?: boolean;
   href?: string;
   onClick?: () => void;
 };
 
-function HeaderAction({ label, title, active, href, onClick }: ActionProps) {
-  const className = `rounded-full border px-3 py-1.5 text-[11px] font-black transition-colors ${
+function HeaderAction({ label, title, icon, active, href, onClick }: ActionProps) {
+  const iconOnly = Boolean(icon);
+  const className = `rounded-full border font-black transition-colors ${
+    iconOnly
+      ? "flex h-10 w-10 items-center justify-center text-lg"
+      : "px-3 py-1.5 text-[11px]"
+  } ${
     active ? "bg-amber-300 text-amber-950 border-amber-200" : "bg-[rgba(20,10,0,0.54)] text-amber-100 border-amber-900/70"
   }`;
+  const content = iconOnly ? <span aria-hidden="true">{icon}</span> : label;
 
   if (href) {
     return (
       <Link href={href} className={className} title={title}>
-        {label}
+        {content}
       </Link>
     );
   }
 
   return (
     <button type="button" onClick={onClick} className={className} title={title}>
-      {label}
+      {content}
     </button>
   );
 }
@@ -86,44 +93,37 @@ export default function UserPageHeader({
         </div>
 
         <div className="flex justify-center">
-          <div className="relative h-16 w-16 sm:h-20 sm:w-20">
-            <Image
-              src="/icon.png"
-              alt="Whack-a-Butterfly"
-              fill
-              sizes="80px"
-              className="object-contain drop-shadow-[0_0_14px_rgba(251,191,36,0.28)]"
-              priority
-            />
-          </div>
+          {isAdmin ? (
+            <Link href={adminHref} className="relative block h-16 w-16 sm:h-20 sm:w-20" title="Admin">
+              <Image
+                src="/icon.png"
+                alt="Whack-a-Butterfly"
+                fill
+                sizes="80px"
+                className="object-contain drop-shadow-[0_0_14px_rgba(251,191,36,0.28)] transition-transform hover:scale-105"
+                priority
+              />
+            </Link>
+          ) : (
+            <div className="relative h-16 w-16 sm:h-20 sm:w-20">
+              <Image
+                src="/icon.png"
+                alt="Whack-a-Butterfly"
+                fill
+                sizes="80px"
+                className="object-contain drop-shadow-[0_0_14px_rgba(251,191,36,0.28)]"
+                priority
+              />
+            </div>
+          )}
         </div>
 
         <div className="justify-self-end flex min-w-0 flex-col items-end gap-2">
-          {showBack ? (
-            backHref ? (
-              <Link
-                href={backHref}
-                className="rounded-full border border-amber-200 bg-amber-300 px-4 py-2 text-xs font-black text-amber-950"
-              >
-                Back
-              </Link>
-            ) : (
-              <button
-                type="button"
-                onClick={onBack}
-                className="rounded-full border border-amber-200 bg-amber-300 px-4 py-2 text-xs font-black text-amber-950"
-              >
-                Back
-              </button>
-            )
-          ) : (
-            <div className="h-8" />
-          )}
-
           <div className="flex flex-wrap justify-end gap-2">
             <HeaderAction
               label="Rulebook"
               title="Rulebook"
+              icon="📖"
               active={active === "rules"}
               href={rulesHref}
               onClick={onRules}
@@ -131,17 +131,17 @@ export default function UserPageHeader({
             <HeaderAction
               label="Leaderboard"
               title="Leaderboard"
+              icon="🏆"
               active={active === "leaderboard"}
               href={leaderboardHref}
               onClick={onLeaderboard}
             />
-            {isAdmin && (
-              <HeaderAction
-                label="Admin"
-                title="Admin"
-                active={false}
-                href={adminHref}
-              />
+            {showBack && (
+              backHref ? (
+                <HeaderAction label="Back" title="Back" icon="↩" href={backHref} />
+              ) : (
+                <HeaderAction label="Back" title="Back" icon="↩" onClick={onBack} />
+              )
             )}
           </div>
         </div>

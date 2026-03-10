@@ -508,7 +508,16 @@ export default function GameScreen({ user, difficulty, onGameEnd }: Props) {
             className="w-full py-3.5 rounded-2xl text-sm font-black text-black flex items-center justify-center gap-3"
             style={{ background: "linear-gradient(135deg, #fbbf24, #f59e0b)" }}
           >
-            <span className="flex h-10 w-10 items-center justify-center rounded-full text-lg font-black shadow-[0_6px_18px_rgba(76,29,149,0.35)]" style={{ background: "#6d28d9", color: "#fff" }}>f</span>
+            <span
+              className="flex h-11 w-11 items-center justify-center rounded-full shadow-[0_6px_18px_rgba(76,29,149,0.35)]"
+              style={{ background: "#6d28d9" }}
+              aria-hidden="true"
+            >
+              <svg width="24" height="24" viewBox="0 0 24 24" fill="none">
+                <path d="M7 5.5h10v13H15.6v-5.5L12 16l-3.6-3v5.5H7v-13Z" fill="white" />
+                <path d="M9.3 8.3h1.9v2H9.3v-2Zm3.5 0h1.9v2h-1.9v-2Z" fill="#6d28d9" />
+              </svg>
+            </span>
             Share to Farcaster
           </button>
         </div>

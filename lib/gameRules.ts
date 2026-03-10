@@ -16,9 +16,9 @@ type PayoutBand = {
 };
 
 export const DIFFICULTY_CONFIG: Record<Difficulty, DifficultyConfig> = {
-  easy: { label: "Easy", emoji: "🟢", waves: 10, maxPts: 40, fee: 0.015, color: "#16a34a" },
-  medium: { label: "Medium", emoji: "🟡", waves: 9, maxPts: 60, fee: 0.025, color: "#ca8a04" },
-  hard: { label: "Hard", emoji: "🔴", waves: 8, maxPts: 80, fee: 0.035, color: "#dc2626" },
+  easy: { label: "Easy", emoji: "🟢", waves: 15, maxPts: 40, fee: 0.015, color: "#16a34a" },
+  medium: { label: "Medium", emoji: "🟡", waves: 12, maxPts: 60, fee: 0.025, color: "#ca8a04" },
+  hard: { label: "Hard", emoji: "🔴", waves: 9, maxPts: 80, fee: 0.035, color: "#dc2626" },
 };
 
 export const PRIZE_PER_POINT: Record<Difficulty, number> = {
