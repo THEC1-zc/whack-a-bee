@@ -18,7 +18,7 @@ import {
   setWeeklySnapshot,
   type WeeklyTransferResult,
 } from "@/lib/weekly";
-import { getAdminStats, resetLeaderboard } from "@/lib/leaderboard";
+import { getAdminStats, getWeeklyAdminStats, resetLeaderboard } from "@/lib/leaderboard";
 import { logTxRecord } from "@/lib/txLedger";
 
 const POT_PRIVATE_KEY = process.env.POT_WALLET_PRIVATE_KEY;
@@ -193,7 +193,7 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: "Weekly pot is empty" }, { status: 400 });
     }
 
-    const stats = await getAdminStats();
+    const stats = await getWeeklyAdminStats(meta.weekId);
     const addressProfiles = new Map<string, { playerName?: string; playerUsername?: string; playerFid?: number }>();
     for (const p of stats.players) {
       if (!p.address) continue;

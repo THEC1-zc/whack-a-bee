@@ -11,7 +11,7 @@ import {
   setWeeklySnapshot,
   type WeeklyTransferResult,
 } from "@/lib/weekly";
-import { getAdminStats, resetLeaderboard } from "@/lib/leaderboard";
+import { getWeeklyAdminStats, resetLeaderboard } from "@/lib/leaderboard";
 import { logTxRecord } from "@/lib/txLedger";
 import { BF_ADDRESS, ERC20_ABI, toBFUnits } from "@/lib/contracts";
 import { createPublicClient, createWalletClient, http } from "viem";
@@ -99,7 +99,7 @@ export async function GET(req: NextRequest) {
       return NextResponse.json({ skipped: true, reason: "pot empty" });
     }
 
-    const stats = await getAdminStats();
+    const stats = await getWeeklyAdminStats(meta.weekId);
     const profiles = new Map(stats.players.filter((p: { address?: string }) => p.address).map((p: { address?: string; username?: string }) => [p.address!.toLowerCase(), p]));
     const top3 = stats.players.filter((p: { address?: string }) => p.address).slice(0, 3).map((p: { address?: string }) => p.address!.toLowerCase());
 
