@@ -359,7 +359,7 @@ export default function GameScreen({ user, difficulty, onGameEnd }: Props) {
   const burnBf = Math.floor(prizeBfGross * 0.01);
   const payoutRows = [
     { label: "Game Difficulty", value: `${cfg.emoji} ${cfg.label}`, tone: cfg.color },
-    { label: "Game Type", value: `${capInfo.icon} ${capInfo.label}`, tone: "#c084fc" },
+    { label: "Game Type", value: `${capInfo.icon} ${capInfo.label}`, tone: "#f8e7b4" },
     { label: "Weekly Pot Share", value: `${weeklyBf.toLocaleString()} BF`, tone: "#fbbf24" },
     { label: "Burn Share", value: `${burnBf.toLocaleString()} BF`, tone: "#f87171" },
   ];
@@ -579,8 +579,22 @@ export default function GameScreen({ user, difficulty, onGameEnd }: Props) {
         </div>
       )}
 
+      <div className="mx-4 mb-2">
+        <div
+          className="rounded-full border px-3 py-1.5 text-center text-[11px] font-black tracking-[0.18em] uppercase"
+          style={{
+            background: "rgba(24, 12, 2, 0.68)",
+            borderColor: "rgba(255, 214, 122, 0.24)",
+            color: "#fff2cf",
+            textShadow: "0 1px 8px rgba(16, 7, 1, 0.32)",
+          }}
+        >
+          {capInfo.icon} {capInfo.label} Run
+        </div>
+      </div>
+
       {session?.capType === "jolly" && (
-        <div className="mx-4 mb-2 rounded-xl border border-violet-700 bg-violet-900/30 text-violet-200 text-[11px] font-bold text-center py-1.5">
+        <div className="mx-4 mb-2 rounded-xl border border-violet-300/30 bg-[rgba(69,34,113,0.38)] text-violet-100 text-[11px] font-bold text-center py-1.5 shadow-[0_8px_18px_rgba(69,34,113,0.18)]">
           🃏 JOLLY WAVE: {activeWaveInfo.icon} {activeWaveInfo.label}
         </div>
       )}

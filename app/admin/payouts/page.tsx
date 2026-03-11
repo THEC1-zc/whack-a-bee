@@ -119,7 +119,7 @@ export default function AdminPayoutsPage() {
   }
 
   return (
-    <div className="user-page-bg min-h-dvh p-5">
+    <div className="user-page-bg user-page-overlay min-h-dvh p-5">
       <div className="max-w-6xl mx-auto space-y-4">
         <UserPageHeader
           user={user!}
@@ -132,7 +132,7 @@ export default function AdminPayoutsPage() {
         <div className="flex items-center justify-between gap-3 flex-wrap">
           <div className="text-2xl font-black text-white">Weekly Payout History</div>
           <div className="flex items-center gap-2">
-            <label className="text-amber-300 text-xs">Week</label>
+            <label className="text-amber-100/75 text-xs">Week</label>
             <input
               value={weekFilter}
               onChange={(e) => {
@@ -140,14 +140,14 @@ export default function AdminPayoutsPage() {
                 setWeekFilter(e.target.value.trim());
               }}
               placeholder="YYYY-W##"
-              className="px-3 py-2 rounded-lg bg-amber-950 border border-amber-900 text-amber-100 text-sm"
+              className="page-panel-soft px-3 py-2 rounded-full text-amber-100 text-sm"
             />
           </div>
         </div>
 
         {error && <div className="text-red-400 text-sm">{error}</div>}
 
-        <div className="rounded-xl border border-amber-900 p-3 text-amber-200 text-sm" style={{ background: "#140a00" }}>
+        <div className="page-panel px-4 py-3 text-amber-200 text-sm">
           Rows: {rows.length}
           {uniqueWeeks.length > 0 && <span className="ml-3">Weeks: {uniqueWeeks.join(", ")}</span>}
         </div>
@@ -156,8 +156,8 @@ export default function AdminPayoutsPage() {
           <button
             type="button"
             onClick={() => copyText(rows.map(rowToText).join("\n"), `Copied ${rows.length} rows`)}
-            className="px-3 py-1 rounded-lg text-xs font-black text-black"
-            style={{ background: "linear-gradient(135deg, #fbbf24, #f59e0b)" }}
+            className="px-3 py-1 rounded-full text-xs font-black text-amber-950"
+            style={{ background: "linear-gradient(135deg, #f7bd2b, #ffdc72)" }}
           >
             Copy All
           </button>
@@ -170,7 +170,7 @@ export default function AdminPayoutsPage() {
           ) : rows.length === 0 ? (
             <div className="text-amber-500 text-sm">No payout rows</div>
           ) : rows.map((r, idx) => (
-            <div key={`${r.weekId}-${r.txHash || idx}`} className="rounded-xl border border-amber-900 p-3 text-xs" style={{ background: "#140a00" }}>
+            <div key={`${r.weekId}-${r.txHash || idx}`} className="page-panel-soft rounded-[22px] p-3 text-xs">
               <div className="text-amber-400">{r.weekId} · {new Date(r.at).toLocaleString("en-GB", { timeZone: "Europe/Rome" })}</div>
               <div className={`mt-1 ${r.ok ? "text-green-400" : "text-red-400"}`}>{r.status}</div>
               <div className="text-amber-200 mt-1">Player: {r.playerUsername ? `@${r.playerUsername}` : (r.player || "-")}</div>
@@ -200,7 +200,7 @@ export default function AdminPayoutsPage() {
           ))}
         </div>
 
-        <div className="hidden md:block rounded-xl border border-amber-900 overflow-auto" style={{ background: "#140a00" }}>
+        <div className="page-panel overflow-auto">
           <table className="min-w-full text-xs">
             <thead>
               <tr className="text-amber-400 border-b border-amber-900">

@@ -150,7 +150,7 @@ export default function AdminTransactions() {
     "w-full py-4 rounded-2xl text-base font-black text-black disabled:opacity-40 transition-all active:scale-95 shadow-lg";
 
   return (
-    <div className="user-page-bg min-h-dvh p-5">
+    <div className="user-page-bg user-page-overlay min-h-dvh p-5">
       <div className="max-w-lg mx-auto space-y-4">
         <UserPageHeader
           user={user!}
@@ -175,14 +175,11 @@ export default function AdminTransactions() {
         )}
 
         <div className="grid gap-3 sm:grid-cols-[1.25fr,0.75fr]">
-          <div
-            className="rounded-2xl border border-amber-900 p-4"
-            style={{ background: "#140a00" }}
-          >
+          <div className="page-panel px-4 py-4">
             <div className="flex items-start justify-between gap-3">
               <div>
-                <div className="text-amber-400 text-xs uppercase tracking-[0.22em]">Recent Transactions</div>
-                <div className="text-amber-600 text-sm mt-1">Fee in, payouts, weekly, errors</div>
+                <div className="page-kicker">Recent Transactions</div>
+                <div className="text-amber-100/60 text-sm mt-1">Fee in, payouts, weekly, errors</div>
               </div>
               <Link href="/admin/tx-records" className="text-amber-300 text-xs font-bold underline underline-offset-4">
                 Open full log
@@ -196,15 +193,14 @@ export default function AdminTransactions() {
               ) : recentTx.map((tx) => (
                 <div
                   key={tx.id}
-                  className="rounded-xl border border-amber-900/60 px-3 py-3"
-                  style={{ background: "rgba(36, 19, 0, 0.7)" }}
+                  className="page-panel-soft rounded-[22px] px-3 py-3"
                 >
                   <div className="flex items-start justify-between gap-3">
                     <div className="min-w-0">
                       <div className="text-white text-sm font-black truncate">
                         {tx.kind.replaceAll("_", " ")}
                       </div>
-                      <div className="text-amber-600 text-[11px] mt-0.5">
+                      <div className="text-amber-100/50 text-[11px] mt-0.5">
                         {new Date(tx.at).toLocaleString("en-GB", { timeZone: "Europe/Rome" })}
                       </div>
                     </div>
@@ -212,13 +208,13 @@ export default function AdminTransactions() {
                       {tx.status}
                     </div>
                   </div>
-                  <div className="mt-2 flex flex-wrap gap-x-3 gap-y-1 text-[11px] text-amber-200">
+                  <div className="mt-2 flex flex-wrap gap-x-3 gap-y-1 text-[11px] text-amber-100/80">
                     <span>{tx.playerUsername ? `@${tx.playerUsername}` : short(tx.playerAddress)}</span>
                     <span>USDC {typeof tx.amountUsdc === "number" ? tx.amountUsdc.toFixed(4) : "-"}</span>
                     <span>BF {typeof tx.amountBf === "number" ? Math.round(tx.amountBf).toLocaleString() : "-"}</span>
                   </div>
                   <div className="mt-2 flex flex-wrap items-center gap-3 text-[11px]">
-                    <span className="text-amber-500">{tx.stage || "stage n/a"}</span>
+                    <span className="text-amber-100/55">{tx.stage || "stage n/a"}</span>
                     {tx.txHash && tx.basescanUrl ? (
                       <a href={tx.basescanUrl} target="_blank" rel="noreferrer" className="text-amber-300 underline underline-offset-4">
                         {shortTx(tx.txHash)}
@@ -235,8 +231,7 @@ export default function AdminTransactions() {
 
           <Link
             href="/admin/tx-records"
-            className="flex items-center gap-4 rounded-2xl p-5 border border-amber-900 active:scale-95 transition-transform"
-            style={{ background: "#140a00" }}
+            className="page-panel-soft flex items-center gap-4 rounded-[26px] p-5 active:scale-95 transition-transform"
           >
             <div
               className="w-14 h-14 rounded-xl flex items-center justify-center text-3xl shrink-0"
@@ -246,9 +241,9 @@ export default function AdminTransactions() {
             </div>
             <div className="flex-1">
               <div className="text-white font-black text-lg">Tx Log completo</div>
-              <div className="text-amber-600 text-sm">Audit completo delle transazioni</div>
+              <div className="text-amber-100/60 text-sm">Audit completo delle transazioni</div>
             </div>
-            <div className="text-amber-700 text-2xl">›</div>
+            <div className="text-amber-100/45 text-2xl">›</div>
           </Link>
         </div>
 

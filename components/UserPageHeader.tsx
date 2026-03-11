@@ -20,12 +20,14 @@ type ActionProps = {
 
 function HeaderAction({ label, title, icon, active, href, onClick }: ActionProps) {
   const iconOnly = Boolean(icon);
-  const className = `rounded-full border font-black transition-colors ${
+  const className = `page-chip font-black transition-all duration-200 hover:translate-y-[-1px] ${
     iconOnly
-      ? "flex h-10 w-10 items-center justify-center text-lg"
-      : "px-3 py-1.5 text-[11px]"
+      ? "flex h-11 w-11 items-center justify-center text-lg"
+      : "px-3 py-2 text-[11px]"
   } ${
-    active ? "bg-amber-300 text-amber-950 border-amber-200" : "bg-[rgba(20,10,0,0.54)] text-amber-100 border-amber-900/70"
+    active
+      ? "bg-amber-200/95 text-amber-950 shadow-[0_10px_20px_rgba(247,189,43,0.18)]"
+      : "text-amber-50"
   }`;
   const content = iconOnly ? <span aria-hidden="true">{icon}</span> : label;
 
@@ -76,7 +78,7 @@ export default function UserPageHeader({
   active?: "home" | "rules" | "leaderboard" | "weekly" | "payout";
 }) {
   return (
-    <div className="user-page-chrome w-full rounded-[28px] px-4 py-3">
+    <div className="user-page-chrome page-fade-top w-full rounded-[30px] px-4 py-3.5">
       <div className="grid grid-cols-[minmax(0,1fr)_auto_minmax(0,1fr)] items-center gap-3">
         <div className="min-w-0 flex items-center gap-3">
           {user.pfpUrl ? (
@@ -84,40 +86,42 @@ export default function UserPageHeader({
             <img
               src={user.pfpUrl}
               alt={user.username}
-              className="h-14 w-14 rounded-full border-2 border-amber-300 object-cover shadow-[0_0_18px_rgba(251,191,36,0.22)]"
+              className="h-14 w-14 rounded-full border border-amber-200/45 object-cover shadow-[0_10px_24px_rgba(247,189,43,0.16)]"
             />
           ) : (
-            <div className="flex h-14 w-14 items-center justify-center rounded-full border-2 border-amber-300 bg-[rgba(20,10,0,0.68)] text-2xl">
+            <div className="page-chip flex h-14 w-14 items-center justify-center rounded-full text-2xl">
               🦋
             </div>
           )}
           <div className="min-w-0">
             <div className="truncate text-sm font-black text-white">{user.displayName}</div>
-            <div className="truncate text-xs text-amber-300">@{user.username}</div>
-            <div className="truncate text-[11px] text-amber-100/85">{shortWallet(user.address)}</div>
+            <div className="truncate text-xs text-amber-200">@{user.username}</div>
+            <div className="truncate text-[11px] text-amber-50/72">{shortWallet(user.address)}</div>
           </div>
         </div>
 
         <div className="flex justify-center">
           {isAdmin ? (
-            <Link href={adminHref} className="relative block h-16 w-16 sm:h-20 sm:w-20" title="Admin">
+            <Link href={adminHref} className="relative block h-16 w-16 rounded-[22px] sm:h-20 sm:w-20" title="Admin">
+              <span className="absolute inset-0 rounded-[22px] bg-[radial-gradient(circle,rgba(255,228,156,0.2)_0%,rgba(255,228,156,0.05)_45%,transparent_75%)]" />
               <Image
                 src="/icon.png"
                 alt="Whack-a-Butterfly"
                 fill
                 sizes="80px"
-                className="object-contain drop-shadow-[0_0_14px_rgba(251,191,36,0.28)] transition-transform hover:scale-105"
+                className="object-contain drop-shadow-[0_0_18px_rgba(247,189,43,0.32)] transition-transform hover:scale-[1.04]"
                 priority
               />
             </Link>
           ) : (
             <div className="relative h-16 w-16 sm:h-20 sm:w-20">
+              <span className="absolute inset-0 rounded-[22px] bg-[radial-gradient(circle,rgba(255,228,156,0.16)_0%,rgba(255,228,156,0.04)_45%,transparent_75%)]" />
               <Image
                 src="/icon.png"
                 alt="Whack-a-Butterfly"
                 fill
                 sizes="80px"
-                className="object-contain drop-shadow-[0_0_14px_rgba(251,191,36,0.28)]"
+                className="object-contain drop-shadow-[0_0_18px_rgba(247,189,43,0.3)]"
                 priority
               />
             </div>

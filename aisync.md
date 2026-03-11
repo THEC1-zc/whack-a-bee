@@ -218,6 +218,17 @@ Payout bands:
   - Hard `79.41%`
 
 ### 2026-03-10 19:10:00 +0100
+- Visual redesign pass across the app shell:
+  - introduced a softer shared visual language in `app/globals.css` with unified panel/chip/surface classes
+  - reduced the old hard-box feeling by replacing many opaque card blocks with layered translucent surfaces
+  - refreshed `components/UserPageHeader.tsx` spacing, halo treatment, and action styling
+  - restyled `components/App.tsx`, `components/RulesScreen.tsx`, `components/LeaderboardScreen.tsx`, and `app/weekly/page.tsx` to the new shared system
+  - aligned admin surfaces in `app/admin/page.tsx`, `app/admin/transactions/page.tsx`, `app/admin/wallets/page.tsx`, `app/admin/payouts/page.tsx`, `app/admin/tx-records/page.tsx`, and `app/admin/weekly/page.tsx`
+  - improved in-game run type readability in `components/GameScreen.tsx` with a dedicated high-contrast run badge and clearer payout `Game Type` tone
+- Verification:
+  - `npm run build` ✅
+  - targeted lint ✅ with only existing `<img>` warnings in `components/GameScreen.tsx` and `components/LeaderboardScreen.tsx`
+  - local Playwright/browser smoke could not run in the current sandbox because headless Chromium launch is blocked by macOS permission restrictions
 - Reworked game type distribution in `lib/gameRules.ts`:
   - `Low` `0.9x` at `15%`
   - `Nice` `1.1x` at `20%`

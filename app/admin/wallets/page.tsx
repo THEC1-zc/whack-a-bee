@@ -78,7 +78,7 @@ export default function AdminWallets() {
     );
 
   return (
-    <div className="user-page-bg min-h-dvh p-5">
+    <div className="user-page-bg user-page-overlay min-h-dvh p-5">
       <div className="max-w-lg mx-auto space-y-4">
         <UserPageHeader
           user={user!}
@@ -92,15 +92,15 @@ export default function AdminWallets() {
           <button
             onClick={refresh}
             disabled={loading}
-            className="px-4 py-2 rounded-xl text-sm font-black text-black disabled:opacity-40 transition-all active:scale-95"
-            style={{ background: "linear-gradient(135deg,#fbbf24,#f59e0b)" }}
+            className="px-4 py-2 rounded-full text-sm font-black text-amber-950 disabled:opacity-40 transition-all active:scale-95"
+            style={{ background: "linear-gradient(135deg,#f7bd2b,#ffdc72)" }}
           >
             {loading ? "⏳" : "🔄 Refresh"}
           </button>
         </div>
 
         {lastRefresh && (
-          <div className="text-amber-800 text-xs">
+          <div className="text-amber-100/55 text-xs">
             Aggiornato: {new Date(lastRefresh).toLocaleTimeString("it-IT")}
           </div>
         )}
@@ -127,8 +127,7 @@ export default function AdminWallets() {
             return (
               <div
                 key={key}
-                className="rounded-2xl border border-amber-900 overflow-hidden"
-                style={{ background: "#140a00" }}
+                className="page-panel rounded-[28px] overflow-hidden"
               >
                 {/* Card header */}
                 <div
@@ -209,7 +208,7 @@ export default function AdminWallets() {
                       href={`https://basescan.org/address/${w.address}`}
                       target="_blank"
                       rel="noreferrer"
-                      className="text-amber-700 text-xs hover:text-amber-400 transition-colors font-mono break-all"
+                      className="text-amber-100/55 text-xs hover:text-amber-200 transition-colors font-mono break-all"
                     >
                       {w.address}
                     </a>
@@ -221,11 +220,8 @@ export default function AdminWallets() {
 
         {/* Totali aggregati */}
         {wallets && (
-          <div
-            className="rounded-2xl border border-amber-900 p-4"
-            style={{ background: "#140a00" }}
-          >
-            <div className="text-amber-400 text-xs uppercase tracking-widest mb-3">
+          <div className="page-panel px-4 py-4">
+            <div className="page-kicker mb-3">
               Totali aggregati
             </div>
             <div className="grid grid-cols-3 gap-3 text-center">
@@ -252,7 +248,7 @@ export default function AdminWallets() {
                 },
               ].map((t) => (
                 <div key={t.l}>
-                  <div className="text-amber-700 text-xs">{t.l}</div>
+                  <div className="text-amber-100/55 text-xs">{t.l}</div>
                   <div className="text-white font-black text-base mt-1">{t.v}</div>
                 </div>
               ))}

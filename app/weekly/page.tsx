@@ -33,7 +33,7 @@ export default function WeeklyPage() {
   }, []);
 
   return (
-    <div className="user-page-bg min-h-dvh p-6">
+    <div className="user-page-bg user-page-overlay min-h-dvh p-6">
       <div className="max-w-xl mx-auto space-y-4">
         {user && (
           <UserPageHeader
@@ -47,26 +47,26 @@ export default function WeeklyPage() {
           />
         )}
 
-        <div className="rounded-xl border border-amber-900 p-4 text-center" style={{ background: "#140a00" }}>
-          <div className="text-amber-500 text-xs uppercase tracking-widest">Current Pot</div>
-          <div className="text-2xl font-black text-amber-200 mt-1">
+        <div className="page-panel px-5 py-5 text-center">
+          <div className="page-kicker">Current Pot</div>
+          <div className="mt-2 text-3xl font-black text-amber-50">
             {state ? `${Math.round(state.potBf).toLocaleString()} BF` : "—"}
           </div>
           {state?.payoutAt && (
-            <div className="text-amber-300 text-xs mt-1">
+            <div className="page-copy text-xs mt-2">
               Payout {new Date(state.payoutAt).toLocaleString("en-GB", { timeZone: "Europe/Rome" })} CET
             </div>
           )}
           {state?.payoutAt && now != null && (
-            <div className="text-amber-300 text-xs mt-1">
+            <div className="page-muted text-xs mt-1">
               Countdown {formatCountdown(state.payoutAt - now)}
             </div>
           )}
         </div>
 
-        <div className="rounded-xl border border-amber-900 p-4" style={{ background: "#140a00" }}>
-          <div className="text-amber-400 text-xs uppercase tracking-widest mb-2">How it works</div>
-          <ul className="text-amber-200 text-sm space-y-1">
+        <div className="page-panel px-5 py-5">
+          <div className="page-kicker mb-3">How it works</div>
+          <ul className="page-copy text-sm space-y-2 leading-6">
             <li>• Pot = 5% of every win paid</li>
             <li>• Top 3 (overall net gain) split 60% (50/30/20)</li>
             <li>• 7 lottery prizes split 40% equally</li>

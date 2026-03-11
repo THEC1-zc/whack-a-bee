@@ -119,7 +119,7 @@ export default function AdminTxRecordsPage() {
   }
 
   return (
-    <div className="user-page-bg min-h-dvh p-5">
+    <div className="user-page-bg user-page-overlay min-h-dvh p-5">
       <div className="max-w-7xl mx-auto space-y-4">
         <UserPageHeader
           user={user!}
@@ -135,8 +135,8 @@ export default function AdminTxRecordsPage() {
           <button
             type="button"
             onClick={() => copyText(records.map(toRowText).join("\n"), `Copied ${records.length} rows`)}
-            className="px-3 py-1 rounded-lg text-xs font-black text-black"
-            style={{ background: "linear-gradient(135deg, #fbbf24, #f59e0b)" }}
+            className="px-3 py-1 rounded-full text-xs font-black text-amber-950"
+            style={{ background: "linear-gradient(135deg, #f7bd2b, #ffdc72)" }}
           >
             Copy All
           </button>
@@ -151,7 +151,7 @@ export default function AdminTxRecordsPage() {
           ) : records.length === 0 ? (
             <div className="text-amber-500 text-sm">No records</div>
           ) : records.map((r) => (
-            <div key={r.id} className="rounded-xl border border-amber-900 p-3 text-xs" style={{ background: "#140a00" }}>
+            <div key={r.id} className="page-panel-soft rounded-[22px] p-3 text-xs">
               <div className="text-amber-400">{new Date(r.at).toLocaleString("en-GB", { timeZone: "Europe/Rome" })}</div>
               <div className="text-amber-200 mt-1">{r.kind} · <span className={r.status === "ok" ? "text-green-400" : "text-red-400"}>{r.status}</span></div>
               <div className="text-amber-200 mt-1">Player: {r.playerUsername ? `@${r.playerUsername}` : short(r.playerAddress)}</div>
@@ -177,7 +177,7 @@ export default function AdminTxRecordsPage() {
           ))}
         </div>
 
-        <div className="hidden md:block rounded-xl border border-amber-900 overflow-auto" style={{ background: "#140a00" }}>
+        <div className="page-panel overflow-auto">
           <table className="min-w-full text-xs">
             <thead>
               <tr className="text-amber-400 border-b border-amber-900">

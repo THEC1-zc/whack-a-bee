@@ -194,7 +194,7 @@ export default function AdminWeekly() {
     "w-full py-4 rounded-2xl text-base font-black text-black disabled:opacity-40 transition-all active:scale-95 shadow-lg";
 
   return (
-    <div className="user-page-bg min-h-dvh p-5">
+    <div className="user-page-bg user-page-overlay min-h-dvh p-5">
       <div className="max-w-lg mx-auto space-y-4">
         <UserPageHeader
           user={user!}

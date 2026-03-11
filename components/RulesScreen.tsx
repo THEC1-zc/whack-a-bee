@@ -25,7 +25,7 @@ export default function RulesScreen({
   onLeaderboard: () => void;
 }) {
   return (
-    <div className="user-page-bg min-h-dvh flex flex-col">
+    <div className="user-page-bg user-page-overlay min-h-dvh flex flex-col">
       <div className="mx-4 mt-4">
         <UserPageHeader
           user={user}
@@ -38,7 +38,7 @@ export default function RulesScreen({
         />
       </div>
 
-      <div className="flex-1 overflow-y-auto px-4 py-4 space-y-4">
+      <div className="page-wrap mx-auto flex-1 overflow-y-auto px-4 py-4 space-y-4">
 
         {/* Come si gioca */}
         <Section title="🎮 How to Play">
@@ -58,7 +58,7 @@ export default function RulesScreen({
         <Section title="🎲 Game Types">
           <div className="space-y-2">
             {CAP_TYPES.map((item) => (
-              <div key={item.key} className="rounded-xl p-3 border" style={{ background: "#0f0800", borderColor: "#7c3aed44" }}>
+              <div key={item.key} className="page-panel-soft rounded-[22px] p-3">
                 <div className="flex items-center justify-between">
                   <div className="text-white font-black">{item.icon} {item.label}</div>
                   <div className="text-violet-300 text-sm font-bold">{item.pct}% chance</div>
@@ -77,7 +77,7 @@ export default function RulesScreen({
         <Section title="⚙️ Difficulty">
           <div className="space-y-2">
             {(Object.entries(DIFFICULTY_CONFIG) as [keyof typeof DIFFICULTY_CONFIG, typeof DIFFICULTY_CONFIG.easy][]).map(([key, cfg]) => (
-              <div key={key} className="rounded-xl p-3 border" style={{ background: "#0f0800", borderColor: cfg.color + "55" }}>
+              <div key={key} className="page-panel-soft rounded-[22px] p-3" style={{ borderColor: cfg.color + "33" }}>
                 <div className="flex items-center justify-between mb-2">
                   <div className="flex items-center gap-2">
                     <span className="text-lg">{cfg.emoji}</span>
@@ -99,7 +99,7 @@ export default function RulesScreen({
         {/* Premi */}
         <Section title="💰 Prize System">
           <div className="space-y-3">
-            <div className="rounded-xl p-3 border border-green-900" style={{ background: "#0a1f0a" }}>
+            <div className="page-panel-soft rounded-[22px] p-3 border border-green-300/15">
               <div className="text-green-400 font-bold text-sm mb-1">Reward per point</div>
               <div className="text-green-300 text-2xl font-black">{(PRIZE_PER_POINT.medium * BF_PER_USDC_FALLBACK).toFixed(0)} BF</div>
               <div className="text-green-700 text-xs mt-1">base value for each point</div>
@@ -110,7 +110,7 @@ export default function RulesScreen({
               Claims are executed on-chain in BF from your connected Farcaster wallet.
             </p>
 
-            <div className="rounded-xl p-3 border border-amber-900" style={{ background: "#1f1000" }}>
+            <div className="page-panel-soft rounded-[22px] p-3">
               <div className="text-amber-500 text-xs uppercase tracking-widest mb-2">Prize examples</div>
               <div className="space-y-1">
                 {[
@@ -125,7 +125,7 @@ export default function RulesScreen({
                 ))}
               </div>
             </div>
-            <div className="rounded-xl p-3 border border-amber-900" style={{ background: "#1f1000" }}>
+            <div className="page-panel-soft rounded-[22px] p-3">
               <div className="text-amber-500 text-xs uppercase tracking-widest mb-2">Weekly tickets</div>
               <div className="text-amber-200 text-sm">1 base ticket, +1 for reaching the point cap, +1 for a profitable run, +1 every 10th claimed win.</div>
             </div>
@@ -137,7 +137,7 @@ export default function RulesScreen({
           <p className="text-amber-200 text-sm leading-relaxed mb-3">
             All prizes are paid from a dedicated pool. If the balance drops below <span className="text-amber-400 font-bold">100,000 BF</span>, the game is temporarily suspended until the pool is refilled.
           </p>
-          <div className="rounded-xl p-3 border border-amber-900" style={{ background: "#1f1000" }}>
+          <div className="page-panel-soft rounded-[22px] p-3">
             <div className="text-amber-500 text-xs uppercase tracking-widest mb-1">Prize pool wallet</div>
             <div className="text-amber-300 font-mono text-sm break-all">{PRIZE_WALLET}</div>
           </div>
@@ -149,17 +149,17 @@ export default function RulesScreen({
             The fee is charged before each game via your Farcaster wallet. Payment is made on the <span className="text-amber-400 font-bold">Base</span> network in <span className="text-amber-400 font-bold">USDC</span>.
           </p>
           <div className="grid grid-cols-3 gap-2 text-center">
-            <div className="rounded-xl p-2 border border-green-900" style={{ background: "#0a1a0a" }}>
+            <div className="page-panel-soft rounded-[18px] p-2 border border-green-300/15">
               <div className="text-green-400 text-xs">🟢 Easy</div>
               <div className="text-green-300 font-black">{DIFFICULTY_CONFIG.easy.fee.toFixed(3)}</div>
               <div className="text-green-800 text-xs">USDC</div>
             </div>
-            <div className="rounded-xl p-2 border border-yellow-900" style={{ background: "#1a1500" }}>
+            <div className="page-panel-soft rounded-[18px] p-2 border border-yellow-300/15">
               <div className="text-yellow-400 text-xs">🟡 Medium</div>
               <div className="text-yellow-300 font-black">{DIFFICULTY_CONFIG.medium.fee.toFixed(3)}</div>
               <div className="text-yellow-800 text-xs">USDC</div>
             </div>
-            <div className="rounded-xl p-2 border border-red-900" style={{ background: "#1a0a0a" }}>
+            <div className="page-panel-soft rounded-[18px] p-2 border border-red-300/15">
               <div className="text-red-400 text-xs">🔴 Hard</div>
               <div className="text-red-300 font-black">{DIFFICULTY_CONFIG.hard.fee.toFixed(3)}</div>
               <div className="text-red-800 text-xs">USDC</div>
@@ -190,8 +190,8 @@ export default function RulesScreen({
 
 function Section({ title, children }: { title: string; children: React.ReactNode }) {
   return (
-    <div className="rounded-2xl p-4 border border-amber-950" style={{ background: "#150800" }}>
-      <h3 className="text-white font-black text-base mb-3">{title}</h3>
+    <div className="page-panel page-fade-top rounded-[28px] p-5">
+      <h3 className="page-title text-base mb-3">{title}</h3>
       {children}
     </div>
   );
@@ -199,9 +199,9 @@ function Section({ title, children }: { title: string; children: React.ReactNode
 
 function Stat({ label, value }: { label: string; value: string }) {
   return (
-    <div className="rounded-lg p-2" style={{ background: "#1a0a00" }}>
-      <div className="text-amber-300 text-xs">{label}</div>
-      <div className="text-amber-300 font-bold text-sm">{value}</div>
+    <div className="page-panel-soft rounded-[18px] p-2.5">
+      <div className="text-amber-100 text-xs">{label}</div>
+      <div className="text-amber-50 font-bold text-sm">{value}</div>
     </div>
   );
 }
@@ -210,11 +210,11 @@ function BeeRule({ emoji, label, desc, points, color, fast }: {
   emoji: string; label: string; desc: string; points: string; color: string; fast?: boolean;
 }) {
   return (
-    <div className="flex items-center gap-3 rounded-xl p-3" style={{ background: "#0f0800", border: `1px solid ${color}33` }}>
+    <div className="flex items-center gap-3 rounded-[22px] p-3 page-panel-soft" style={{ border: `1px solid ${color}26` }}>
       <span className="text-3xl" style={{ filter: fast ? "hue-rotate(180deg)" : undefined }}>{emoji}</span>
       <div className="flex-1">
         <div className="text-white font-bold text-sm">{label}</div>
-        <div className="text-amber-200 text-xs">{desc}</div>
+        <div className="page-copy text-xs">{desc}</div>
       </div>
       <div className="font-black text-sm" style={{ color }}>{points}</div>
     </div>

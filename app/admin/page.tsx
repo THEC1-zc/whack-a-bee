@@ -104,7 +104,7 @@ export default function AdminHome() {
   }
 
   return (
-    <div className="user-page-bg min-h-dvh p-5">
+    <div className="user-page-bg user-page-overlay min-h-dvh p-5">
       <div className="max-w-lg mx-auto space-y-5">
         <UserPageHeader
           user={user!}
@@ -114,7 +114,7 @@ export default function AdminHome() {
           rulesHref="/?screen=rules"
           leaderboardHref="/?screen=leaderboard"
         />
-        <div className="text-right text-[10px] text-amber-900">{BUILD_STAMP}</div>
+        <div className="text-right text-[10px] text-amber-100/55">{BUILD_STAMP}</div>
 
         {/* Quick stats */}
         {qs ? (
@@ -125,12 +125,8 @@ export default function AdminHome() {
               { l: "Fee USDC", v: qs.totalFees.toFixed(2) },
               { l: "Pot BF", v: Math.round(qs.potBf).toLocaleString() },
             ].map((s) => (
-              <div
-                key={s.l}
-                className="rounded-2xl border border-amber-900 p-4 text-center"
-                style={{ background: "#140a00" }}
-              >
-                <div className="text-amber-600 text-xs uppercase tracking-widest">{s.l}</div>
+              <div key={s.l} className="page-panel-soft rounded-[22px] p-4 text-center">
+                <div className="page-kicker">{s.l}</div>
                 <div className="text-white text-2xl font-black mt-1">{s.v}</div>
               </div>
             ))}
@@ -145,8 +141,7 @@ export default function AdminHome() {
             <Link
               key={s.href}
               href={s.href}
-              className="flex items-center gap-4 rounded-2xl p-5 border border-amber-900 active:scale-95 transition-transform"
-              style={{ background: "#140a00" }}
+              className="page-panel-soft flex items-center gap-4 rounded-[26px] p-5 active:scale-95 transition-transform"
             >
               <div
                 className="w-14 h-14 rounded-xl flex items-center justify-center text-3xl shrink-0"
@@ -156,9 +151,9 @@ export default function AdminHome() {
               </div>
               <div className="flex-1 min-w-0">
                 <div className="text-white font-black text-lg">{s.label}</div>
-                <div className="text-amber-600 text-sm">{s.desc}</div>
+                <div className="text-amber-100/60 text-sm">{s.desc}</div>
               </div>
-              <div className="text-amber-700 text-2xl">›</div>
+              <div className="text-amber-100/45 text-2xl">›</div>
             </Link>
           ))}
         </div>

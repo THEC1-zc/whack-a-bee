@@ -159,8 +159,8 @@ export default function App() {
   const ticketTotal = (visibleTickets?.claimed || 0) + (visibleTickets?.pending || 0);
 
   return (
-    <div className="user-page-bg min-h-dvh flex flex-col items-center p-5 gap-4">
-      <div className="mt-2 w-full max-w-sm">
+    <div className="user-page-bg user-page-overlay min-h-dvh flex flex-col items-center p-5">
+      <div className="page-wrap page-stack mt-2">
         <UserPageHeader
           user={user}
           isAdmin={user.address?.toLowerCase() === ADMIN_WALLET}
@@ -170,24 +170,25 @@ export default function App() {
           onLeaderboard={() => setScreen("leaderboard")}
           active="home"
         />
-      </div>
-
-      <div className="user-page-chrome w-full max-w-sm rounded-2xl px-4 py-5 text-center">
-        <div className="text-6xl mb-1" style={{ filter: "drop-shadow(0 0 20px #fbbf24)" }}>🦋</div>
-        <h1 className="text-3xl font-black text-white">Whack-a-Butterfly</h1>
+        <div className="page-panel page-fade-top px-5 py-6 text-center">
+        <div className="page-kicker">Miniapp live on Farcaster</div>
+        <div className="mt-3 text-6xl" style={{ filter: "drop-shadow(0 0 20px rgba(247,189,43,0.32))" }}>🦋</div>
+        <h1 className="page-title mt-2 text-[2.35rem] leading-none">Whack-a-Butterfly</h1>
+        <p className="page-copy mt-3 text-sm leading-6">
+          Clean waves, climb the weekly pot, and turn sharp taps into BF.
+        </p>
         <button
           type="button"
           onClick={handleShareApp}
-          className="mt-3 px-4 py-2 rounded-xl text-xs font-black text-black inline-flex items-center gap-2"
-          style={{ background: "linear-gradient(135deg, #fbbf24, #f59e0b)" }}
+          className="mt-4 inline-flex items-center gap-3 rounded-full bg-[linear-gradient(135deg,#f7bd2b,#ffda6b)] px-4 py-2.5 text-xs font-black text-amber-950 shadow-[0_14px_28px_rgba(247,189,43,0.2)]"
         >
-          <span className="relative h-5 w-5 overflow-hidden rounded-full">
-            <Image src="/farcaster-share.svg" alt="" fill sizes="20px" className="object-cover" />
+          <span className="relative h-6 w-6 overflow-hidden rounded-full ring-1 ring-amber-950/10">
+            <Image src="/farcaster-share.svg" alt="" fill sizes="24px" className="object-cover" />
           </span>
           Share app to Farcaster
         </button>
-        {shareError && <div className="text-red-400 text-xs mt-1">{shareError}</div>}
-        <div className="mt-3 flex justify-center gap-4 text-[11px] text-amber-200">
+        {shareError && <div className="mt-2 text-xs text-red-300">{shareError}</div>}
+        <div className="mt-4 flex justify-center gap-4 text-[11px] text-amber-100/80">
           <button onClick={logout} className="underline underline-offset-4">Logout</button>
           {!user.address && (
             <button onClick={connectWallet} className="underline underline-offset-4">Connect wallet</button>
@@ -195,44 +196,46 @@ export default function App() {
         </div>
       </div>
 
-      <div className="w-full max-w-sm rounded-2xl p-4 border" style={{ background: "#2a1500", borderColor: poolEmpty ? "#dc2626" : "#92400e" }}>
-        <div className="text-xs text-amber-500 uppercase tracking-widest mb-1 text-center">
+      <div className="page-panel px-5 py-5 text-center">
+        <div className="text-xs uppercase tracking-widest mb-1 text-center text-amber-200/80">
           {poolUnavailable ? "⚠️ Prize Pool Unavailable" : poolEmpty ? "⚠️ Prize Pool Empty" : "💰 Prize Pool (approx)"}
         </div>
-        <div className={`text-3xl font-black text-center ${poolEmpty || poolUnavailable ? "text-red-400" : "text-amber-400"}`}>
+        <div className={`text-center text-[2.6rem] font-black leading-none ${poolEmpty || poolUnavailable ? "text-red-300" : "text-amber-100"}`}>
           {poolLoading ? "..." : poolUnavailable ? "—" : `${Math.round(poolBalanceBf).toLocaleString()} BF`}
         </div>
-        {poolEmpty && <div className="text-red-400 text-xs text-center mt-1">Game temporarily suspended</div>}
-        {poolUnavailable && <div className="text-red-400 text-xs text-center mt-1">Pool not configured</div>}
-        <div className="text-xs text-amber-700 text-center mt-1">Base reward: {bfPerPoint.toFixed(0)} BF per point</div>
+        {poolEmpty && <div className="mt-2 text-xs text-red-300">Game temporarily suspended</div>}
+        {poolUnavailable && <div className="mt-2 text-xs text-red-300">Pool not configured</div>}
+        <div className="page-muted mt-2 text-xs text-center">Base reward: {bfPerPoint.toFixed(0)} BF per point</div>
       </div>
 
-      <div className="w-full max-w-sm rounded-2xl p-3 border border-amber-900 text-center text-xs" style={{ background: "#1f1000" }}>
-        <div className="text-amber-500 uppercase tracking-widest mb-1">Rate</div>
-        <div className="text-amber-200 font-bold">1 USDC ≈ {Math.round(liveBfPerUsdc).toLocaleString()} BF</div>
-      </div>
+      <div className="page-stat-grid sm:grid-cols-3">
+        <div className="page-panel-soft px-4 py-4 text-center text-xs">
+          <div className="page-kicker mb-2">Rate</div>
+          <div className="text-sm font-bold text-amber-50">1 USDC ≈ {Math.round(liveBfPerUsdc).toLocaleString()} BF</div>
+        </div>
 
-      <div className="w-full max-w-sm rounded-2xl p-3 border border-amber-900 text-center text-xs" style={{ background: "#1f1000" }}>
-        <div className="text-amber-500 uppercase tracking-widest mb-1">Weekly Pot</div>
-        <div className="text-amber-200 font-bold">{weeklyPot == null ? "—" : `${Math.round(weeklyPot).toLocaleString()} BF`}</div>
-        {nextReset && <div className="text-amber-700 mt-1">Resets {new Date(nextReset).toLocaleString("en-GB", { timeZone: "Europe/Rome" })} CET</div>}
-        <Link href="/weekly" className="text-amber-300 underline mt-1 inline-block">Weekly details</Link>
-      </div>
+        <div className="page-panel-soft px-4 py-4 text-center text-xs">
+          <div className="page-kicker mb-2">Weekly Pot</div>
+          <div className="text-sm font-bold text-amber-50">{weeklyPot == null ? "—" : `${Math.round(weeklyPot).toLocaleString()} BF`}</div>
+          {nextReset && <div className="page-muted mt-2">Resets {new Date(nextReset).toLocaleString("en-GB", { timeZone: "Europe/Rome" })} CET</div>}
+          <Link href="/weekly" className="page-link mt-2 inline-block">Weekly details</Link>
+        </div>
 
-      <div className="w-full max-w-sm rounded-2xl p-3 border border-amber-900 text-center text-xs" style={{ background: "#1f1000" }}>
-        <div className="text-amber-500 uppercase tracking-widest mb-1">My Weekly Tickets</div>
-        <div className="text-amber-200 font-bold">{ticketTotal}</div>
-        <div className="text-amber-700 mt-1">1 base ticket, +1 cap-cleared run, +1 profitable run, +1 every 10th win.</div>
+        <div className="page-panel-soft px-4 py-4 text-center text-xs">
+          <div className="page-kicker mb-2">My Weekly Tickets</div>
+          <div className="text-sm font-bold text-amber-50">{ticketTotal}</div>
+          <div className="page-muted mt-2">1 base ticket, +1 cap-cleared run, +1 profitable run, +1 every 10th win.</div>
+        </div>
       </div>
 
       {lastResult && (
-        <div className="w-full max-w-sm rounded-2xl p-3 border text-center text-sm font-black text-green-200" style={{ background: "#052e16", borderColor: "#16a34a" }}>
+        <div className="page-panel-soft border border-green-300/15 px-4 py-4 text-center text-sm font-black text-green-100">
           🎉 You won {Math.round(lastResult.prize * liveBfPerUsdc).toLocaleString()} BF with {lastResult.score} points!
         </div>
       )}
 
-      <div className="w-full max-w-sm rounded-2xl p-4 border border-amber-900" style={{ background: "#1f1000" }}>
-        <div className="text-amber-500 uppercase tracking-widest text-center mb-3">Difficulty</div>
+      <div className="page-panel px-5 py-5">
+        <div className="page-kicker text-center mb-4">Difficulty</div>
         <div className="grid grid-cols-3 gap-3">
           {(Object.keys(DIFFICULTY_CONFIG) as Difficulty[]).map((key) => {
             const item = DIFFICULTY_CONFIG[key];
@@ -242,17 +245,18 @@ export default function App() {
                 key={key}
                 type="button"
                 onClick={() => setDifficulty(key)}
-                className="rounded-2xl border p-3 text-center transition-all"
+                className="rounded-[22px] border p-3 text-center transition-all"
                 style={{
-                  background: active ? "rgba(251,191,36,0.18)" : "#140a00",
-                  borderColor: active ? "#fbbf24" : "#5d2e00",
+                  background: active ? "rgba(255, 242, 212, 0.15)" : "rgba(255, 242, 212, 0.07)",
+                  borderColor: active ? "rgba(247,189,43,0.48)" : "rgba(255,214,122,0.12)",
+                  boxShadow: active ? "0 10px 24px rgba(247,189,43,0.14)" : "none",
                 }}
               >
                 <div className="text-3xl mb-1">{item.emoji}</div>
                 <div className="text-white font-black text-lg">{item.label}</div>
-                <div className="text-amber-500 text-xs mt-1">{item.fee} USDC</div>
-                <div className="text-amber-700 text-[11px] mt-1">{item.waves} waves · {item.maxPts}pt cap</div>
-                <div className="text-amber-700 text-[11px] mt-1">Linear payout up to {getFullValueThreshold(key)} pt</div>
+                <div className="text-amber-200 text-xs mt-1">{item.fee} USDC</div>
+                <div className="page-muted text-[11px] mt-1">{item.waves} waves · {item.maxPts}pt cap</div>
+                <div className="page-muted text-[11px] mt-1">Linear payout up to {getFullValueThreshold(key)} pt</div>
               </button>
             );
           })}
@@ -263,13 +267,14 @@ export default function App() {
         type="button"
         onClick={() => setScreen("game")}
         disabled={poolDisabled}
-        className="w-full max-w-sm py-5 rounded-2xl text-3xl font-black text-black disabled:opacity-50"
-        style={{ background: "linear-gradient(135deg, #fbbf24, #f59e0b)" }}
+        className="w-full rounded-[26px] py-5 text-3xl font-black text-amber-950 disabled:opacity-50 shadow-[0_18px_34px_rgba(247,189,43,0.2)]"
+        style={{ background: "linear-gradient(135deg, #f7bd2b, #ffdc72)" }}
       >
         PLAY — {cfg.fee} USDC 🦋
       </button>
-      <div className="text-[11px] text-amber-600 text-center max-w-sm">
+      <div className="page-muted text-center text-[11px]">
         {cfg.label}: {cfg.waves} waves, base {bfPerPoint.toFixed(0)} BF per point, up to about {maxPrizeBf.toLocaleString()} BF net before Prizefly bonus.
+      </div>
       </div>
     </div>
   );
@@ -278,26 +283,26 @@ export default function App() {
 function NotConnected({ onConnect, canConnect }: { onConnect: () => Promise<string | null>; canConnect: boolean }) {
   return (
     <div className="user-page-bg min-h-dvh flex items-center justify-center p-6">
-      <div className="user-page-chrome w-full max-w-sm rounded-2xl p-6 text-center">
+      <div className="page-panel page-wrap px-6 py-6 text-center">
         <div className="text-6xl mb-3">🦋</div>
-        <h1 className="text-3xl font-black text-white">Whack-a-Butterfly</h1>
-        <p className="text-amber-200 text-sm mt-3">
+        <h1 className="page-title text-3xl">Whack-a-Butterfly</h1>
+        <p className="page-copy text-sm mt-3">
           {canConnect ? "Connect your Farcaster wallet to start playing." : "Open this app inside Farcaster to connect your wallet and play."}
         </p>
         {canConnect ? (
           <button
             onClick={() => void onConnect()}
-            className="mt-5 w-full py-4 rounded-2xl text-lg font-black text-black"
-            style={{ background: "linear-gradient(135deg, #fbbf24, #f59e0b)" }}
+            className="mt-5 w-full py-4 rounded-[24px] text-lg font-black text-amber-950"
+            style={{ background: "linear-gradient(135deg, #f7bd2b, #ffdc72)" }}
           >
             Connect Wallet
           </button>
         ) : (
-          <div className="mt-5 w-full py-4 rounded-2xl text-sm font-black text-amber-950" style={{ background: "linear-gradient(135deg, #fbbf24, #f59e0b)" }}>
+          <div className="mt-5 w-full py-4 rounded-[24px] text-sm font-black text-amber-950" style={{ background: "linear-gradient(135deg, #f7bd2b, #ffdc72)" }}>
             Launch in Farcaster
           </div>
         )}
-        <div className="text-amber-700 text-xs mt-3">Prize wallet: {PRIZE_WALLET.slice(0, 6)}…{PRIZE_WALLET.slice(-4)}</div>
+        <div className="page-muted text-xs mt-3">Prize wallet: {PRIZE_WALLET.slice(0, 6)}…{PRIZE_WALLET.slice(-4)}</div>
       </div>
     </div>
   );
