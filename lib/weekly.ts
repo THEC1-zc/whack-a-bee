@@ -5,6 +5,7 @@ import { privateKeyToAccount } from "viem/accounts";
 import { BF_ADDRESS, ERC20_ABI, toBFUnits } from "@/lib/contracts";
 import { getBfPerUsdc } from "./pricing";
 import { getCurrentWeekTicketState, getUserWeeklyTickets } from "@/lib/gameSessions";
+import { getSundayWeekId, nextSundayCET } from "@/lib/weekWindow";
 
 const WEEKLY_KEY = "weekly:state:";
 const WEEKLY_LOG_KEY = "weekly:log:";
@@ -86,49 +87,9 @@ function getRedis() {
   return redis;
 }
 
-function getCETDateParts(date = new Date()) {
-  const fmt = new Intl.DateTimeFormat("en-GB", {
-    timeZone: "Europe/Rome",
-    year: "numeric",
-    month: "2-digit",
-    day: "2-digit",
-  }).formatToParts(date);
-  const get = (t: string) => Number(fmt.find((p) => p.type === t)?.value);
-  return { year: get("year"), month: get("month"), day: get("day") };
-}
-
-function getISOWeekId(date = new Date()) {
-  const { year, month, day } = getCETDateParts(date);
-  const d = new Date(Date.UTC(year, month - 1, day));
-  const dayNum = d.getUTCDay() || 7;
-  d.setUTCDate(d.getUTCDate() + 4 - dayNum);
-  const yearStart = new Date(Date.UTC(d.getUTCFullYear(), 0, 1));
-  const week = Math.ceil((((d.getTime() - yearStart.getTime()) / 86400000) + 1) / 7);
-  return `${d.getUTCFullYear()}-W${String(week).padStart(2, "0")}`;
-}
-
-function nextSundayCET(hour = 0, minute = 0): number {
-  const now = new Date();
-  const fmt = new Intl.DateTimeFormat("en-GB", {
-    timeZone: "Europe/Rome",
-    year: "numeric",
-    month: "2-digit",
-    day: "2-digit",
-  });
-  const parts = fmt.formatToParts(now);
-  const y = Number(parts.find((p) => p.type === "year")?.value);
-  const m = Number(parts.find((p) => p.type === "month")?.value);
-  const d = Number(parts.find((p) => p.type === "day")?.value);
-  const base = new Date(Date.UTC(y, m - 1, d));
-  const dayNum = base.getUTCDay();
-  const daysToSun = (7 - dayNum) % 7;
-  const target = new Date(Date.UTC(y, m - 1, d + daysToSun, hour - 1, minute, 0));
-  return target.getTime();
-}
-
 export function getWeeklyMeta() {
   return {
-    weekId: getISOWeekId(),
+    weekId: getSundayWeekId(),
     snapshotAt: nextSundayCET(0, 0),
     payoutAt: nextSundayCET(0, 5),
   };

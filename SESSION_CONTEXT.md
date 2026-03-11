@@ -91,6 +91,10 @@ NEXT_PUBLIC_BUILD_STAMP
   - Big `2x` `15%`
   - Mega `3x` `5%`
   - Jolly `10%` (wave-by-wave reroll)
+- Weekly window:
+  - Sunday-based CET week id
+  - snapshot Sunday `00:00` CET
+  - payout Sunday `00:05` CET
 
 ## Comandi utili
 ```bash

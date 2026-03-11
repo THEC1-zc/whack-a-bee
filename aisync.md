@@ -251,3 +251,10 @@ Payout bands:
 - Validation:
   - `npm run build` ✅
   - targeted lint ✅ (markdown file ignored by ESLint as expected)
+
+### 2026-03-11 11:05:00 +0100
+- Second audit found and fixed a weekly boundary bug:
+  - weekly payout/reset runs on Sunday CET, but game/weekly state was still keyed by ISO week
+  - added shared `lib/weekWindow.ts` and switched `lib/weekly.ts` + `lib/gameSessions.ts` to a Sunday-based CET week id
+  - this aligns claimed games, weekly tickets, pot accounting, snapshot, and payout to the same Sunday boundary
+- Also updated `SESSION_CONTEXT.md` to document the Sunday-based weekly window.

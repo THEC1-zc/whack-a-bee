@@ -40,6 +40,7 @@ import {
   pickJollyWaveMultipliers,
 } from "@/lib/gameRules";
 import { logTxRecord } from "@/lib/txLedger";
+import { getSundayWeekId } from "@/lib/weekWindow";
 
 const CONTRACT_ADDRESS = (
   process.env.NEXT_PUBLIC_BFPAYOUT_CONTRACT || "0xCdfdbB8B93d8a02319434abA5CC69b31a746ef1D"
@@ -222,27 +223,6 @@ function normalizeHash(hash: string) {
 
 function txUrl(hash?: string) {
   return hash ? `https://basescan.org/tx/${hash}` : undefined;
-}
-
-function getCETDateParts(date = new Date()) {
-  const fmt = new Intl.DateTimeFormat("en-GB", {
-    timeZone: "Europe/Rome",
-    year: "numeric",
-    month: "2-digit",
-    day: "2-digit",
-  }).formatToParts(date);
-  const get = (t: string) => Number(fmt.find((p) => p.type === t)?.value);
-  return { year: get("year"), month: get("month"), day: get("day") };
-}
-
-function getISOWeekId(date = new Date()) {
-  const { year, month, day } = getCETDateParts(date);
-  const d = new Date(Date.UTC(year, month - 1, day));
-  const dayNum = d.getUTCDay() || 7;
-  d.setUTCDate(d.getUTCDate() + 4 - dayNum);
-  const yearStart = new Date(Date.UTC(d.getUTCFullYear(), 0, 1));
-  const week = Math.ceil((((d.getTime() - yearStart.getTime()) / 86400000) + 1) / 7);
-  return `${d.getUTCFullYear()}-W${String(week).padStart(2, "0")}`;
 }
 
 async function getIndex() {
@@ -486,7 +466,7 @@ export async function createGameSession(difficulty: Difficulty, callerAddress?: 
     capScore: Math.max(1, Math.floor(cfg.maxPts * capMultiplier)),
     waveMultipliers,
     createdAt: Date.now(),
-    weekId: getISOWeekId(),
+    weekId: getSundayWeekId(),
     status: "created",
     ticketAssigned: false,
     ticketCount: 0,
@@ -567,7 +547,7 @@ export async function verifyGameFee(params: {
   game.feeVerifiedAt = Date.now();
   game.startedAt = game.feeVerifiedAt;
   game.status = "fee_verified";
-  game.weekId = getISOWeekId(new Date(game.feeVerifiedAt));
+  game.weekId = getSundayWeekId(new Date(game.feeVerifiedAt));
 
   await saveGame(game);
   await setFeeTxOwner(params.txHash, game.gameId);
@@ -897,7 +877,7 @@ function shortAddress(addr: string) {
 }
 
 export async function getCurrentWeekTicketState() {
-  const weekId = getISOWeekId();
+  const weekId = getSundayWeekId();
   const allGames = await listAllGames();
   const games = allGames.filter((game) => game.weekId === weekId && game.ticketAssigned && game.status === "claimed");
   const tickets: Record<string, number> = {};
