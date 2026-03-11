@@ -8,26 +8,17 @@ import {
   mergePendingTicketsIntoClaimed,
   releaseWeeklyPayoutLock,
   resetWeeklyState,
+  sendWeeklyBfTransfers,
   setWeeklySnapshot,
-  type WeeklyTransferResult,
 } from "@/lib/weekly";
 import { getWeeklyAdminStats, resetLeaderboard } from "@/lib/leaderboard";
 import { logTxRecord } from "@/lib/txLedger";
-import { BF_ADDRESS, ERC20_ABI, toBFUnits } from "@/lib/contracts";
-import { createPublicClient, createWalletClient, http } from "viem";
-import { base } from "viem/chains";
-import { privateKeyToAccount } from "viem/accounts";
 
 // Vercel Cron — domenica 23:00 UTC = domenica 00:00 CET
 // configurato in vercel.json: { "crons": [{ "path": "/api/cron/weekly-payout", "schedule": "0 23 * * 0" }] }
 
 const CRON_SECRET = process.env.CRON_SECRET;
 const POT_PRIVATE_KEY = process.env.POT_WALLET_PRIVATE_KEY;
-
-function normalizeKey(value: string | undefined) {
-  const raw = (value || "").trim().replace(/^['"]|['"]$/g, "").replace(/\s+/g, "");
-  return raw.startsWith("0x") ? raw : `0x${raw}`;
-}
 
 function weightedPick(map: Record<string, number>, count: number, exclude: Set<string>) {
   const pool = Object.entries(map)
@@ -42,29 +33,6 @@ function weightedPick(map: Record<string, number>, count: number, exclude: Set<s
     winners.push(pool.splice(Math.min(idx, pool.length - 1), 1)[0].addr);
   }
   return winners;
-}
-
-async function sendTransfers(transfers: { to: string; amountBf: number; group: string; playerUsername?: string }[]): Promise<WeeklyTransferResult[]> {
-  const key = normalizeKey(POT_PRIVATE_KEY);
-  if (!/^0x[0-9a-fA-F]{64}$/.test(key)) throw new Error("POT_WALLET_PRIVATE_KEY invalid");
-  const account = privateKeyToAccount(key as `0x${string}`);
-  const pub = createPublicClient({ chain: base, transport: http("https://mainnet.base.org") });
-  const wallet = createWalletClient({ account, chain: base, transport: http("https://mainnet.base.org") });
-  const results: WeeklyTransferResult[] = [];
-  for (const t of transfers) {
-    if (t.amountBf <= 0) continue;
-    try {
-      const txHash = await wallet.writeContract({
-        address: BF_ADDRESS, abi: ERC20_ABI, functionName: "transfer",
-        args: [t.to as `0x${string}`, toBFUnits(t.amountBf)],
-      });
-      await pub.waitForTransactionReceipt({ hash: txHash });
-      results.push({ ...t, txHash, ok: true });
-    } catch (e) {
-      results.push({ ...t, ok: false, error: e instanceof Error ? e.message : "transfer failed" });
-    }
-  }
-  return results;
 }
 
 export async function GET(req: NextRequest) {
@@ -117,7 +85,7 @@ export async function GET(req: NextRequest) {
 
     await setWeeklySnapshot({ status: "running", weekId: meta.weekId, startedAt: Date.now(), potBf, top3, lotteryWinners, transfers, mode: "cron" });
 
-    const results = await sendTransfers(transfers);
+    const results = await sendWeeklyBfTransfers(transfers, POT_PRIVATE_KEY);
     const failed = results.filter(r => !r.ok);
 
     for (const r of results) {

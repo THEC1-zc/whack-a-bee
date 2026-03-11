@@ -1,4 +1,8 @@
 import Redis from "ioredis";
+import { createPublicClient, createWalletClient, http } from "viem";
+import { base } from "viem/chains";
+import { privateKeyToAccount } from "viem/accounts";
+import { BF_ADDRESS, ERC20_ABI, toBFUnits } from "@/lib/contracts";
 import { getBfPerUsdc } from "./pricing";
 import { getCurrentWeekTicketState, getUserWeeklyTickets } from "@/lib/gameSessions";
 
@@ -344,4 +348,52 @@ export function getAdminWallet() {
 export async function getBfValueFromUsdc(usdcAmount: number) {
   const rate = await getBfPerUsdc();
   return usdcAmount * rate;
+}
+
+// ── Shared BF transfer helper ─────────────────────────────────────────────────
+// Used by both admin/weekly-payout and cron/weekly-payout to avoid duplication.
+
+function normalizePotKey(value: string | undefined) {
+  const raw = (value || "").trim().replace(/^['"]|['"]$/g, "").replace(/\s+/g, "");
+  return raw.startsWith("0x") ? raw : `0x${raw}`;
+}
+
+export type BfTransferPlan = {
+  to: string;
+  amountBf: number;
+  group: string;
+  playerName?: string;
+  playerUsername?: string;
+  playerFid?: number;
+};
+
+export async function sendWeeklyBfTransfers(
+  transfers: BfTransferPlan[],
+  potPrivateKey: string | undefined
+): Promise<WeeklyTransferResult[]> {
+  const key = normalizePotKey(potPrivateKey);
+  if (!/^0x[0-9a-fA-F]{64}$/.test(key)) {
+    throw new Error("POT_WALLET_PRIVATE_KEY invalid: expected 64 hex chars (with or without 0x)");
+  }
+  const account = privateKeyToAccount(key as `0x${string}`);
+  const pub = createPublicClient({ chain: base, transport: http("https://mainnet.base.org") });
+  const wallet = createWalletClient({ account, chain: base, transport: http("https://mainnet.base.org") });
+  const results: WeeklyTransferResult[] = [];
+
+  for (const t of transfers) {
+    if (t.amountBf <= 0) continue;
+    try {
+      const txHash = await wallet.writeContract({
+        address: BF_ADDRESS,
+        abi: ERC20_ABI,
+        functionName: "transfer",
+        args: [t.to as `0x${string}`, toBFUnits(t.amountBf)],
+      });
+      await pub.waitForTransactionReceipt({ hash: txHash });
+      results.push({ ...t, txHash, ok: true });
+    } catch (e: unknown) {
+      results.push({ ...t, ok: false, error: e instanceof Error ? e.message : "transfer failed" });
+    }
+  }
+  return results;
 }

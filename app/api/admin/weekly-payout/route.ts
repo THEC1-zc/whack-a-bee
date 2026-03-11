@@ -1,8 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import { createPublicClient, createWalletClient, http, recoverMessageAddress } from "viem";
-import { base } from "viem/chains";
-import { privateKeyToAccount } from "viem/accounts";
-import { BF_ADDRESS, ERC20_ABI, toBFUnits } from "@/lib/contracts";
+import { recoverMessageAddress } from "viem";
 import { requireAdminRequest, getAdminWallet } from "@/lib/adminSession";
 import { createAdminChallenge, buildAdminChallengeMessage, verifyAdminChallenge } from "@/lib/adminAuth";
 import {
@@ -15,8 +12,8 @@ import {
   mergePendingTicketsIntoClaimed,
   releaseWeeklyPayoutLock,
   resetWeeklyState,
+  sendWeeklyBfTransfers,
   setWeeklySnapshot,
-  type WeeklyTransferResult,
 } from "@/lib/weekly";
 import { getAdminStats, getWeeklyAdminStats, resetLeaderboard } from "@/lib/leaderboard";
 import { logTxRecord } from "@/lib/txLedger";
@@ -43,15 +40,6 @@ type TransferPlan = {
   playerFid?: number;
 };
 
-function normalizePrivateKey(value: string | undefined) {
-  const raw = (value || "").trim().replace(/^['"]|['"]$/g, "");
-  const compact = raw.replace(/\s+/g, "");
-  if (/^[0-9a-fA-F]{64}$/.test(compact)) {
-    return `0x${compact}`;
-  }
-  return compact;
-}
-
 function weightedPick(map: Record<string, number>, count: number, exclude: Set<string>) {
   const entries = Object.entries(map).filter(([addr, tickets]) => tickets > 0 && !exclude.has(addr.toLowerCase()));
   const winners: string[] = [];
@@ -69,37 +57,6 @@ function weightedPick(map: Record<string, number>, count: number, exclude: Set<s
     winners.push(win.addr);
   }
   return winners;
-}
-
-async function sendBfTransfers(transfers: TransferPlan[]): Promise<WeeklyTransferResult[]> {
-  const key = normalizePrivateKey(POT_PRIVATE_KEY);
-  if (!/^0x[0-9a-fA-F]{64}$/.test(key)) {
-    throw new Error("POT_WALLET_PRIVATE_KEY invalid: expected 64 hex chars (with or without 0x)");
-  }
-  const account = privateKeyToAccount(key as `0x${string}`);
-  const publicClient = createPublicClient({ chain: base, transport: http("https://mainnet.base.org") });
-  const walletClient = createWalletClient({ account, chain: base, transport: http("https://mainnet.base.org") });
-  const results: WeeklyTransferResult[] = [];
-
-  for (const t of transfers) {
-    if (t.amountBf <= 0) continue;
-
-    try {
-      const txHash = await walletClient.writeContract({
-        address: BF_ADDRESS,
-        abi: ERC20_ABI,
-        functionName: "transfer",
-        args: [t.to as `0x${string}`, toBFUnits(t.amountBf)],
-      });
-      await publicClient.waitForTransactionReceipt({ hash: txHash });
-      results.push({ ...t, txHash, ok: true });
-    } catch (e: unknown) {
-      const error = e instanceof Error ? e.message : "transfer failed";
-      results.push({ ...t, ok: false, error });
-    }
-  }
-
-  return results;
 }
 
 // GET — issue a payout challenge (used by admin UI before calling POST)
@@ -241,7 +198,7 @@ export async function POST(req: NextRequest) {
       transfers,
     });
 
-    const results = await sendBfTransfers(transfers);
+    const results = await sendWeeklyBfTransfers(transfers, POT_PRIVATE_KEY);
     const failed = results.filter((r) => !r.ok);
 
     for (const r of results) {

@@ -240,3 +240,14 @@ Payout bands:
 - Tightened hard wave timing instead:
   - restored hard butterfly durations to `1800 / 1600 / 1500 / 1800 / 1800`
   - added a hard-only wave timeout of `1050ms`, so each hard board closes `750ms` earlier without redefining the butterfly type timings themselves
+
+### 2026-03-11 10:40:00 +0100
+- Completed the interrupted audit follow-up:
+  - weekly GitHub Action fix is already present in `.github/workflows/weekly-payout.yml` (`mode=auto` + `--fail-with-body`)
+  - confirmed `/api/admin/leaderboard` already requires wallet signature for `weekly_reset`
+  - weekly payout top3 now uses `getWeeklyAdminStats(meta.weekId)` instead of lifetime leaderboard stats
+  - finished the shared weekly BF transfer refactor by moving the helper into `lib/weekly.ts` and wiring both `app/api/admin/weekly-payout/route.ts` and `app/api/cron/weekly-payout/route.ts` to it
+  - updated `SESSION_CONTEXT.md` to match the live session-based game flow, current fee/wave values, and active game types
+- Validation:
+  - `npm run build` ✅
+  - targeted lint ✅ (markdown file ignored by ESLint as expected)
