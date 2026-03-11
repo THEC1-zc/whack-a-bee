@@ -229,6 +229,13 @@ Payout bands:
   - `npm run build` ✅
   - targeted lint ✅ with only existing `<img>` warnings in `components/GameScreen.tsx` and `components/LeaderboardScreen.tsx`
   - local Playwright/browser smoke could not run in the current sandbox because headless Chromium launch is blocked by macOS permission restrictions
+- Admin transaction wording pass:
+  - clarified `game_pot_in` as `weekly pot in` and `game_prize_out` as `player payout out` in the admin transaction views
+  - no payout flow logic changed; this was a visibility fix to make the weekly split readable from the tx log
+- Visual refinement follow-up:
+  - removed most filled panel backgrounds from the shared user/admin shell so the illustrated page background stays visible
+  - shifted readability toward stronger overlay contrast plus text-shadow instead of dark card blocks
+  - softened home difficulty selection so each difficulty reads as a highlighted line item instead of a boxed tile
 - Reworked game type distribution in `lib/gameRules.ts`:
   - `Low` `0.9x` at `15%`
   - `Nice` `1.1x` at `20%`

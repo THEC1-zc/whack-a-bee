@@ -58,6 +58,23 @@ function shortTx(hash?: string) {
   return `${hash.slice(0, 10)}...${hash.slice(-6)}`;
 }
 
+function kindLabel(kind: string) {
+  switch (kind) {
+    case "game_fee_in":
+      return "game fee in";
+    case "game_prize_out":
+      return "player payout out";
+    case "game_pot_in":
+      return "weekly pot in";
+    case "weekly_payout_out":
+      return "weekly payout out";
+    case "payout_error":
+      return "payout error";
+    default:
+      return kind.replaceAll("_", " ");
+  }
+}
+
 export default function AdminTransactions() {
   const { user } = useFarcaster();
   const address = user?.address?.toLowerCase() || "";
@@ -198,7 +215,7 @@ export default function AdminTransactions() {
                   <div className="flex items-start justify-between gap-3">
                     <div className="min-w-0">
                       <div className="text-white text-sm font-black truncate">
-                        {tx.kind.replaceAll("_", " ")}
+                        {kindLabel(tx.kind)}
                       </div>
                       <div className="text-amber-100/50 text-[11px] mt-0.5">
                         {new Date(tx.at).toLocaleString("en-GB", { timeZone: "Europe/Rome" })}

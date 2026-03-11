@@ -34,6 +34,23 @@ function shortTx(hash?: string) {
   return `${hash.slice(0, 10)}...${hash.slice(-6)}`;
 }
 
+function kindLabel(kind: string) {
+  switch (kind) {
+    case "game_fee_in":
+      return "game fee in";
+    case "game_prize_out":
+      return "player payout out";
+    case "game_pot_in":
+      return "weekly pot in";
+    case "weekly_payout_out":
+      return "weekly payout out";
+    case "payout_error":
+      return "payout error";
+    default:
+      return kind.replaceAll("_", " ");
+  }
+}
+
 export default function AdminTxRecordsPage() {
   const { user, connectWallet } = useFarcaster();
   const address = user?.address?.toLowerCase() || "";
@@ -47,7 +64,7 @@ export default function AdminTxRecordsPage() {
   function toRowText(r: TxRecord) {
     return [
       `date_cet=${new Date(r.at).toLocaleString("en-GB", { timeZone: "Europe/Rome" })}`,
-      `kind=${r.kind}`,
+      `kind=${kindLabel(r.kind)}`,
       `status=${r.status}`,
       `player=${r.playerUsername ? `@${r.playerUsername}` : (r.playerAddress || "-")}`,
       `to=${r.to || "-"}`,
@@ -153,7 +170,7 @@ export default function AdminTxRecordsPage() {
           ) : records.map((r) => (
             <div key={r.id} className="page-panel-soft rounded-[22px] p-3 text-xs">
               <div className="text-amber-400">{new Date(r.at).toLocaleString("en-GB", { timeZone: "Europe/Rome" })}</div>
-              <div className="text-amber-200 mt-1">{r.kind} · <span className={r.status === "ok" ? "text-green-400" : "text-red-400"}>{r.status}</span></div>
+              <div className="text-amber-200 mt-1">{kindLabel(r.kind)} · <span className={r.status === "ok" ? "text-green-400" : "text-red-400"}>{r.status}</span></div>
               <div className="text-amber-200 mt-1">Player: {r.playerUsername ? `@${r.playerUsername}` : short(r.playerAddress)}</div>
               <div className="text-amber-200">To: {short(r.to)}</div>
               <div className="text-amber-200">USDC: {typeof r.amountUsdc === "number" ? r.amountUsdc.toFixed(4) : "-"}</div>
@@ -201,7 +218,7 @@ export default function AdminTxRecordsPage() {
               ) : records.map((r) => (
                 <tr key={r.id} className="border-b border-amber-950 text-amber-200">
                   <td className="p-2">{new Date(r.at).toLocaleString("en-GB", { timeZone: "Europe/Rome" })}</td>
-                  <td className="p-2">{r.kind}</td>
+                  <td className="p-2">{kindLabel(r.kind)}</td>
                   <td className={`p-2 ${r.status === "ok" ? "text-green-400" : "text-red-400"}`}>{r.status}</td>
                   <td className="p-2">{r.playerUsername ? `@${r.playerUsername}` : short(r.playerAddress)}</td>
                   <td className="p-2">{short(r.to)}</td>

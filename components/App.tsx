@@ -229,7 +229,7 @@ export default function App() {
       </div>
 
       {lastResult && (
-        <div className="page-panel-soft border border-green-300/15 px-4 py-4 text-center text-sm font-black text-green-100">
+        <div className="page-panel-soft px-4 py-4 text-center text-sm font-black text-green-100">
           🎉 You won {Math.round(lastResult.prize * liveBfPerUsdc).toLocaleString()} BF with {lastResult.score} points!
         </div>
       )}
@@ -245,11 +245,11 @@ export default function App() {
                 key={key}
                 type="button"
                 onClick={() => setDifficulty(key)}
-                className="rounded-[22px] border p-3 text-center transition-all"
+                className="rounded-[22px] p-3 text-center transition-all"
                 style={{
-                  background: active ? "rgba(255, 242, 212, 0.15)" : "rgba(255, 242, 212, 0.07)",
-                  borderColor: active ? "rgba(247,189,43,0.48)" : "rgba(255,214,122,0.12)",
-                  boxShadow: active ? "0 10px 24px rgba(247,189,43,0.14)" : "none",
+                  background: "transparent",
+                  borderBottom: active ? "2px solid rgba(247,189,43,0.7)" : "2px solid rgba(255,214,122,0.14)",
+                  boxShadow: "none",
                 }}
               >
                 <div className="text-3xl mb-1">{item.emoji}</div>
