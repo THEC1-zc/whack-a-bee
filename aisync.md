@@ -266,3 +266,14 @@ Payout bands:
 - Validation:
   - targeted lint ✅ with only the known leaderboard avatar `<img>` warning
   - `npm run build` ✅
+
+### 2026-03-11 12:05:00 +0100
+- Rebalanced `PRIZE_PER_POINT` in `lib/gameRules.ts` to bring RTP back into target bands:
+  - easy `0.000276`
+  - medium `0.000786`
+  - hard `0.001898`
+- Synced the same live values into `local-balance/LTM.xml`, including the current wave counts (`15 / 13 / 8`).
+- Monte Carlo validation (`10000` runs/difficulty, BF rate fallback `5,100,000 BF / USDC`) landed at:
+  - easy `85.55%`
+  - medium `79.87%`
+  - hard `75.26%`

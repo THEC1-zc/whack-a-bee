@@ -9,7 +9,7 @@
   <Author>Codex</Author>
   <LastAuthor>Fabio Viscarelli 1256/2024</LastAuthor>
   <Created>2026-03-08T00:00:00Z</Created>
-  <LastSaved>2026-03-08T21:44:05Z</LastSaved>
+  <LastSaved>2026-03-10T15:57:17Z</LastSaved>
   <Version>16.00</Version>
  </DocumentProperties>
  <OfficeDocumentSettings xmlns="urn:schemas-microsoft-com:office:office">
@@ -24,11 +24,11 @@
     <SheetIndex>0</SheetIndex>
    </Xct>
   </SupBook>
-  <WindowHeight>16940</WindowHeight>
+  <WindowHeight>16980</WindowHeight>
   <WindowWidth>24960</WindowWidth>
   <WindowTopX>4440</WindowTopX>
   <WindowTopY>760</WindowTopY>
-  <ActiveSheet>1</ActiveSheet>
+  <ActiveSheet>6</ActiveSheet>
   <ProtectStructure>False</ProtectStructure>
   <ProtectWindows>False</ProtectWindows>
  </ExcelWorkbook>
@@ -63,7 +63,7 @@
    <Alignment ss:Vertical="Center" ss:WrapText="1"/>
    <NumberFormat ss:Format="@"/>
   </Style>
-  <Style ss:ID="s68">
+  <Style ss:ID="s67">
    <NumberFormat ss:Format="@"/>
   </Style>
  </Styles>
@@ -149,7 +149,7 @@
  <Worksheet ss:Name="Butterfly Types - renew">
   <Table ss:ExpandedColumnCount="13" ss:ExpandedRowCount="6" x:FullColumns="1"
    x:FullRows="1" ss:DefaultColumnWidth="65" ss:DefaultRowHeight="18">
-   <Row ss:Height="48">
+   <Row ss:AutoFitHeight="0" ss:Height="48">
     <Cell ss:StyleID="s62"><Data ss:Type="String">Type</Data></Cell>
     <Cell ss:StyleID="s62"><Data ss:Type="String">Icon</Data></Cell>
     <Cell ss:StyleID="s62"><Data ss:Type="String">Color Name</Data></Cell>
@@ -164,7 +164,7 @@
     <Cell ss:StyleID="s62"><Data ss:Type="String">Per Game Limit</Data></Cell>
     <Cell ss:StyleID="s62"><Data ss:Type="String">Notes</Data></Cell>
    </Row>
-   <Row ss:Height="80">
+   <Row ss:AutoFitHeight="0" ss:Height="80">
     <Cell ss:StyleID="s63"><Data ss:Type="String">Butterfly</Data></Cell>
     <Cell ss:StyleID="s64"><Data ss:Type="String">&#128993;&#129419;</Data></Cell>
     <Cell ss:StyleID="s63"><Data ss:Type="String">Gold</Data></Cell>
@@ -179,7 +179,7 @@
     <Cell ss:StyleID="s63"><Data ss:Type="String">Unlimited</Data></Cell>
     <Cell ss:StyleID="s63"><Data ss:Type="String">Fills remaining free slots</Data></Cell>
    </Row>
-   <Row ss:Height="112">
+   <Row ss:AutoFitHeight="0" ss:Height="112">
     <Cell ss:StyleID="s63"><Data ss:Type="String">Triplefly</Data></Cell>
     <Cell ss:StyleID="s64"><Data ss:Type="String">&#128309;&#129419;</Data></Cell>
     <Cell ss:StyleID="s63"><Data ss:Type="String">Blue</Data></Cell>
@@ -194,7 +194,7 @@
     <Cell ss:StyleID="s63"><Data ss:Type="String">Unlimited</Data></Cell>
     <Cell ss:StyleID="s63"><Data ss:Type="String">Priority below Super and Fuchsia</Data></Cell>
    </Row>
-   <Row ss:Height="80">
+   <Row ss:AutoFitHeight="0" ss:Height="80">
     <Cell ss:StyleID="s63"><Data ss:Type="String">Quickfly</Data></Cell>
     <Cell ss:StyleID="s64"><Data ss:Type="String">&#129655;&#129419;</Data></Cell>
     <Cell ss:StyleID="s63"><Data ss:Type="String">Fuchsia</Data></Cell>
@@ -209,7 +209,7 @@
     <Cell ss:StyleID="s63"><Data ss:Type="String">3 per game</Data></Cell>
     <Cell ss:StyleID="s63"><Data ss:Type="String">Very fast rare scorer</Data></Cell>
    </Row>
-   <Row ss:Height="80">
+   <Row ss:AutoFitHeight="0" ss:Height="80">
     <Cell ss:StyleID="s63"><Data ss:Type="String">Bomb</Data></Cell>
     <Cell ss:StyleID="s64"><Data ss:Type="String">&#128308;&#129419;</Data></Cell>
     <Cell ss:StyleID="s63"><Data ss:Type="String">Red</Data></Cell>
@@ -224,7 +224,7 @@
     <Cell ss:StyleID="s63"><Data ss:Type="String">Unlimited</Data></Cell>
     <Cell ss:StyleID="s63"><Data ss:Type="String">Main negative pressure source</Data></Cell>
    </Row>
-   <Row ss:Height="64">
+   <Row ss:AutoFitHeight="0" ss:Height="64">
     <Cell ss:StyleID="s63"><Data ss:Type="String">Prizefly</Data></Cell>
     <Cell ss:StyleID="s64"><Data ss:Type="String">&#128995;&#129419;</Data></Cell>
     <Cell ss:StyleID="s63"><Data ss:Type="String">Purple</Data></Cell>
@@ -243,7 +243,6 @@
   <WorksheetOptions xmlns="urn:schemas-microsoft-com:office:excel">
    <Unsynced/>
    <Zoom>115</Zoom>
-   <Selected/>
    <FreezePanes/>
    <FrozenNoSplit/>
    <SplitHorizontal>1</SplitHorizontal>
@@ -281,7 +280,7 @@
     <Cell ss:StyleID="s62"><Data ss:Type="String">Per Game Limit</Data></Cell>
     <Cell ss:StyleID="s62"><Data ss:Type="String">Notes</Data></Cell>
    </Row>
-   <Row ss:Height="80">
+   <Row ss:AutoFitHeight="0" ss:Height="80">
     <Cell ss:StyleID="s63"><Data ss:Type="String">Normal</Data></Cell>
     <Cell ss:StyleID="s64"><Data ss:Type="String">&#128993;&#129419;</Data></Cell>
     <Cell ss:StyleID="s63"><Data ss:Type="String">Gold</Data></Cell>
@@ -296,7 +295,7 @@
     <Cell ss:StyleID="s63"><Data ss:Type="String">Unlimited</Data></Cell>
     <Cell ss:StyleID="s63"><Data ss:Type="String">Fills remaining free slots</Data></Cell>
    </Row>
-   <Row ss:Height="96">
+   <Row ss:AutoFitHeight="0" ss:Height="96">
     <Cell ss:StyleID="s63"><Data ss:Type="String">Fast</Data></Cell>
     <Cell ss:StyleID="s64"><Data ss:Type="String">&#128309;&#129419;</Data></Cell>
     <Cell ss:StyleID="s63"><Data ss:Type="String">Blue</Data></Cell>
@@ -311,7 +310,7 @@
     <Cell ss:StyleID="s63"><Data ss:Type="String">Unlimited</Data></Cell>
     <Cell ss:StyleID="s63"><Data ss:Type="String">Priority below Super and Fuchsia</Data></Cell>
    </Row>
-   <Row ss:Height="64">
+   <Row ss:AutoFitHeight="0" ss:Height="64">
     <Cell ss:StyleID="s63"><Data ss:Type="String">Fuchsia</Data></Cell>
     <Cell ss:StyleID="s64"><Data ss:Type="String">&#129655;&#129419;</Data></Cell>
     <Cell ss:StyleID="s63"><Data ss:Type="String">Fuchsia</Data></Cell>
@@ -326,7 +325,7 @@
     <Cell ss:StyleID="s63"><Data ss:Type="String">3 per game</Data></Cell>
     <Cell ss:StyleID="s63"><Data ss:Type="String">Very fast rare scorer</Data></Cell>
    </Row>
-   <Row ss:Height="80">
+   <Row ss:AutoFitHeight="0" ss:Height="80">
     <Cell ss:StyleID="s63"><Data ss:Type="String">Bomb</Data></Cell>
     <Cell ss:StyleID="s64"><Data ss:Type="String">&#128308;&#129419;</Data></Cell>
     <Cell ss:StyleID="s63"><Data ss:Type="String">Red</Data></Cell>
@@ -341,7 +340,7 @@
     <Cell ss:StyleID="s63"><Data ss:Type="String">Unlimited</Data></Cell>
     <Cell ss:StyleID="s63"><Data ss:Type="String">Main negative pressure source</Data></Cell>
    </Row>
-   <Row ss:Height="64">
+   <Row ss:AutoFitHeight="0" ss:Height="64">
     <Cell ss:StyleID="s63"><Data ss:Type="String">Super</Data></Cell>
     <Cell ss:StyleID="s64"><Data ss:Type="String">&#128995;&#129419;</Data></Cell>
     <Cell ss:StyleID="s63"><Data ss:Type="String">Purple</Data></Cell>
@@ -400,7 +399,7 @@
     <Cell ss:StyleID="s62"><Data ss:Type="String">Super Limit / Game</Data></Cell>
     <Cell ss:StyleID="s62"><Data ss:Type="String">Board Absolute Max</Data></Cell>
    </Row>
-   <Row ss:Height="80">
+   <Row ss:AutoFitHeight="0" ss:Height="80">
     <Cell ss:StyleID="s63"><Data ss:Type="String">Easy</Data></Cell>
     <Cell ss:StyleID="s64"><Data ss:Type="String">Always 2</Data></Cell>
     <Cell ss:StyleID="s63"><Data ss:Type="String">max(2, round(2 * capMultiplier)) =&gt; 2/3/4/6</Data></Cell>
@@ -411,7 +410,7 @@
     <Cell ss:StyleID="s63"><Data ss:Type="String">1</Data></Cell>
     <Cell ss:StyleID="s65"><Data ss:Type="Number">9</Data></Cell>
    </Row>
-   <Row ss:Height="80">
+   <Row ss:AutoFitHeight="0" ss:Height="80">
     <Cell ss:StyleID="s63"><Data ss:Type="String">Medium</Data></Cell>
     <Cell ss:StyleID="s64"><Data ss:Type="String">1 = 60%, 2 = 30%, 3 = 10%</Data></Cell>
     <Cell ss:StyleID="s63"><Data ss:Type="String">max(2, round(baseCount * capMultiplier))</Data></Cell>
@@ -422,7 +421,7 @@
     <Cell ss:StyleID="s63"><Data ss:Type="String">1</Data></Cell>
     <Cell ss:StyleID="s65"><Data ss:Type="Number">9</Data></Cell>
    </Row>
-   <Row ss:Height="96">
+   <Row ss:AutoFitHeight="0" ss:Height="96">
     <Cell ss:StyleID="s63"><Data ss:Type="String">Hard</Data></Cell>
     <Cell ss:StyleID="s64"><Data ss:Type="String">1 = 15%, 2 = 25%, 3 = 30%, 4 = 20%, 5 = 10%</Data></Cell>
     <Cell ss:StyleID="s63"><Data ss:Type="String">max(2, round(baseCount * capMultiplier)), then slot-capped</Data></Cell>
@@ -537,59 +536,59 @@
  <Worksheet ss:Name="Foglio6">
   <Table ss:ExpandedColumnCount="7" ss:ExpandedRowCount="9" x:FullColumns="1"
    x:FullRows="1" ss:DefaultColumnWidth="65" ss:DefaultRowHeight="15">
-   <Column ss:StyleID="s68" ss:AutoFitWidth="0" ss:Width="109"/>
-   <Column ss:StyleID="s68" ss:AutoFitWidth="0" ss:Span="2"/>
-   <Row ss:Height="16">
+   <Column ss:StyleID="s67" ss:AutoFitWidth="0" ss:Width="109"/>
+   <Column ss:StyleID="s67" ss:AutoFitWidth="0" ss:Span="2"/>
+   <Row ss:AutoFitHeight="0" ss:Height="16">
     <Cell ss:Index="2"><Data ss:Type="String">easy</Data></Cell>
     <Cell><Data ss:Type="String">medium</Data></Cell>
     <Cell><Data ss:Type="String">hard</Data></Cell>
    </Row>
-   <Row ss:Height="16">
+   <Row ss:AutoFitHeight="0" ss:Height="16">
     <Cell><Data ss:Type="String">numero wave</Data></Cell>
     <Cell><Data ss:Type="Number">10</Data></Cell>
     <Cell><Data ss:Type="Number">9</Data></Cell>
     <Cell><Data ss:Type="Number">8</Data></Cell>
    </Row>
-   <Row ss:Height="16">
+   <Row ss:AutoFitHeight="0" ss:Height="16">
     <Cell><Data ss:Type="String">bomb per wave</Data></Cell>
     <Cell><Data ss:Type="Number">2</Data></Cell>
     <Cell><Data ss:Type="String">2-3</Data></Cell>
     <Cell><Data ss:Type="String">3-5</Data></Cell>
    </Row>
-   <Row ss:Height="16">
+   <Row ss:AutoFitHeight="0" ss:Height="16">
     <Cell ss:StyleID="s63"><Data ss:Type="String">Butterfly per wave</Data></Cell>
     <Cell><Data ss:Type="String">1-4</Data></Cell>
     <Cell><Data ss:Type="String">1-5</Data></Cell>
     <Cell><Data ss:Type="String">1-6</Data></Cell>
    </Row>
-   <Row ss:Height="16">
+   <Row ss:AutoFitHeight="0" ss:Height="16">
     <Cell ss:StyleID="s63"><Data ss:Type="String">Triplefly</Data></Cell>
     <Cell><Data ss:Type="String">0-3</Data></Cell>
     <Cell><Data ss:Type="String">0-2</Data></Cell>
     <Cell><Data ss:Type="String">0-1</Data></Cell>
    </Row>
-   <Row ss:Height="32">
+   <Row ss:AutoFitHeight="0" ss:Height="32">
     <Cell ss:StyleID="s63"><Data ss:Type="String">Quickfly</Data></Cell>
     <Cell><Data ss:Type="String">1 max 4 x wave</Data></Cell>
     <Cell><Data ss:Type="String">1 max 2 x wave</Data></Cell>
     <Cell><Data ss:Type="String">1 max 2 x wave</Data></Cell>
    </Row>
-   <Row ss:Height="48">
+   <Row ss:AutoFitHeight="0" ss:Height="48">
     <Cell ss:StyleID="s63"><Data ss:Type="String">Prizefly</Data></Cell>
     <Cell ss:StyleID="s63"><Data ss:Type="String">2.5% per game, 7.5% in Mega</Data></Cell>
     <Cell ss:StyleID="s63"><Data ss:Type="String">2.5% per game, 7.5% in Mega</Data></Cell>
     <Cell ss:StyleID="s63"><Data ss:Type="String">2.5% per game, 7.5% in Mega</Data></Cell>
    </Row>
-   <Row ss:Height="112">
+   <Row ss:AutoFitHeight="0" ss:Height="112">
     <Cell><Data ss:Type="String">megagame</Data></Cell>
     <Cell><Data ss:Type="String">3%</Data></Cell>
     <Cell><Data ss:Type="String">2%</Data></Cell>
     <Cell><Data ss:Type="String">1%</Data></Cell>
-    <Cell ss:StyleID="s68"><Data ss:Type="String">chanche di avere un megagame</Data></Cell>
-    <Cell ss:StyleID="s68"><Data ss:Type="String">megagame bomb chances dimezzate, triple e quick raddopiate</Data></Cell>
-    <Cell ss:StyleID="s68"><Data ss:Type="String">50000 bf bonus a fine game</Data></Cell>
+    <Cell ss:StyleID="s67"><Data ss:Type="String">chanche di avere un megagame</Data></Cell>
+    <Cell ss:StyleID="s67"><Data ss:Type="String">megagame bomb chances dimezzate, triple e quick raddopiate</Data></Cell>
+    <Cell ss:StyleID="s67"><Data ss:Type="String">50000 bf bonus a fine game</Data></Cell>
    </Row>
-   <Row ss:Height="16">
+   <Row ss:AutoFitHeight="0" ss:Height="16">
     <Cell><Data ss:Type="String">prize per point</Data></Cell>
     <Cell><Data ss:Type="String">0.55</Data></Cell>
     <Cell><Data ss:Type="String">0.8</Data></Cell>
@@ -602,6 +601,7 @@
     <Footer x:Margin="0.3"/>
     <PageMargins x:Bottom="0.75" x:Left="0.7" x:Right="0.7" x:Top="0.75"/>
    </PageSetup>
+   <Unsynced/>
    <Panes>
     <Pane>
      <Number>3</Number>
@@ -624,40 +624,230 @@
     <Cell ss:StyleID="s62"><Data ss:Type="String">Hard</Data></Cell>
     <Cell ss:StyleID="s62"><Data ss:Type="String">Notes</Data></Cell>
    </Row>
-   <Row><Cell ss:StyleID="s63"><Data ss:Type="String">Difficulty</Data></Cell><Cell ss:StyleID="s63"><Data ss:Type="String">waves</Data></Cell><Cell ss:StyleID="s65"><Data ss:Type="Number">15</Data></Cell><Cell ss:StyleID="s65"><Data ss:Type="Number">12</Data></Cell><Cell ss:StyleID="s65"><Data ss:Type="Number">9</Data></Cell><Cell ss:StyleID="s63"><Data ss:Type="String">Live wave count per difficulty</Data></Cell></Row>
-   <Row><Cell ss:StyleID="s63"><Data ss:Type="String">Difficulty</Data></Cell><Cell ss:StyleID="s63"><Data ss:Type="String">maxPts</Data></Cell><Cell ss:StyleID="s65"><Data ss:Type="Number">45</Data></Cell><Cell ss:StyleID="s65"><Data ss:Type="Number">65</Data></Cell><Cell ss:StyleID="s65"><Data ss:Type="Number">85</Data></Cell><Cell ss:StyleID="s63"><Data ss:Type="String">Base point cap before capMultiplier</Data></Cell></Row>
-   <Row><Cell ss:StyleID="s63"><Data ss:Type="String">Difficulty</Data></Cell><Cell ss:StyleID="s63"><Data ss:Type="String">fee_usdc</Data></Cell><Cell ss:StyleID="s65"><Data ss:Type="Number">0.015</Data></Cell><Cell ss:StyleID="s65"><Data ss:Type="Number">0.025</Data></Cell><Cell ss:StyleID="s65"><Data ss:Type="Number">0.035</Data></Cell><Cell ss:StyleID="s63"><Data ss:Type="String">Entry fee</Data></Cell></Row>
-   <Row><Cell ss:StyleID="s63"><Data ss:Type="String">Payout</Data></Cell><Cell ss:StyleID="s63"><Data ss:Type="String">prize_per_point_usdc</Data></Cell><Cell ss:StyleID="s65"><Data ss:Type="Number">0.00041061</Data></Cell><Cell ss:StyleID="s65"><Data ss:Type="Number">0.00099418</Data></Cell><Cell ss:StyleID="s65"><Data ss:Type="Number">0.00088064</Data></Cell><Cell ss:StyleID="s63"><Data ss:Type="String">Linear payout; total prize = score * PPP + bonus</Data></Cell></Row>
-   <Row><Cell ss:StyleID="s63"><Data ss:Type="String">Payout</Data></Cell><Cell ss:StyleID="s63"><Data ss:Type="String">payout_model</Data></Cell><Cell ss:StyleID="s66"><Data ss:Type="String">linear</Data></Cell><Cell ss:StyleID="s66"><Data ss:Type="String">linear</Data></Cell><Cell ss:StyleID="s66"><Data ss:Type="String">linear</Data></Cell><Cell ss:StyleID="s63"><Data ss:Type="String">Bands removed from live rules</Data></Cell></Row>
-   <Row><Cell ss:StyleID="s63"><Data ss:Type="String">Butterfly</Data></Cell><Cell ss:StyleID="s63"><Data ss:Type="String">normal_points</Data></Cell><Cell ss:StyleID="s65"><Data ss:Type="Number">1</Data></Cell><Cell ss:StyleID="s65"><Data ss:Type="Number">1</Data></Cell><Cell ss:StyleID="s65"><Data ss:Type="Number">1</Data></Cell><Cell ss:StyleID="s63"><Data ss:Type="String">Base yellow butterfly score</Data></Cell></Row>
-   <Row><Cell ss:StyleID="s63"><Data ss:Type="String">Triplefly</Data></Cell><Cell ss:StyleID="s63"><Data ss:Type="String">fast_points</Data></Cell><Cell ss:StyleID="s65"><Data ss:Type="Number">2</Data></Cell><Cell ss:StyleID="s65"><Data ss:Type="Number">3</Data></Cell><Cell ss:StyleID="s65"><Data ss:Type="Number">4</Data></Cell><Cell ss:StyleID="s63"><Data ss:Type="String">Blue fast scorer</Data></Cell></Row>
-   <Row><Cell ss:StyleID="s63"><Data ss:Type="String">Quickfly</Data></Cell><Cell ss:StyleID="s63"><Data ss:Type="String">fuchsia_points</Data></Cell><Cell ss:StyleID="s65"><Data ss:Type="Number">3</Data></Cell><Cell ss:StyleID="s65"><Data ss:Type="Number">5</Data></Cell><Cell ss:StyleID="s65"><Data ss:Type="Number">7</Data></Cell><Cell ss:StyleID="s63"><Data ss:Type="String">Pink burst scorer</Data></Cell></Row>
-   <Row><Cell ss:StyleID="s63"><Data ss:Type="String">Bombfly</Data></Cell><Cell ss:StyleID="s63"><Data ss:Type="String">bomb_points</Data></Cell><Cell ss:StyleID="s65"><Data ss:Type="Number">-1</Data></Cell><Cell ss:StyleID="s65"><Data ss:Type="Number">-2</Data></Cell><Cell ss:StyleID="s65"><Data ss:Type="Number">-3</Data></Cell><Cell ss:StyleID="s63"><Data ss:Type="String">Negative pressure per hit</Data></Cell></Row>
-   <Row><Cell ss:StyleID="s63"><Data ss:Type="String">Prizefly</Data></Cell><Cell ss:StyleID="s63"><Data ss:Type="String">super_points</Data></Cell><Cell ss:StyleID="s65"><Data ss:Type="Number">1</Data></Cell><Cell ss:StyleID="s65"><Data ss:Type="Number">1</Data></Cell><Cell ss:StyleID="s65"><Data ss:Type="Number">1</Data></Cell><Cell ss:StyleID="s63"><Data ss:Type="String">Point contribution; BF bonus is separate</Data></Cell></Row>
-   <Row><Cell ss:StyleID="s63"><Data ss:Type="String">Prizefly</Data></Cell><Cell ss:StyleID="s63"><Data ss:Type="String">bonus_bf</Data></Cell><Cell ss:StyleID="s65"><Data ss:Type="Number">100000</Data></Cell><Cell ss:StyleID="s65"><Data ss:Type="Number">100000</Data></Cell><Cell ss:StyleID="s65"><Data ss:Type="Number">100000</Data></Cell><Cell ss:StyleID="s63"><Data ss:Type="String">Flat BF bonus if spawned and hit</Data></Cell></Row>
-   <Row><Cell ss:StyleID="s63"><Data ss:Type="String">Spawn</Data></Cell><Cell ss:StyleID="s63"><Data ss:Type="String">fast_chance</Data></Cell><Cell ss:StyleID="s65"><Data ss:Type="Number">0.22</Data></Cell><Cell ss:StyleID="s65"><Data ss:Type="Number">0.25</Data></Cell><Cell ss:StyleID="s65"><Data ss:Type="Number">0.3</Data></Cell><Cell ss:StyleID="s63"><Data ss:Type="String">Mega doubles this chance</Data></Cell></Row>
-   <Row><Cell ss:StyleID="s63"><Data ss:Type="String">Spawn</Data></Cell><Cell ss:StyleID="s63"><Data ss:Type="String">fast_limit_per_wave</Data></Cell><Cell ss:StyleID="s65"><Data ss:Type="Number">1</Data></Cell><Cell ss:StyleID="s65"><Data ss:Type="Number">1</Data></Cell><Cell ss:StyleID="s65"><Data ss:Type="Number">1</Data></Cell><Cell ss:StyleID="s63"><Data ss:Type="String">Mega raises to 2 in code</Data></Cell></Row>
-   <Row><Cell ss:StyleID="s63"><Data ss:Type="String">Spawn</Data></Cell><Cell ss:StyleID="s63"><Data ss:Type="String">fuchsia_chance</Data></Cell><Cell ss:StyleID="s65"><Data ss:Type="Number">0.15</Data></Cell><Cell ss:StyleID="s65"><Data ss:Type="Number">0.15</Data></Cell><Cell ss:StyleID="s65"><Data ss:Type="Number">0.15</Data></Cell><Cell ss:StyleID="s63"><Data ss:Type="String">Mega doubles this chance</Data></Cell></Row>
-   <Row><Cell ss:StyleID="s63"><Data ss:Type="String">Spawn</Data></Cell><Cell ss:StyleID="s63"><Data ss:Type="String">fuchsia_max_per_game</Data></Cell><Cell ss:StyleID="s65"><Data ss:Type="Number">3</Data></Cell><Cell ss:StyleID="s65"><Data ss:Type="Number">3</Data></Cell><Cell ss:StyleID="s65"><Data ss:Type="Number">3</Data></Cell><Cell ss:StyleID="s63"><Data ss:Type="String">Hard cap across the run</Data></Cell></Row>
-   <Row><Cell ss:StyleID="s63"><Data ss:Type="String">Spawn</Data></Cell><Cell ss:StyleID="s63"><Data ss:Type="String">super_chance_per_game</Data></Cell><Cell ss:StyleID="s65"><Data ss:Type="Number">0.025</Data></Cell><Cell ss:StyleID="s65"><Data ss:Type="Number">0.025</Data></Cell><Cell ss:StyleID="s65"><Data ss:Type="Number">0.025</Data></Cell><Cell ss:StyleID="s63"><Data ss:Type="String">Mega multiplies by 3 in code</Data></Cell></Row>
-   <Row><Cell ss:StyleID="s63"><Data ss:Type="String">Duration</Data></Cell><Cell ss:StyleID="s63"><Data ss:Type="String">normal_ms</Data></Cell><Cell ss:StyleID="s65"><Data ss:Type="Number">1200</Data></Cell><Cell ss:StyleID="s65"><Data ss:Type="Number">1000</Data></Cell><Cell ss:StyleID="s65"><Data ss:Type="Number">800</Data></Cell><Cell ss:StyleID="s63"><Data ss:Type="String">Visible lifetime</Data></Cell></Row>
-   <Row><Cell ss:StyleID="s63"><Data ss:Type="String">Duration</Data></Cell><Cell ss:StyleID="s63"><Data ss:Type="String">fast_ms</Data></Cell><Cell ss:StyleID="s65"><Data ss:Type="Number">1050</Data></Cell><Cell ss:StyleID="s65"><Data ss:Type="Number">850</Data></Cell><Cell ss:StyleID="s65"><Data ss:Type="Number">600</Data></Cell><Cell ss:StyleID="s63"><Data ss:Type="String">Triplefly lifetime</Data></Cell></Row>
-   <Row><Cell ss:StyleID="s63"><Data ss:Type="String">Duration</Data></Cell><Cell ss:StyleID="s63"><Data ss:Type="String">fuchsia_ms</Data></Cell><Cell ss:StyleID="s65"><Data ss:Type="Number">750</Data></Cell><Cell ss:StyleID="s65"><Data ss:Type="Number">600</Data></Cell><Cell ss:StyleID="s65"><Data ss:Type="Number">500</Data></Cell><Cell ss:StyleID="s63"><Data ss:Type="String">Quickfly lifetime</Data></Cell></Row>
-   <Row><Cell ss:StyleID="s63"><Data ss:Type="String">Duration</Data></Cell><Cell ss:StyleID="s63"><Data ss:Type="String">bomb_ms</Data></Cell><Cell ss:StyleID="s65"><Data ss:Type="Number">1300</Data></Cell><Cell ss:StyleID="s65"><Data ss:Type="Number">1000</Data></Cell><Cell ss:StyleID="s65"><Data ss:Type="Number">800</Data></Cell><Cell ss:StyleID="s63"><Data ss:Type="String">Bombfly lifetime</Data></Cell></Row>
-   <Row><Cell ss:StyleID="s63"><Data ss:Type="String">Duration</Data></Cell><Cell ss:StyleID="s63"><Data ss:Type="String">super_ms</Data></Cell><Cell ss:StyleID="s65"><Data ss:Type="Number">1300</Data></Cell><Cell ss:StyleID="s65"><Data ss:Type="Number">1000</Data></Cell><Cell ss:StyleID="s65"><Data ss:Type="Number">800</Data></Cell><Cell ss:StyleID="s63"><Data ss:Type="String">Prizefly lifetime</Data></Cell></Row>
-   <Row><Cell ss:StyleID="s63"><Data ss:Type="String">Pacing</Data></Cell><Cell ss:StyleID="s63"><Data ss:Type="String">spawn_base_ms</Data></Cell><Cell ss:StyleID="s65"><Data ss:Type="Number">900</Data></Cell><Cell ss:StyleID="s65"><Data ss:Type="Number">820</Data></Cell><Cell ss:StyleID="s65"><Data ss:Type="Number">720</Data></Cell><Cell ss:StyleID="s63"><Data ss:Type="String">Wave delay base</Data></Cell></Row>
-   <Row><Cell ss:StyleID="s63"><Data ss:Type="String">Pacing</Data></Cell><Cell ss:StyleID="s63"><Data ss:Type="String">spawn_min_ms</Data></Cell><Cell ss:StyleID="s65"><Data ss:Type="Number">450</Data></Cell><Cell ss:StyleID="s65"><Data ss:Type="Number">420</Data></Cell><Cell ss:StyleID="s65"><Data ss:Type="Number">380</Data></Cell><Cell ss:StyleID="s63"><Data ss:Type="String">Wave delay floor</Data></Cell></Row>
-   <Row><Cell ss:StyleID="s63"><Data ss:Type="String">Pacing</Data></Cell><Cell ss:StyleID="s63"><Data ss:Type="String">spawn_step_ms</Data></Cell><Cell ss:StyleID="s65"><Data ss:Type="Number">16</Data></Cell><Cell ss:StyleID="s65"><Data ss:Type="Number">18</Data></Cell><Cell ss:StyleID="s65"><Data ss:Type="Number">22</Data></Cell><Cell ss:StyleID="s63"><Data ss:Type="String">Delay reduction per wave index</Data></Cell></Row>
-   <Row><Cell ss:StyleID="s63"><Data ss:Type="String">Board</Data></Cell><Cell ss:StyleID="s63"><Data ss:Type="String">base_wave_max</Data></Cell><Cell ss:StyleID="s65"><Data ss:Type="Number">2</Data></Cell><Cell ss:StyleID="s65"><Data ss:Type="Number">3</Data></Cell><Cell ss:StyleID="s65"><Data ss:Type="Number">5</Data></Cell><Cell ss:StyleID="s63"><Data ss:Type="String">Base spawn volume before capMultiplier</Data></Cell></Row>
-   <Row><Cell ss:StyleID="s63"><Data ss:Type="String">Cap</Data></Cell><Cell ss:StyleID="s63"><Data ss:Type="String">distribution</Data></Cell><Cell ss:StyleID="s66"><Data ss:Type="String">0.95/1.2/1.5/2/3</Data></Cell><Cell ss:StyleID="s66"><Data ss:Type="String">0.95/1.2/1.5/2/3</Data></Cell><Cell ss:StyleID="s66"><Data ss:Type="String">0.95/1.2/1.5/2/3</Data></Cell><Cell ss:StyleID="s63"><Data ss:Type="String">Weighted by CAP_DISTRIBUTION in code</Data></Cell></Row>
-   <Row><Cell ss:StyleID="s63"><Data ss:Type="String">Notes</Data></Cell><Cell ss:StyleID="s63"><Data ss:Type="String">source_of_truth</Data></Cell><Cell ss:StyleID="s66"><Data ss:Type="String">This sheet is the manual tuning matrix for future code sync</Data></Cell><Cell ss:StyleID="s66"><Data ss:Type="String">Edit values here, then port to lib/gameRules.ts</Data></Cell><Cell ss:StyleID="s66"><Data ss:Type="String">Do not trust older sheets if values diverge</Data></Cell><Cell ss:StyleID="s63"><Data ss:Type="String">Added after live rebalance pass</Data></Cell></Row>
+   <Row ss:Height="32">
+   <Cell ss:StyleID="s63"><Data ss:Type="String">Difficulty</Data></Cell>
+   <Cell ss:StyleID="s63"><Data ss:Type="String">waves</Data></Cell>
+   <Cell ss:StyleID="s65"><Data ss:Type="Number">15</Data></Cell>
+    <Cell ss:StyleID="s65"><Data ss:Type="Number">13</Data></Cell>
+    <Cell ss:StyleID="s65"><Data ss:Type="Number">8</Data></Cell>
+    <Cell ss:StyleID="s63"><Data ss:Type="String">Live wave count per difficulty</Data></Cell>
+   </Row>
+   <Row ss:Height="48">
+    <Cell ss:StyleID="s63"><Data ss:Type="String">Difficulty</Data></Cell>
+    <Cell ss:StyleID="s63"><Data ss:Type="String">maxPts</Data></Cell>
+    <Cell ss:StyleID="s65"><Data ss:Type="Number">45</Data></Cell>
+    <Cell ss:StyleID="s65"><Data ss:Type="Number">65</Data></Cell>
+    <Cell ss:StyleID="s65"><Data ss:Type="Number">85</Data></Cell>
+    <Cell ss:StyleID="s63"><Data ss:Type="String">Base point cap before capMultiplier</Data></Cell>
+   </Row>
+   <Row ss:Height="16">
+    <Cell ss:StyleID="s63"><Data ss:Type="String">Difficulty</Data></Cell>
+    <Cell ss:StyleID="s63"><Data ss:Type="String">fee_usdc</Data></Cell>
+    <Cell ss:StyleID="s65"><Data ss:Type="Number">1.4999999999999999E-2</Data></Cell>
+    <Cell ss:StyleID="s65"><Data ss:Type="Number">2.5000000000000001E-2</Data></Cell>
+    <Cell ss:StyleID="s65"><Data ss:Type="Number">3.5000000000000003E-2</Data></Cell>
+    <Cell ss:StyleID="s63"><Data ss:Type="String">Entry fee</Data></Cell>
+   </Row>
+   <Row ss:Height="64">
+   <Cell ss:StyleID="s63"><Data ss:Type="String">Payout</Data></Cell>
+   <Cell ss:StyleID="s63"><Data ss:Type="String">prize_per_point_usdc</Data></Cell>
+    <Cell ss:StyleID="s65"><Data ss:Type="Number">2.76E-4</Data></Cell>
+    <Cell ss:StyleID="s65"><Data ss:Type="Number">7.86E-4</Data></Cell>
+    <Cell ss:StyleID="s65"><Data ss:Type="Number">1.898E-3</Data></Cell>
+    <Cell ss:StyleID="s63"><Data ss:Type="String">Linear payout; total prize = score * PPP + bonus</Data></Cell>
+   </Row>
+   <Row ss:AutoFitHeight="0">
+    <Cell ss:StyleID="s63"><Data ss:Type="String">Payout</Data></Cell>
+    <Cell ss:StyleID="s63"><Data ss:Type="String">payout_model</Data></Cell>
+    <Cell ss:StyleID="s66"><Data ss:Type="String">linear</Data></Cell>
+    <Cell ss:StyleID="s66"><Data ss:Type="String">linear</Data></Cell>
+    <Cell ss:StyleID="s66"><Data ss:Type="String">linear</Data></Cell>
+    <Cell ss:StyleID="s63"><Data ss:Type="String">Bands removed from live rules</Data></Cell>
+   </Row>
+   <Row ss:AutoFitHeight="0">
+    <Cell ss:StyleID="s63"><Data ss:Type="String">Butterfly</Data></Cell>
+    <Cell ss:StyleID="s63"><Data ss:Type="String">normal_points</Data></Cell>
+    <Cell ss:StyleID="s65"><Data ss:Type="Number">1</Data></Cell>
+    <Cell ss:StyleID="s65"><Data ss:Type="Number">1</Data></Cell>
+    <Cell ss:StyleID="s65"><Data ss:Type="Number">1</Data></Cell>
+    <Cell ss:StyleID="s63"><Data ss:Type="String">Base yellow butterfly score</Data></Cell>
+   </Row>
+   <Row ss:AutoFitHeight="0">
+    <Cell ss:StyleID="s63"><Data ss:Type="String">Triplefly</Data></Cell>
+    <Cell ss:StyleID="s63"><Data ss:Type="String">fast_points</Data></Cell>
+    <Cell ss:StyleID="s65"><Data ss:Type="Number">2</Data></Cell>
+    <Cell ss:StyleID="s65"><Data ss:Type="Number">3</Data></Cell>
+    <Cell ss:StyleID="s65"><Data ss:Type="Number">4</Data></Cell>
+    <Cell ss:StyleID="s63"><Data ss:Type="String">Blue fast scorer</Data></Cell>
+   </Row>
+   <Row ss:AutoFitHeight="0">
+    <Cell ss:StyleID="s63"><Data ss:Type="String">Quickfly</Data></Cell>
+    <Cell ss:StyleID="s63"><Data ss:Type="String">fuchsia_points</Data></Cell>
+    <Cell ss:StyleID="s65"><Data ss:Type="Number">3</Data></Cell>
+    <Cell ss:StyleID="s65"><Data ss:Type="Number">5</Data></Cell>
+    <Cell ss:StyleID="s65"><Data ss:Type="Number">7</Data></Cell>
+    <Cell ss:StyleID="s63"><Data ss:Type="String">Pink burst scorer</Data></Cell>
+   </Row>
+   <Row ss:AutoFitHeight="0">
+    <Cell ss:StyleID="s63"><Data ss:Type="String">Bombfly</Data></Cell>
+    <Cell ss:StyleID="s63"><Data ss:Type="String">bomb_points</Data></Cell>
+    <Cell ss:StyleID="s65"><Data ss:Type="Number">-1</Data></Cell>
+    <Cell ss:StyleID="s65"><Data ss:Type="Number">-2</Data></Cell>
+    <Cell ss:StyleID="s65"><Data ss:Type="Number">-3</Data></Cell>
+    <Cell ss:StyleID="s63"><Data ss:Type="String">Negative pressure per hit</Data></Cell>
+   </Row>
+   <Row ss:AutoFitHeight="0">
+    <Cell ss:StyleID="s63"><Data ss:Type="String">Prizefly</Data></Cell>
+    <Cell ss:StyleID="s63"><Data ss:Type="String">super_points</Data></Cell>
+    <Cell ss:StyleID="s65"><Data ss:Type="Number">1</Data></Cell>
+    <Cell ss:StyleID="s65"><Data ss:Type="Number">1</Data></Cell>
+    <Cell ss:StyleID="s65"><Data ss:Type="Number">1</Data></Cell>
+    <Cell ss:StyleID="s63"><Data ss:Type="String">Point contribution; BF bonus is separate</Data></Cell>
+   </Row>
+   <Row ss:AutoFitHeight="0">
+    <Cell ss:StyleID="s63"><Data ss:Type="String">Prizefly</Data></Cell>
+    <Cell ss:StyleID="s63"><Data ss:Type="String">bonus_bf</Data></Cell>
+    <Cell ss:StyleID="s65"><Data ss:Type="Number">100000</Data></Cell>
+    <Cell ss:StyleID="s65"><Data ss:Type="Number">100000</Data></Cell>
+    <Cell ss:StyleID="s65"><Data ss:Type="Number">100000</Data></Cell>
+    <Cell ss:StyleID="s63"><Data ss:Type="String">Flat BF bonus if spawned and hit</Data></Cell>
+   </Row>
+   <Row ss:AutoFitHeight="0">
+    <Cell ss:StyleID="s63"><Data ss:Type="String">Spawn</Data></Cell>
+    <Cell ss:StyleID="s63"><Data ss:Type="String">fast_chance</Data></Cell>
+    <Cell ss:StyleID="s65"><Data ss:Type="Number">0.22</Data></Cell>
+    <Cell ss:StyleID="s65"><Data ss:Type="Number">0.25</Data></Cell>
+    <Cell ss:StyleID="s65"><Data ss:Type="Number">0.3</Data></Cell>
+    <Cell ss:StyleID="s63"><Data ss:Type="String">Mega doubles this chance</Data></Cell>
+   </Row>
+   <Row ss:AutoFitHeight="0">
+    <Cell ss:StyleID="s63"><Data ss:Type="String">Spawn</Data></Cell>
+    <Cell ss:StyleID="s63"><Data ss:Type="String">fast_limit_per_wave</Data></Cell>
+    <Cell ss:StyleID="s65"><Data ss:Type="Number">1</Data></Cell>
+    <Cell ss:StyleID="s65"><Data ss:Type="Number">1</Data></Cell>
+    <Cell ss:StyleID="s65"><Data ss:Type="Number">1</Data></Cell>
+    <Cell ss:StyleID="s63"><Data ss:Type="String">Mega raises to 2 in code</Data></Cell>
+   </Row>
+   <Row ss:AutoFitHeight="0">
+    <Cell ss:StyleID="s63"><Data ss:Type="String">Spawn</Data></Cell>
+    <Cell ss:StyleID="s63"><Data ss:Type="String">fuchsia_chance</Data></Cell>
+    <Cell ss:StyleID="s65"><Data ss:Type="Number">0.15</Data></Cell>
+    <Cell ss:StyleID="s65"><Data ss:Type="Number">0.15</Data></Cell>
+    <Cell ss:StyleID="s65"><Data ss:Type="Number">0.15</Data></Cell>
+    <Cell ss:StyleID="s63"><Data ss:Type="String">Mega doubles this chance</Data></Cell>
+   </Row>
+   <Row ss:AutoFitHeight="0">
+    <Cell ss:StyleID="s63"><Data ss:Type="String">Spawn</Data></Cell>
+    <Cell ss:StyleID="s63"><Data ss:Type="String">fuchsia_max_per_game</Data></Cell>
+    <Cell ss:StyleID="s65"><Data ss:Type="Number">3</Data></Cell>
+    <Cell ss:StyleID="s65"><Data ss:Type="Number">3</Data></Cell>
+    <Cell ss:StyleID="s65"><Data ss:Type="Number">3</Data></Cell>
+    <Cell ss:StyleID="s63"><Data ss:Type="String">Hard cap across the run</Data></Cell>
+   </Row>
+   <Row ss:AutoFitHeight="0">
+    <Cell ss:StyleID="s63"><Data ss:Type="String">Spawn</Data></Cell>
+    <Cell ss:StyleID="s63"><Data ss:Type="String">super_chance_per_game</Data></Cell>
+    <Cell ss:StyleID="s65"><Data ss:Type="Number">2.5000000000000001E-2</Data></Cell>
+    <Cell ss:StyleID="s65"><Data ss:Type="Number">2.5000000000000001E-2</Data></Cell>
+    <Cell ss:StyleID="s65"><Data ss:Type="Number">2.5000000000000001E-2</Data></Cell>
+    <Cell ss:StyleID="s63"><Data ss:Type="String">Mega multiplies by 3 in code</Data></Cell>
+   </Row>
+   <Row ss:AutoFitHeight="0">
+    <Cell ss:StyleID="s63"><Data ss:Type="String">Duration</Data></Cell>
+    <Cell ss:StyleID="s63"><Data ss:Type="String">normal_ms</Data></Cell>
+    <Cell ss:StyleID="s65"><Data ss:Type="Number">1200</Data></Cell>
+    <Cell ss:StyleID="s65"><Data ss:Type="Number">1000</Data></Cell>
+    <Cell ss:StyleID="s65"><Data ss:Type="Number">800</Data></Cell>
+    <Cell ss:StyleID="s63"><Data ss:Type="String">Visible lifetime</Data></Cell>
+   </Row>
+   <Row ss:AutoFitHeight="0">
+    <Cell ss:StyleID="s63"><Data ss:Type="String">Duration</Data></Cell>
+    <Cell ss:StyleID="s63"><Data ss:Type="String">fast_ms</Data></Cell>
+    <Cell ss:StyleID="s65"><Data ss:Type="Number">1050</Data></Cell>
+    <Cell ss:StyleID="s65"><Data ss:Type="Number">850</Data></Cell>
+    <Cell ss:StyleID="s65"><Data ss:Type="Number">600</Data></Cell>
+    <Cell ss:StyleID="s63"><Data ss:Type="String">Triplefly lifetime</Data></Cell>
+   </Row>
+   <Row ss:AutoFitHeight="0">
+    <Cell ss:StyleID="s63"><Data ss:Type="String">Duration</Data></Cell>
+    <Cell ss:StyleID="s63"><Data ss:Type="String">fuchsia_ms</Data></Cell>
+    <Cell ss:StyleID="s65"><Data ss:Type="Number">750</Data></Cell>
+    <Cell ss:StyleID="s65"><Data ss:Type="Number">600</Data></Cell>
+    <Cell ss:StyleID="s65"><Data ss:Type="Number">500</Data></Cell>
+    <Cell ss:StyleID="s63"><Data ss:Type="String">Quickfly lifetime</Data></Cell>
+   </Row>
+   <Row ss:AutoFitHeight="0">
+    <Cell ss:StyleID="s63"><Data ss:Type="String">Duration</Data></Cell>
+    <Cell ss:StyleID="s63"><Data ss:Type="String">bomb_ms</Data></Cell>
+    <Cell ss:StyleID="s65"><Data ss:Type="Number">1300</Data></Cell>
+    <Cell ss:StyleID="s65"><Data ss:Type="Number">1000</Data></Cell>
+    <Cell ss:StyleID="s65"><Data ss:Type="Number">800</Data></Cell>
+    <Cell ss:StyleID="s63"><Data ss:Type="String">Bombfly lifetime</Data></Cell>
+   </Row>
+   <Row ss:AutoFitHeight="0">
+    <Cell ss:StyleID="s63"><Data ss:Type="String">Duration</Data></Cell>
+    <Cell ss:StyleID="s63"><Data ss:Type="String">super_ms</Data></Cell>
+    <Cell ss:StyleID="s65"><Data ss:Type="Number">1300</Data></Cell>
+    <Cell ss:StyleID="s65"><Data ss:Type="Number">1000</Data></Cell>
+    <Cell ss:StyleID="s65"><Data ss:Type="Number">800</Data></Cell>
+    <Cell ss:StyleID="s63"><Data ss:Type="String">Prizefly lifetime</Data></Cell>
+   </Row>
+   <Row ss:AutoFitHeight="0">
+    <Cell ss:StyleID="s63"><Data ss:Type="String">Pacing</Data></Cell>
+    <Cell ss:StyleID="s63"><Data ss:Type="String">spawn_base_ms</Data></Cell>
+    <Cell ss:StyleID="s65"><Data ss:Type="Number">900</Data></Cell>
+    <Cell ss:StyleID="s65"><Data ss:Type="Number">820</Data></Cell>
+    <Cell ss:StyleID="s65"><Data ss:Type="Number">720</Data></Cell>
+    <Cell ss:StyleID="s63"><Data ss:Type="String">Wave delay base</Data></Cell>
+   </Row>
+   <Row ss:AutoFitHeight="0">
+    <Cell ss:StyleID="s63"><Data ss:Type="String">Pacing</Data></Cell>
+    <Cell ss:StyleID="s63"><Data ss:Type="String">spawn_min_ms</Data></Cell>
+    <Cell ss:StyleID="s65"><Data ss:Type="Number">450</Data></Cell>
+    <Cell ss:StyleID="s65"><Data ss:Type="Number">420</Data></Cell>
+    <Cell ss:StyleID="s65"><Data ss:Type="Number">380</Data></Cell>
+    <Cell ss:StyleID="s63"><Data ss:Type="String">Wave delay floor</Data></Cell>
+   </Row>
+   <Row ss:AutoFitHeight="0">
+    <Cell ss:StyleID="s63"><Data ss:Type="String">Pacing</Data></Cell>
+    <Cell ss:StyleID="s63"><Data ss:Type="String">spawn_step_ms</Data></Cell>
+    <Cell ss:StyleID="s65"><Data ss:Type="Number">16</Data></Cell>
+    <Cell ss:StyleID="s65"><Data ss:Type="Number">18</Data></Cell>
+    <Cell ss:StyleID="s65"><Data ss:Type="Number">22</Data></Cell>
+    <Cell ss:StyleID="s63"><Data ss:Type="String">Delay reduction per wave index</Data></Cell>
+   </Row>
+   <Row ss:Height="48">
+    <Cell ss:StyleID="s63"><Data ss:Type="String">Board</Data></Cell>
+    <Cell ss:StyleID="s63"><Data ss:Type="String">base_wave_max</Data></Cell>
+    <Cell ss:StyleID="s65"><Data ss:Type="Number">2</Data></Cell>
+    <Cell ss:StyleID="s65"><Data ss:Type="Number">3</Data></Cell>
+    <Cell ss:StyleID="s65"><Data ss:Type="Number">5</Data></Cell>
+    <Cell ss:StyleID="s63"><Data ss:Type="String">Base spawn volume before capMultiplier</Data></Cell>
+   </Row>
+   <Row ss:Height="48">
+    <Cell ss:StyleID="s63"><Data ss:Type="String">Cap</Data></Cell>
+    <Cell ss:StyleID="s63"><Data ss:Type="String">distribution</Data></Cell>
+    <Cell ss:StyleID="s66"><Data ss:Type="String">0.95/1.2/1.5/2/3</Data></Cell>
+    <Cell ss:StyleID="s66"><Data ss:Type="String">0.95/1.2/1.5/2/3</Data></Cell>
+    <Cell ss:StyleID="s66"><Data ss:Type="String">0.95/1.2/1.5/2/3</Data></Cell>
+    <Cell ss:StyleID="s63"><Data ss:Type="String">Weighted by CAP_DISTRIBUTION in code</Data></Cell>
+   </Row>
+   <Row ss:Height="64">
+    <Cell ss:StyleID="s63"><Data ss:Type="String">Notes</Data></Cell>
+    <Cell ss:StyleID="s63"><Data ss:Type="String">source_of_truth</Data></Cell>
+    <Cell ss:StyleID="s66"><Data ss:Type="String">This sheet is the manual tuning matrix for future code sync</Data></Cell>
+    <Cell ss:StyleID="s66"><Data ss:Type="String">Edit values here, then port to lib/gameRules.ts</Data></Cell>
+    <Cell ss:StyleID="s66"><Data ss:Type="String">Do not trust older sheets if values diverge</Data></Cell>
+    <Cell ss:StyleID="s63"><Data ss:Type="String">Added after live rebalance pass</Data></Cell>
+   </Row>
   </Table>
   <WorksheetOptions xmlns="urn:schemas-microsoft-com:office:excel">
    <Unsynced/>
+   <Selected/>
    <FreezePanes/>
    <FrozenNoSplit/>
    <SplitHorizontal>1</SplitHorizontal>
-   <TopRowBottomPane>1</TopRowBottomPane>
+   <TopRowBottomPane>4</TopRowBottomPane>
    <ActivePane>2</ActivePane>
    <Panes>
     <Pane>
