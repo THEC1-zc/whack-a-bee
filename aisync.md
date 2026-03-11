@@ -236,6 +236,14 @@ Payout bands:
   - removed most filled panel backgrounds from the shared user/admin shell so the illustrated page background stays visible
   - shifted readability toward stronger overlay contrast plus text-shadow instead of dark card blocks
   - softened home difficulty selection so each difficulty reads as a highlighted line item instead of a boxed tile
+- App share preview logic:
+  - added a dedicated share landing route at `/share/app` with its own frame metadata and centered Farcaster preview image
+  - app share from the home screen now embeds `/share/app` instead of the root app URL, so Farcaster uses the share-specific preview rather than the generic root OG layout
+  - the new OG composition is center-weighted for mobile frame previews, avoiding the old too-wide layout that lost readability at the sides
+- Payout share preview logic:
+  - added a dedicated dynamic share route at `/share/payout`
+  - payout share now embeds the share route instead of the raw `/api/share-image` URL
+  - the route generates metadata/frame tags from the run query params and points Farcaster to the existing payout image renderer, making payout shares behave like a proper preview card/frame object instead of a direct image link
 - Reworked game type distribution in `lib/gameRules.ts`:
   - `Low` `0.9x` at `15%`
   - `Nice` `1.1x` at `20%`

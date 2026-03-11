@@ -363,7 +363,17 @@ export default function GameScreen({ user, difficulty, onGameEnd }: Props) {
     { label: "Weekly Pot Share", value: `${weeklyBf.toLocaleString()} BF`, tone: "#fbbf24" },
     { label: "Burn Share", value: `${burnBf.toLocaleString()} BF`, tone: "#f87171" },
   ];
-  const shareImage = `${appUrl}/api/share-image?score=${score}&pct=${pct}&prizeBf=${prizeBfNet}&fee=${cfg.fee}&difficulty=${cfg.label}&tickets=${ticketEstimate}&waves=${cfg.waves}&v=4`;
+  const shareQuery = new URLSearchParams({
+    score: String(score),
+    pct: String(pct),
+    prizeBf: String(prizeBfNet),
+    fee: String(cfg.fee),
+    difficulty: cfg.label,
+    tickets: String(ticketEstimate),
+    waves: String(cfg.waves),
+    v: "5",
+  }).toString();
+  const shareUrl = `${appUrl}/share/payout?${shareQuery}`;
   const shareText = `I just cleared ${cfg.waves} waves on Whack-a-Butterfly by @Thec1, entered a ${cfg.fee} USDC ${cfg.label} run, hit ${pct}% of the cap and won ${prizeBfNet} BF plus ${ticketEstimate} weekly tickets. Can you beat it?`;
 
   if (["waiting", "preparing", "paying"].includes(feeStatus)) {
@@ -487,7 +497,7 @@ export default function GameScreen({ user, difficulty, onGameEnd }: Props) {
             <button
               onClick={async () => {
                 try {
-                  await sdk.actions.composeCast({ text: `${shareText}\n${appUrl}`, embeds: [shareImage] });
+                  await sdk.actions.composeCast({ text: `${shareText}\n${appUrl}`, embeds: [shareUrl] });
                 } catch (error) {
                   console.error("Share error", error);
                 }

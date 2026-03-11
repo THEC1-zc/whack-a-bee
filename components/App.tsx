@@ -97,10 +97,11 @@ export default function App() {
 
   async function handleShareApp() {
     const appUrl = process.env.NEXT_PUBLIC_APP_URL || "https://whack-a-bee.vercel.app";
+    const shareUrl = `${appUrl}/share/app`;
     const shareText = "Whack-a-Butterfly by @Thec1 is live on Farcaster. Enter, play, win BF, and climb the weekly pot leaderboard.";
     setShareError(null);
     try {
-      await sdk.actions.composeCast({ text: shareText, embeds: [appUrl] });
+      await sdk.actions.composeCast({ text: shareText, embeds: [shareUrl] });
     } catch {
       setShareError("Share failed");
     }
