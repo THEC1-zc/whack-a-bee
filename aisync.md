@@ -258,3 +258,11 @@ Payout bands:
   - added shared `lib/weekWindow.ts` and switched `lib/weekly.ts` + `lib/gameSessions.ts` to a Sunday-based CET week id
   - this aligns claimed games, weekly tickets, pot accounting, snapshot, and payout to the same Sunday boundary
 - Also updated `SESSION_CONTEXT.md` to document the Sunday-based weekly window.
+
+### 2026-03-11 11:35:00 +0100
+- Fixed home-shell navigation in `components/UserPageHeader.tsx`:
+  - when both `href` and `onClick` are provided, header actions now prefer the local click handler
+  - this restores `Rules` and `Leaderboard` opening correctly from the main page without forcing a route transition
+- Validation:
+  - targeted lint ✅ with only the known leaderboard avatar `<img>` warning
+  - `npm run build` ✅

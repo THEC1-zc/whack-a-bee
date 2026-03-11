@@ -29,6 +29,16 @@ function HeaderAction({ label, title, icon, active, href, onClick }: ActionProps
   }`;
   const content = iconOnly ? <span aria-hidden="true">{icon}</span> : label;
 
+  // Prefer the local click handler when both are provided so App screen-state
+  // navigation works from the home shell without forcing a route transition.
+  if (onClick) {
+    return (
+      <button type="button" onClick={onClick} className={className} title={title}>
+        {content}
+      </button>
+    );
+  }
+
   if (href) {
     return (
       <Link href={href} className={className} title={title}>
@@ -37,11 +47,7 @@ function HeaderAction({ label, title, icon, active, href, onClick }: ActionProps
     );
   }
 
-  return (
-    <button type="button" onClick={onClick} className={className} title={title}>
-      {content}
-    </button>
-  );
+  return null;
 }
 
 export default function UserPageHeader({
