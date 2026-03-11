@@ -14,29 +14,19 @@ export async function generateMetadata({
 }): Promise<Metadata> {
   const params = await searchParams;
   const score = readParam(params.score, "0");
-  const pct = readParam(params.pct, "0");
   const prizeBf = readParam(params.prizeBf, "0");
-  const fee = readParam(params.fee, "0");
   const difficulty = readParam(params.difficulty, "Battle");
-  const tickets = readParam(params.tickets, "0");
-  const waves = readParam(params.waves, "0");
-
-  const imageQuery = new URLSearchParams({
+  const shareQuery = new URLSearchParams({
     score,
-    pct,
     prizeBf,
-    fee,
     difficulty,
-    tickets,
-    waves,
-    v: "5",
   });
-  const imageUrl = `${APP_URL}/api/share-image?${imageQuery.toString()}`;
-  const shareUrl = `${APP_URL}/share/payout?${imageQuery.toString()}`;
+  const shareUrl = `${APP_URL}/share/payout?${shareQuery.toString()}`;
+  const imageUrl = `${APP_URL}/api/share-payout-image?${shareQuery.toString()}`;
 
   return {
     title: `${prizeBf} BF won on Whack-a-Butterfly`,
-    description: `${difficulty} run cleared on Farcaster with ${score} points and ${tickets} weekly tickets.`,
+    description: `${difficulty} run cleared on Farcaster with ${score} points and ${prizeBf} BF won.`,
     openGraph: {
       title: "Whack-a-Butterfly Payout",
       description: `${difficulty} run cleared with ${score} points and ${prizeBf} BF won.`,

@@ -243,7 +243,8 @@ Payout bands:
 - Payout share preview logic:
   - added a dedicated dynamic share route at `/share/payout`
   - payout share now embeds the share route instead of the raw `/api/share-image` URL
-  - the route generates metadata/frame tags from the run query params and points Farcaster to the existing payout image renderer, making payout shares behave like a proper preview card/frame object instead of a direct image link
+  - replaced the old dense payout preview usage with a dedicated, simpler payout share image route focused on `BF won`, `difficulty`, and `points`
+  - the route generates metadata/frame tags from the run query params and points Farcaster to the payout-share-specific image renderer
 - Reworked game type distribution in `lib/gameRules.ts`:
   - `Low` `0.9x` at `15%`
   - `Nice` `1.1x` at `20%`
