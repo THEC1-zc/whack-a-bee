@@ -1,3 +1,5 @@
+import { formatUnits, parseUnits } from "viem";
+
 // USDC on Base
 export const USDC_ADDRESS = "0x833589fCD6eDb6E08f4c7C32D4f71b54bdA02913" as const;
 const ENV_PRIZE_WALLET = process.env.NEXT_PUBLIC_PRIZE_WALLET_ADDRESS as string | undefined;
@@ -130,4 +132,3 @@ export function toBFUnits(amount: number): bigint {
 export function fromBFUnits(units: bigint): number {
   return Number(formatUnits(units, BF_DECIMALS));
 }
-import { formatUnits, parseUnits } from "viem";
