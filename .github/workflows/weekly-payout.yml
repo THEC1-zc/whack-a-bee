@@ -22,6 +22,11 @@ jobs:
           if [ -z "$SITE_URL" ]; then
             echo "Missing SITE_URL secret" && exit 1
           fi
-          curl -sS -X POST "$SITE_URL/api/admin/weekly-payout" \
+          # mode=auto exempts the wallet-signature 2FA requirement (server-side cron path).
+          # --fail-with-body causes curl to exit non-zero on HTTP 4xx/5xx so the workflow
+          # correctly marks the run as failed instead of silently succeeding.
+          RESPONSE=$(curl -sS --fail-with-body -X POST "$SITE_URL/api/admin/weekly-payout" \
             -H "x-admin-token: $ADMIN_API_KEY" \
-            -H "Content-Type: application/json"
+            -H "Content-Type: application/json" \
+            -d '{"mode":"auto","force":false}')
+          echo "Response: $RESPONSE"
