@@ -653,7 +653,7 @@
    <Cell ss:StyleID="s63"><Data ss:Type="String">prize_per_point_usdc</Data></Cell>
     <Cell ss:StyleID="s65"><Data ss:Type="Number">2.76E-4</Data></Cell>
     <Cell ss:StyleID="s65"><Data ss:Type="Number">7.86E-4</Data></Cell>
-    <Cell ss:StyleID="s65"><Data ss:Type="Number">1.898E-3</Data></Cell>
+    <Cell ss:StyleID="s65"><Data ss:Type="Number">1.68E-3</Data></Cell>
     <Cell ss:StyleID="s63"><Data ss:Type="String">Linear payout; total prize = score * PPP + bonus</Data></Cell>
    </Row>
    <Row ss:AutoFitHeight="0">

@@ -2,7 +2,7 @@ import crypto from "node:crypto";
 
 // admin_login is a dedicated action so its challenge token cannot be replayed
 // to authorize other admin operations (e.g. reset_leaderboard).
-export type AdminAction = "reset_leaderboard" | "admin_login" | "weekly_payout" | "weekly_reset";
+export type AdminAction = "reset_leaderboard" | "admin_login" | "weekly_payout" | "weekly_reset" | "rescue_payout";
 
 type ChallengePayload = {
   action: AdminAction;

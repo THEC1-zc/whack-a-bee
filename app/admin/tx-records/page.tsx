@@ -42,6 +42,8 @@ function kindLabel(kind: string) {
       return "player payout out";
     case "game_pot_in":
       return "weekly pot in";
+    case "game_burn_out":
+      return "burn out";
     case "weekly_payout_out":
       return "weekly payout out";
     case "payout_error":

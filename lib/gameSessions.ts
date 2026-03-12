@@ -1,6 +1,7 @@
 import crypto from "node:crypto";
 import Redis from "ioredis";
 import {
+  createWalletClient,
   createPublicClient,
   decodeFunctionData,
   encodePacked,
@@ -8,7 +9,6 @@ import {
   http,
   keccak256,
   parseEventLogs,
-  recoverMessageAddress,
 } from "viem";
 import { privateKeyToAccount } from "viem/accounts";
 import { base } from "viem/chains";
@@ -49,6 +49,13 @@ const SIGNER_PRIVATE_KEY = process.env.PAYOUT_SIGNER_PRIVATE_KEY || "";
 const PRIZE_WALLET_ADDRESS = (
   process.env.NEXT_PUBLIC_PRIZE_WALLET_ADDRESS || PRIZE_WALLET
 ) as `0x${string}`;
+const POT_WALLET_ADDRESS = (
+  process.env.POT_WALLET_ADDRESS || "0x468d066995A4C09209c9c165F30Bd76A4FDB88e0"
+) as `0x${string}`;
+const BURN_WALLET_ADDRESS = (
+  process.env.BURN_WALLET_ADDRESS || "0x5c29b12A731789182012D769B734D77eE15e530F"
+) as `0x${string}`;
+const PRIZE_WALLET_PRIVATE_KEY = process.env.PRIZE_WALLET_PRIVATE_KEY || "";
 const RPC_URLS = (process.env.BASE_RPC_URLS || "")
   .split(",")
   .map((s) => s.trim())
@@ -125,7 +132,7 @@ export type GameRecord = {
   username?: string;
   displayName?: string;
   pfpUrl?: string;
-  feeTxHash?: string;
+  feeTxHash?: `0x${string}`;
   feeVerifiedAt?: number;
   startedAt?: number;
   finishedAt?: number;
@@ -142,8 +149,12 @@ export type GameRecord = {
   claimExpiry?: number;
   claimSignature?: `0x${string}`;
   claimSignedAt?: number;
-  claimTxHash?: string;
+  claimTxHash?: `0x${string}`;
   claimConfirmedAt?: number;
+  claimMethod?: "player" | "admin_rescue";
+  rescuePrizeTxHash?: `0x${string}`;
+  rescuePotTxHash?: `0x${string}`;
+  rescueBurnTxHash?: `0x${string}`;
   ticketAssigned?: boolean;
   ticketCount?: number;
 };
@@ -167,6 +178,7 @@ export type AdminGameRow = {
   prizeBfGross?: number;
   claimTxHash?: string;
   claimTxUrl?: string;
+  claimMethod?: "player" | "admin_rescue";
   ticketAssigned?: boolean;
   ticketCount?: number;
 };
@@ -207,6 +219,23 @@ function baseTransport() {
 
 function getPublicClient() {
   return createPublicClient({ chain: base, transport: baseTransport() });
+}
+
+function getPrizeWalletClient() {
+  const normalized = normalizePrivateKey(PRIZE_WALLET_PRIVATE_KEY);
+  if (!/^0x[0-9a-fA-F]{64}$/.test(normalized)) {
+    throw new Error("PRIZE_WALLET_PRIVATE_KEY invalid");
+  }
+  const account = privateKeyToAccount(normalized as `0x${string}`);
+  if (account.address.toLowerCase() !== PRIZE_WALLET_ADDRESS.toLowerCase()) {
+    throw new Error("PRIZE_WALLET_PRIVATE_KEY does not match configured prize wallet");
+  }
+  return createWalletClient({ account, chain: base, transport: baseTransport() });
+}
+
+function normalizePrivateKey(value: string | undefined) {
+  const raw = (value || "").trim().replace(/^['"]|['"]$/g, "").replace(/\s+/g, "");
+  return raw.startsWith("0x") ? raw : `0x${raw}`;
 }
 
 function sha256Hex(value: string) {
@@ -402,19 +431,6 @@ function normalizeHitStats(
   return safe;
 }
 
-function buildFinishAuthMessage(params: {
-  gameId: string;
-  score: number;
-  hitStats: HitStats;
-}) {
-  return [
-    "Whack-a-Butterfly Game Finish",
-    `Game: ${params.gameId}`,
-    `Score: ${params.score}`,
-    `Hits: normal=${params.hitStats.normal},fast=${params.hitStats.fast},fuchsia=${params.hitStats.fuchsia},bomb=${params.hitStats.bomb},super=${params.hitStats.super}`,
-  ].join("\n");
-}
-
 // ── Ticket calculation ────────────────────────────────────────────────────────
 
 function calculateTickets(params: {
@@ -577,8 +593,6 @@ export async function finishGameSession(params: {
   gameSecret: string;
   score: number;
   hitStats: Partial<HitStats>;
-  finishMessage: string;
-  finishSignature: string;
 }) {
   const game = await getGameById(params.gameId);
   if (!game) throw new Error("Game not found");
@@ -600,24 +614,6 @@ export async function finishGameSession(params: {
 
   // Validate hitStats per-type bounds (B-2 fix: score injection prevention)
   const hitStats = normalizeHitStats(params.hitStats, game.difficulty, game.capMultiplier, game.waveMultipliers);
-  if (!params.finishMessage || !params.finishSignature) {
-    throw new Error("Missing finish authorization");
-  }
-  const expectedMessage = buildFinishAuthMessage({
-    gameId: game.gameId,
-    score: Math.max(0, Math.floor(Number(params.score || 0))),
-    hitStats,
-  });
-  if (params.finishMessage !== expectedMessage) {
-    throw new Error("Finish authorization message mismatch");
-  }
-  const signer = await recoverMessageAddress({
-    message: params.finishMessage,
-    signature: params.finishSignature as `0x${string}`,
-  }).catch(() => null);
-  if (!signer || signer.toLowerCase() !== game.playerAddress.toLowerCase()) {
-    throw new Error("Finish authorization signature invalid");
-  }
 
   const rawScore = deriveScoreFromHits(game.difficulty, hitStats);
   const realizedScore = clampLiveScore(rawScore, game.difficulty, game.capMultiplier);
@@ -752,6 +748,7 @@ export async function confirmClaimForGame(params: { gameId: string; gameSecret: 
   game.status = "claimed";
   game.claimTxHash = params.txHash;
   game.claimConfirmedAt = Date.now();
+  game.claimMethod = "player";
   game.ticketAssigned = true;
   // ticketCount already calculated in finishGameSession; preserve it
   await saveGame(game);
@@ -784,6 +781,144 @@ export async function confirmClaimForGame(params: { gameId: string; gameSecret: 
   });
 
   return game;
+}
+
+async function sendPrizeWalletTransfer(to: `0x${string}`, amountUnits: bigint): Promise<`0x${string}`> {
+  const wallet = getPrizeWalletClient();
+  const publicClient = getPublicClient();
+  const txHash = await wallet.writeContract({
+    address: BF_ADDRESS,
+    abi: ERC20_ABI,
+    functionName: "transfer",
+    args: [to, amountUnits],
+    account: wallet.account,
+  });
+  await publicClient.waitForTransactionReceipt({ hash: txHash });
+  return txHash;
+}
+
+export async function rescueUnclaimedGamePayout(gameId: string) {
+  const game = await getGameById(gameId);
+  if (!game) throw new Error("Game not found");
+  if (!game.playerAddress) throw new Error("Game has no player wallet");
+  const hasPendingRescueLegs =
+    game.claimMethod === "admin_rescue" &&
+    (!game.rescuePrizeTxHash || !game.rescuePotTxHash || !game.rescueBurnTxHash);
+  if (game.status === "claimed") {
+    if (!hasPendingRescueLegs) throw new Error("Game already claimed");
+  } else if (!["finished", "claim_signed"].includes(game.status)) {
+    throw new Error("Game not ready for admin rescue payout");
+  }
+  if (!game.prizeBfGrossUnits || !game.playerBfUnits || !game.potBfUnits || !game.burnBfUnits) {
+    throw new Error("Game payout split is incomplete");
+  }
+  if (!PRIZE_WALLET_PRIVATE_KEY) {
+    throw new Error("PRIZE_WALLET_PRIVATE_KEY missing");
+  }
+
+  const grossUnits = BigInt(game.prizeBfGrossUnits);
+  const availableUnits = await readPrizeWalletBalanceBfUnits();
+  if (availableUnits < grossUnits) {
+    throw new Error("Prize wallet balance insufficient");
+  }
+
+  const playerUnits = BigInt(game.playerBfUnits);
+  const potUnits = BigInt(game.potBfUnits);
+  const burnUnits = BigInt(game.burnBfUnits);
+
+  const createdLogs: Array<{
+    kind: "game_prize_out" | "game_pot_in" | "game_burn_out";
+    to: `0x${string}`;
+    amountBf: number;
+    txHash: `0x${string}`;
+    stage: string;
+  }> = [];
+
+  let prizeTxHash = game.rescuePrizeTxHash;
+  let potTxHash = game.rescuePotTxHash;
+  let burnTxHash = game.rescueBurnTxHash;
+
+  if (!prizeTxHash && playerUnits > BigInt(0)) {
+    prizeTxHash = await sendPrizeWalletTransfer(game.playerAddress as `0x${string}`, playerUnits);
+    game.rescuePrizeTxHash = prizeTxHash;
+    game.claimMethod = "admin_rescue";
+    game.status = "claimed";
+    game.claimConfirmedAt = game.claimConfirmedAt || Date.now();
+    game.claimTxHash = prizeTxHash;
+    game.ticketAssigned = true;
+    await saveGame(game);
+    createdLogs.push({
+      kind: "game_prize_out",
+      to: game.playerAddress as `0x${string}`,
+      amountBf: fromBFUnits(playerUnits),
+      txHash: prizeTxHash,
+      stage: "admin_rescue_winner_transfer_bf",
+    });
+    await setClaimTxOwner(prizeTxHash, game.gameId);
+  }
+  if (!potTxHash && potUnits > BigInt(0)) {
+    potTxHash = await sendPrizeWalletTransfer(POT_WALLET_ADDRESS, potUnits);
+    game.rescuePotTxHash = potTxHash;
+    game.claimMethod = "admin_rescue";
+    game.status = "claimed";
+    game.claimConfirmedAt = game.claimConfirmedAt || Date.now();
+    game.claimTxHash = game.claimTxHash || game.rescuePrizeTxHash || potTxHash;
+    game.ticketAssigned = true;
+    await saveGame(game);
+    createdLogs.push({
+      kind: "game_pot_in",
+      to: POT_WALLET_ADDRESS,
+      amountBf: fromBFUnits(potUnits),
+      txHash: potTxHash,
+      stage: "admin_rescue_pot_transfer_bf",
+    });
+  }
+  if (!burnTxHash && burnUnits > BigInt(0)) {
+    burnTxHash = await sendPrizeWalletTransfer(BURN_WALLET_ADDRESS, burnUnits);
+    game.rescueBurnTxHash = burnTxHash;
+    game.claimMethod = "admin_rescue";
+    game.status = "claimed";
+    game.claimConfirmedAt = game.claimConfirmedAt || Date.now();
+    game.claimTxHash = game.claimTxHash || game.rescuePrizeTxHash || game.rescuePotTxHash || burnTxHash;
+    game.ticketAssigned = true;
+    await saveGame(game);
+    createdLogs.push({
+      kind: "game_burn_out",
+      to: BURN_WALLET_ADDRESS,
+      amountBf: fromBFUnits(burnUnits),
+      txHash: burnTxHash,
+      stage: "admin_rescue_burn_transfer_bf",
+    });
+  }
+
+  game.claimMethod = "admin_rescue";
+  game.status = "claimed";
+  game.claimConfirmedAt = game.claimConfirmedAt || Date.now();
+  game.claimTxHash = (game.rescuePrizeTxHash || game.rescuePotTxHash || game.rescueBurnTxHash) as `0x${string}` | undefined;
+  game.ticketAssigned = true;
+  await saveGame(game);
+
+  for (const log of createdLogs) {
+    await logTxRecord({
+      kind: log.kind,
+      status: "ok",
+      fid: game.fid,
+      playerUsername: game.username,
+      playerAddress: game.playerAddress,
+      to: log.to,
+      amountBf: log.amountBf,
+      txHash: log.txHash,
+      stage: log.stage,
+      meta: { gameId: game.gameId },
+    });
+  }
+
+  return {
+    game,
+    prizeTxHash,
+    potTxHash,
+    burnTxHash,
+  };
 }
 
 export async function listGames(limit = 300) {
@@ -820,6 +955,7 @@ export async function getAdminGames(limit = 300): Promise<AdminGameRow[]> {
     prizeBfGross: game.prizeBfGross,
     claimTxHash: game.claimTxHash,
     claimTxUrl: txUrl(game.claimTxHash),
+    claimMethod: game.claimMethod,
     ticketAssigned: game.ticketAssigned,
     ticketCount: game.ticketCount,
   }));

@@ -9,6 +9,7 @@ export type TxKind =
   | "game_fee_in"
   | "game_prize_out"
   | "game_pot_in"
+  | "game_burn_out"
   | "weekly_payout_out"
   | "payout_error";
 

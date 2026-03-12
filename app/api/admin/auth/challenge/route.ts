@@ -23,6 +23,8 @@ export async function POST(req: NextRequest) {
     action = "weekly_payout";
   } else if (requestedAction === "weekly_reset") {
     action = "weekly_reset";
+  } else if (requestedAction === "rescue_payout") {
+    action = "rescue_payout";
   } else {
     return NextResponse.json({ error: "Invalid action" }, { status: 400 });
   }

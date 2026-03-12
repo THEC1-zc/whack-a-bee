@@ -81,7 +81,7 @@ export default function GameScreen({ user, difficulty, onGameEnd }: Props) {
   const [gameState, setGameState] = useState<"countdown" | "playing" | "ended">("countdown");
   const [countdown, setCountdown] = useState(3);
   const [hitEffects, setHitEffects] = useState<{ id: number; slot: number; text: string }[]>([]);
-  const [paymentStatus, setPaymentStatus] = useState<"pending" | "paid" | "failed">("pending");
+  const [paymentStatus, setPaymentStatus] = useState<"idle" | "claimable" | "claiming" | "paid" | "failed">("idle");
   const [paymentError, setPaymentError] = useState<string | null>(null);
   const [paymentErrorCode, setPaymentErrorCode] = useState<string | null>(null);
   const [paymentNote, setPaymentNote] = useState<string | null>(null);
@@ -254,7 +254,7 @@ export default function GameScreen({ user, difficulty, onGameEnd }: Props) {
         setCurrentWave(0);
         setBees([]);
         setGameState("playing");
-      }, 0);
+      }, 450);
       return () => clearTimeout(start);
     }
     const t = setTimeout(() => setCountdown((value) => value - 1), 1000);
@@ -281,21 +281,14 @@ export default function GameScreen({ user, difficulty, onGameEnd }: Props) {
       if (prize <= 0) {
         setPaymentStatus("paid");
         setPaymentNote("No payout required");
-        return;
-      }
-
-      const claim = await claimPrize(session.gameId, session.gameSecret);
-      if (claim.success) {
-        setPaymentStatus("paid");
         setPaymentError(null);
         setPaymentErrorCode(null);
-        setPaymentNote("Prize: paid · Pot: added");
-      } else {
-        setPaymentStatus("failed");
-        setPaymentError(claim.error || "Claim failed");
-        setPaymentErrorCode(claim.errorCode || null);
-        setPaymentNote(`Prize: ${claim.prizeStatus === "paid" ? "paid" : "not paid"} · Pot: ${claim.potStatus === "added" ? "added" : "not added"}`);
+        return;
       }
+      setPaymentStatus("claimable");
+      setPaymentError(null);
+      setPaymentErrorCode(null);
+      setPaymentNote("Tap Claim Prize to send the payout on-chain.");
     } catch (error) {
       setPaymentStatus("failed");
       setPaymentError(error instanceof Error ? error.message : "Game finish failed");
@@ -303,6 +296,32 @@ export default function GameScreen({ user, difficulty, onGameEnd }: Props) {
       setPaymentNote("Prize: not paid · Pot: not added");
     }
   }, [hitStats, session]);
+
+  const handleClaimPrize = useCallback(async () => {
+    if (!session || paymentStatus === "claiming") return;
+    setPaymentStatus("claiming");
+    setPaymentError(null);
+    setPaymentErrorCode(null);
+    try {
+      const claim = await claimPrize(session.gameId, session.gameSecret);
+      if (claim.success) {
+        setPaymentStatus("paid");
+        setPaymentNote("Prize: paid · Pot: added");
+        return;
+      }
+      setPaymentStatus("failed");
+      setPaymentError(claim.error || "Claim failed");
+      setPaymentErrorCode(claim.errorCode || null);
+      setPaymentNote(
+        `Prize: ${claim.prizeStatus === "paid" ? "paid" : "not paid"} · Pot: ${claim.potStatus === "added" ? "added" : "not added"}`
+      );
+    } catch (error) {
+      setPaymentStatus("failed");
+      setPaymentError(error instanceof Error ? error.message : "Claim failed");
+      setPaymentErrorCode("CLAIM_FAILED");
+      setPaymentNote("Prize: not paid · Pot: not added");
+    }
+  }, [paymentStatus, session]);
 
   useEffect(() => {
     if (gameState !== "playing" || !session) return;
@@ -348,7 +367,7 @@ export default function GameScreen({ user, difficulty, onGameEnd }: Props) {
       ? "Network busy. Please try again later."
       : paymentError.split("\n")[0].slice(0, 220))
     : null;
-  const ticketEstimate = paymentStatus === "paid" ? ticketCount : 0;
+  const ticketEstimate = ticketCount;
   const appUrl = process.env.NEXT_PUBLIC_APP_URL || "https://whack-a-bee.vercel.app";
   const pct = Math.round((score / capScore) * 100);
   const displayedWave = Math.min(currentWave + 1, cfg.waves);
@@ -413,18 +432,6 @@ export default function GameScreen({ user, difficulty, onGameEnd }: Props) {
     );
   }
 
-  if (gameState === "countdown") {
-    return (
-      <div className="min-h-dvh flex flex-col items-center justify-center gap-4" style={{ background: "#1a0a00" }}>
-        <div className="text-amber-500 text-sm font-bold uppercase tracking-widest">{cfg.emoji} {cfg.label} Mode</div>
-        <div className="text-amber-400 text-sm">✅ Fee verified · Secure game ID active</div>
-        <div className="text-amber-400 text-xs">{capInfo.icon} Max prize was {capInfo.label}</div>
-        <div className="text-amber-500 text-xs">{cfg.waves} waves · linear payout up to {getFullValueThreshold(difficulty)} pts</div>
-        <div className="text-9xl font-black text-amber-400 animate-pulse">{countdown || "GO!"}</div>
-      </div>
-    );
-  }
-
   if (gameState === "ended") {
     return (
       <div className="payout-page-bg min-h-dvh p-4">
@@ -444,7 +451,9 @@ export default function GameScreen({ user, difficulty, onGameEnd }: Props) {
             <div className="mt-2 text-[10px] uppercase tracking-[0.24em] text-amber-300">Payout Summary</div>
             <h2 className="mt-2 text-[2.1rem] leading-none font-black text-white">BF Won</h2>
             <div className="mt-4 text-[4.6rem] leading-[0.9] font-black text-amber-300 sm:text-[5.1rem]">{prizeBfNet.toLocaleString()}</div>
-            <div className="mt-1 text-sm font-bold text-emerald-300">Claimed payout</div>
+            <div className="mt-1 text-sm font-bold text-emerald-300">
+              {prizeBfNet > 0 ? (paymentStatus === "paid" ? "Claimed payout" : "Claimable payout") : "Run complete"}
+            </div>
             <div className="mt-3 text-amber-100 text-sm leading-5">
               {score} points made
             </div>
@@ -517,6 +526,18 @@ export default function GameScreen({ user, difficulty, onGameEnd }: Props) {
             </button>
           </div>
 
+          {prizeBfNet > 0 && paymentStatus !== "paid" && (
+            <button
+              type="button"
+              onClick={() => void handleClaimPrize()}
+              disabled={paymentStatus === "claiming"}
+              className="w-full rounded-[24px] px-4 py-4 text-lg font-black text-black disabled:opacity-60 disabled:cursor-wait"
+              style={{ background: "linear-gradient(135deg, #f7bd2b, #ffdc72)" }}
+            >
+              {paymentStatus === "claiming" ? "Claiming Prize..." : paymentStatus === "failed" ? "Retry Claim Prize" : "Claim Prize"}
+            </button>
+          )}
+
           <div className="user-page-chrome rounded-[24px] px-4 py-4">
             <div className="text-[11px] uppercase tracking-[0.22em] text-amber-300">Split</div>
             <div className="mt-3 grid grid-cols-2 gap-3">
@@ -530,8 +551,22 @@ export default function GameScreen({ user, difficulty, onGameEnd }: Props) {
               <div className="mt-2 text-xs leading-5 text-purple-200">Prizefly bonus +{Math.round(superBonus * bfPerUsdc)} BF</div>
             )}
             {prizeBfNet > 0 && (
-              <div className={`mt-3 text-sm font-bold rounded-xl px-3 py-2.5 leading-5 ${paymentStatus === "paid" ? "bg-green-900/80 text-green-300" : paymentStatus === "failed" ? "bg-red-900/80 text-red-300" : "bg-amber-900/80 text-amber-300"}`}>
-                {paymentStatus === "paid" ? `✅ ${paymentNote || "Payment sent"}` : paymentStatus === "failed" ? "❌ Payment error" : "⏳ Processing..."}
+              <div className={`mt-3 text-sm font-bold rounded-xl px-3 py-2.5 leading-5 ${
+                paymentStatus === "paid"
+                  ? "bg-green-900/80 text-green-300"
+                  : paymentStatus === "failed"
+                    ? "bg-red-900/80 text-red-300"
+                    : paymentStatus === "claiming"
+                      ? "bg-amber-900/80 text-amber-300"
+                      : "bg-sky-950/80 text-sky-200"
+              }`}>
+                {paymentStatus === "paid"
+                  ? `✅ ${paymentNote || "Payment sent"}`
+                  : paymentStatus === "failed"
+                    ? "❌ Payment error"
+                    : paymentStatus === "claiming"
+                      ? "⏳ Claim transaction in progress..."
+                      : `🪙 ${paymentNote || "Ready to claim"}`}
               </div>
             )}
             {paymentStatus === "failed" && paymentError && (
@@ -614,7 +649,8 @@ export default function GameScreen({ user, difficulty, onGameEnd }: Props) {
       </div>
 
       <div className="flex-1 flex items-center justify-center px-4">
-        <div className="grid grid-cols-3 gap-3 w-full max-w-xs" style={{ touchAction: "none" }}>
+        <div className="relative w-full max-w-xs">
+          <div className="grid grid-cols-3 gap-3 w-full" style={{ touchAction: "none" }}>
           {Array.from({ length: SLOTS }, (_, slot) => {
             const bee = bees.find((entry) => entry.slot === slot && entry.visible);
             const effect = hitEffects.find((entry) => entry.slot === slot);
@@ -663,6 +699,22 @@ export default function GameScreen({ user, difficulty, onGameEnd }: Props) {
               </div>
             );
           })}
+          </div>
+          {gameState === "countdown" && (
+            <div className="absolute inset-0 flex items-center justify-center rounded-[28px] bg-[rgba(8,4,1,0.56)] backdrop-blur-[2px]">
+              <div className="text-center px-5">
+                <div className="text-[11px] font-black uppercase tracking-[0.22em] text-amber-300">
+                  {cfg.emoji} {cfg.label} Mode
+                </div>
+                <div className="mt-2 text-[11px] text-amber-100/90">
+                  {capInfo.icon} {capInfo.label} run · {cfg.waves} waves · up to {getFullValueThreshold(difficulty)} pts
+                </div>
+                <div className="mt-4 text-[5.5rem] leading-none font-black text-amber-200 drop-shadow-[0_8px_24px_rgba(0,0,0,0.45)]">
+                  {countdown || "GO!"}
+                </div>
+              </div>
+            </div>
+          )}
         </div>
       </div>
 

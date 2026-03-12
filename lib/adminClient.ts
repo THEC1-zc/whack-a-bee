@@ -55,7 +55,7 @@ export async function adminFetch(address: string, input: RequestInfo | URL, init
   });
 }
 
-export async function signAdminAction(address: string, action: Extract<AdminAction, "reset_leaderboard" | "weekly_payout" | "weekly_reset">) {
+export async function signAdminAction(address: string, action: Extract<AdminAction, "reset_leaderboard" | "weekly_payout" | "weekly_reset" | "rescue_payout">) {
   await ensureAdminSession(address);
   const normalized = address.toLowerCase();
   const challengeRes = await fetch("/api/admin/auth/challenge", {

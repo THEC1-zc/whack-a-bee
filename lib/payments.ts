@@ -1,6 +1,6 @@
 "use client";
 
-import { createPublicClient, createWalletClient, custom, http, stringToHex } from "viem";
+import { createPublicClient, createWalletClient, custom, http } from "viem";
 import { base } from "viem/chains";
 import { sdk } from "@farcaster/miniapp-sdk";
 import {
@@ -57,19 +57,6 @@ type FinishGameResponse = {
 function getErrorMessage(error: unknown, fallback: string) {
   if (error instanceof Error && error.message) return error.message;
   return fallback;
-}
-
-function buildFinishAuthMessage(params: {
-  gameId: string;
-  score: number;
-  hitStats: { normal: number; fast: number; fuchsia: number; bomb: number; super: number };
-}) {
-  return [
-    "Whack-a-Butterfly Game Finish",
-    `Game: ${params.gameId}`,
-    `Score: ${params.score}`,
-    `Hits: normal=${params.hitStats.normal},fast=${params.hitStats.fast},fuchsia=${params.hitStats.fuchsia},bomb=${params.hitStats.bomb},super=${params.hitStats.super}`,
-  ].join("\n");
 }
 
 async function parseJson(res: Response) {
@@ -224,29 +211,10 @@ export async function finishGameSession(params: {
   score: number;
   hitStats: { normal: number; fast: number; fuchsia: number; bomb: number; super: number };
 }) {
-  const walletClient = getWalletClient();
-  const [address] = await walletClient.requestAddresses();
-  if (!address) {
-    throw new Error("No wallet connected");
-  }
-  const finishMessage = buildFinishAuthMessage({
-    gameId: params.gameId,
-    score: params.score,
-    hitStats: params.hitStats,
-  });
-  const finishSignature = await sdk.wallet.ethProvider.request({
-    method: "personal_sign",
-    params: [stringToHex(finishMessage), address],
-  });
-
   const res = await fetch("/api/game/finish", {
     method: "POST",
     headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({
-      ...params,
-      finishMessage,
-      finishSignature,
-    }),
+    body: JSON.stringify(params),
   });
   const data = await parseJson(res);
   if (!res.ok || !data?.ok) {

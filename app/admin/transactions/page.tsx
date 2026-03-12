@@ -46,6 +46,18 @@ type TxPreview = {
   reason?: string;
   basescanUrl?: string;
 };
+type RescueGame = {
+  gameId: string;
+  difficulty: "easy" | "medium" | "hard";
+  playerAddress?: string;
+  username?: string;
+  feeExpectedUsdc: number;
+  status: string;
+  scoreRealized?: number;
+  prizeUsdc?: number;
+  prizeBfGross?: number;
+  claimMethod?: "player" | "admin_rescue";
+};
 type Msg = { type: "ok" | "err"; text: string } | null;
 
 function short(addr?: string) {
@@ -66,6 +78,8 @@ function kindLabel(kind: string) {
       return "player payout out";
     case "game_pot_in":
       return "weekly pot in";
+    case "game_burn_out":
+      return "burn out";
     case "weekly_payout_out":
       return "weekly payout out";
     case "payout_error":
@@ -82,9 +96,11 @@ export default function AdminTransactions() {
 
   const [stats, setStats] = useState<AdminStats | null>(null);
   const [recentTx, setRecentTx] = useState<TxPreview[]>([]);
+  const [rescueGames, setRescueGames] = useState<RescueGame[]>([]);
   const [loading, setLoading] = useState(false);
   const [msg, setMsg] = useState<Msg>(null);
   const [resetting, setResetting] = useState(false);
+  const [rescuingGameId, setRescuingGameId] = useState<string | null>(null);
   const [filter, setFilter] = useState<"all" | "easy" | "medium" | "hard">("all");
   const totals = useMemo(() => {
     if (!stats) return null;
@@ -100,13 +116,15 @@ export default function AdminTransactions() {
     setLoading(true);
     void (async () => {
       try {
-        const [statsRes, txRes] = await Promise.all([
+        const [statsRes, txRes, gamesRes] = await Promise.all([
           adminFetch(address, "/api/admin/leaderboard"),
           adminFetch(address, "/api/admin/tx-records?limit=12"),
+          adminFetch(address, "/api/admin/games?limit=80"),
         ]);
-        const [statsData, txData] = await Promise.all([
+        const [statsData, txData, gamesData] = await Promise.all([
           statsRes.json().catch(() => ({})),
           txRes.json().catch(() => ({})),
+          gamesRes.json().catch(() => ({})),
         ]);
         if (!statsRes.ok) {
           throw new Error(statsData?.error || "Leaderboard load failed");
@@ -114,9 +132,19 @@ export default function AdminTransactions() {
         if (!txRes.ok) {
           throw new Error(txData?.error || "Transaction log load failed");
         }
+        if (!gamesRes.ok) {
+          throw new Error(gamesData?.error || "Games load failed");
+        }
         if (!cancelled) {
           setStats(statsData.stats || null);
           setRecentTx(Array.isArray(txData.records) ? txData.records : []);
+          const games = Array.isArray(gamesData.games) ? gamesData.games : [];
+          setRescueGames(
+            games.filter((game: RescueGame) =>
+              ["finished", "claim_signed"].includes(game.status) &&
+              Number(game.prizeUsdc || 0) > 0
+            )
+          );
           setMsg(null);
         }
       } catch (error) {
@@ -134,6 +162,40 @@ export default function AdminTransactions() {
       cancelled = true;
     };
   }, [address, authorized]);
+
+  async function rescuePayout(gameId: string) {
+    setRescuingGameId(gameId);
+    setMsg({ type: "ok", text: "Firma richiesta per completare il payout…" });
+    try {
+      const signed = await signAdminAction(address, "rescue_payout");
+      const res = await adminFetch(address, "/api/admin/games", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          gameId,
+          challenge: signed.challenge,
+          message: signed.message,
+          signature: signed.signature,
+        }),
+      });
+      const data = await res.json().catch(() => ({}));
+      if (!res.ok) {
+        setMsg({ type: "err", text: data?.error || "Rescue payout failed" });
+        return;
+      }
+      setMsg({ type: "ok", text: `Payout completato per ${gameId.slice(0, 8)}…` });
+      setRescueGames((prev) => prev.filter((game) => game.gameId !== gameId));
+      const txRes = await adminFetch(address, "/api/admin/tx-records?limit=12");
+      const txData = await txRes.json().catch(() => ({}));
+      if (txRes.ok) {
+        setRecentTx(Array.isArray(txData.records) ? txData.records : []);
+      }
+    } catch {
+      setMsg({ type: "err", text: "Firma annullata" });
+    } finally {
+      setRescuingGameId(null);
+    }
+  }
 
   async function resetLeaderboard() {
     setResetting(true);
@@ -286,6 +348,51 @@ export default function AdminTransactions() {
             ))}
           </div>
         )}
+
+        <div className="page-panel px-4 py-4">
+          <div className="flex items-start justify-between gap-3">
+            <div>
+              <div className="page-kicker">Unclaimed Payouts</div>
+              <div className="text-amber-100/60 text-sm mt-1">Complete prize claims for players who never submitted the on-chain tx.</div>
+            </div>
+            <div className="text-amber-300 text-xs font-bold">{rescueGames.length} open</div>
+          </div>
+          <div className="mt-4 space-y-2">
+            {rescueGames.length === 0 ? (
+              <div className="text-amber-600 text-sm">No claimable payouts pending.</div>
+            ) : rescueGames.map((game) => (
+              <div key={game.gameId} className="page-panel-soft rounded-[22px] px-3 py-3">
+                <div className="flex items-start justify-between gap-3">
+                  <div className="min-w-0">
+                    <div className="text-white text-sm font-black">
+                      {game.difficulty.toUpperCase()} · {Math.round(game.prizeBfGross || 0).toLocaleString()} BF gross
+                    </div>
+                    <div className="text-amber-100/55 text-[11px] mt-0.5 break-all">
+                      {game.gameId}
+                    </div>
+                  </div>
+                  <div className="text-[11px] font-black uppercase text-amber-300">
+                    {game.status}
+                  </div>
+                </div>
+                <div className="mt-2 flex flex-wrap gap-x-3 gap-y-1 text-[11px] text-amber-100/80">
+                  <span>{game.username ? `@${game.username}` : short(game.playerAddress)}</span>
+                  <span>Fee {game.feeExpectedUsdc.toFixed(3)} USDC</span>
+                  <span>Score {Math.round(game.scoreRealized || 0)}</span>
+                </div>
+                <button
+                  type="button"
+                  disabled={rescuingGameId === game.gameId}
+                  onClick={() => void rescuePayout(game.gameId)}
+                  className="mt-3 w-full rounded-xl px-3 py-2.5 text-sm font-black text-black disabled:opacity-60"
+                  style={{ background: "linear-gradient(135deg,#f7bd2b,#ffdc72)" }}
+                >
+                  {rescuingGameId === game.gameId ? "Completing payout..." : "Complete Payout"}
+                </button>
+              </div>
+            ))}
+          </div>
+        </div>
 
         {/* Difficoltà breakdown */}
         {stats?.gamesByDifficulty && (

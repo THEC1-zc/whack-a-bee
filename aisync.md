@@ -304,3 +304,19 @@ Payout bands:
   - easy `85.55%`
   - medium `79.87%`
   - hard `75.26%`
+
+### 2026-03-12 16:45:00 +0100
+- Reworked the payout flow to remove the extra finish signature and make the on-chain claim explicit:
+  - `/api/game/finish` no longer requires a separate wallet-signed finish payload
+  - `components/GameScreen.tsx` now finishes the run server-side, then shows a manual `Claim Prize` button instead of auto-submitting the tx
+  - payout summary state distinguishes `claimable`, `claiming`, `paid`, and `failed`
+- Moved the pregame countdown onto the gameplay screen as an overlay and added a short `GO` hold so the run start feels less abrupt.
+- Added an admin rescue path for unclaimed game payouts:
+  - new signed admin action `rescue_payout`
+  - `POST /api/admin/games` can now complete a finished/claim-signed payout from the prize wallet, including player, weekly pot, and burn legs
+  - admin transactions UI now lists open unclaimed payouts with a `Complete Payout` action
+  - added `game_burn_out` tx ledger entries and labels in admin logs
+- Slightly nerfed hard live payout by lowering `PRIZE_PER_POINT.hard` from `0.001898` to `0.00168` and synced `local-balance/LTM.xml`.
+- Validation:
+  - `npm run build` ✅
+  - targeted lint ✅ with only the known sprite `<img>` warning in `components/GameScreen.tsx`
