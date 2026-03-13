@@ -320,3 +320,201 @@ Payout bands:
 - Validation:
   - `npm run build` ✅
   - targeted lint ✅ with only the known sprite `<img>` warning in `components/GameScreen.tsx`
+
+### 2026-03-12 17:10:00 +0100
+- Added a new proposal worksheet to `local-balance/LTM.xml`:
+  - `PPP Fixed Wave Model`
+  - documents a fixed-PPP design (`0.0002 USDC/pt`) where game type changes only the number of waves
+  - includes editable assumptions for extra waves by type, per-wave perfect score assumptions, breakeven PPP, and derived perfect-run net payouts for each difficulty
+  - explicitly excludes `Jolly` from the proposal sheet for now
+
+### 2026-03-12 18:05:00 +0100
+- Reworked the `PPP Fixed Wave Model` sheet in `local-balance/LTM.xml` into a full `difficulty x game type` tuning matrix.
+- Replaced the old fallback-rate preview with a live BF price snapshot:
+  - `1 USDC = 4,775,549.188156637 BF`
+- Added columns for the inputs and outputs needed to reason about score and payout end-to-end:
+  - waves, fee, max points, perfect points per wave, perfect score per game
+  - estimated spawn mix per wave and per-butterfly timing/chance values
+  - point values by butterfly type
+  - gross/player/weekly/burn payout in USDC and BF
+  - net income vs fee
+- Left `Jolly` out of this sheet intentionally so the fixed-PPP + extra-wave model stays easy to tune manually first.
+
+### 2026-03-12 18:22:00 +0100
+- Filled the user-created `new balance` worksheet in `local-balance/LTM.xml` with two compact tuning tables:
+  - `easy low`
+  - `easy average`
+- Both tables now include the requested gameplay parameters plus derived payout metrics at the live BF snapshot:
+  - perfect-score theoretical cap
+  - perfect-score with average second-bomb pressure
+  - net player payout in USDC and BF
+  - RTP for both views
+- Kept `bomb = -2` in both tables and explicitly documented the key design consequence:
+  - it increases the penalty for mistakes and the perfect-wave skill challenge
+  - it does not lower the perfect-score cap, because the cap assumes bombs are avoided
+
+### 2026-03-12 18:34:00 +0100
+- Simplified the hand-tuning sheet back to the user’s preferred structure:
+  - removed the second table from the same worksheet
+  - renamed the worksheet to `easy low`
+  - kept only the compact `easy low` grid with the derived payout/RTP rows
+- Fixed the worksheet row count so Excel can open it cleanly.
+
+### 2026-03-12 18:41:00 +0100
+- Added a second worksheet `easylow sync` to `local-balance/LTM.xml`.
+- This sheet is intentionally normalized for two-person tuning work:
+  - one row per numeric parameter
+  - columns `parameter / value / unit / note`
+  - no free-text parsing needed for the core gameplay inputs
+- Seeded it from the current `easy low` sheet values, including the current PPP input shown there.
+
+### 2026-03-12 18:55:00 +0100
+- Updated `easylow sync` in `local-balance/LTM.xml` to the selected `PPP = 0.000275 USDC/point`.
+- This is the current target baseline for building the remaining difficulty/type sheets around a net RTP band of roughly `101%` to `106%`.
+
+### 2026-03-12 19:08:00 +0100
+- Added `local-balance/ltm2sync.xml` as the new sync-only workbook for manual tuning.
+- Created one worksheet per difficulty/type combination:
+  - `easy low/nice/average/big/mega/jolly sync`
+  - `medium low/nice/average/big/mega/jolly sync`
+  - `hard low/nice/average/big/mega/jolly sync`
+- Kept the normalized `parameter / value / unit / note` layout across all sheets.
+- Fully seeded `easy low sync` from the current agreed baseline and left the other sheets mostly blank where tuning inputs are not decided yet.
+- Seeded all sheets with:
+  - `ppp_input_usdc_per_point = 0.000275`
+  - `bf_per_usdc_live_snapshot = 4,775,549.188156637`
+- Fixed worksheet row-count metadata in `ltm2sync.xml` so SpreadsheetML stays compatible with Excel.
+
+### 2026-03-12 19:14:00 +0100
+- Added a dedicated `data` worksheet to `local-balance/ltm2sync.xml`.
+- Centralized the shared tuning reference values there:
+  - `ppp_shared_usdc_per_point`
+  - `bf_per_usdc_live_snapshot`
+  - `bf_usdc_snapshot_utc`
+  - explicit snapshot timezone
+- This sheet is now the intended fixed reference when the shared PPP or live BF/USDC snapshot is refreshed.
+
+### 2026-03-12 19:20:00 +0100
+- Filled `easy average sync` in `local-balance/ltm2sync.xml`.
+- Current assumption is intentionally conservative and traceable:
+  - same `easy` fee and butterfly profile as `easy low`
+  - `Average` currently means `+2` waves over the `easy low` base
+  - all unchanged values are explicitly copied from `easy low` until this sheet is retuned separately
+- Kept the shared references aligned with the `data` worksheet:
+  - `ppp_input_usdc_per_point = 0.000275`
+  - `bf_per_usdc_live_snapshot = 4,775,549.188156637`
+
+### 2026-03-12 19:31:00 +0100
+- Applied the new timing-tuning rule to the `easy` sync branch in `local-balance/ltm2sync.xml`:
+  - `easy nice sync`
+  - `easy average sync`
+  - `easy big sync`
+  - `easy mega sync`
+- Rule used:
+  - each game type is `10%` faster than the previous type for `wave_duration_ms` and all butterfly duration rows
+  - `easy low` remains the timing baseline
+- Extra wave progression in the same branch is now explicit:
+  - `low +0`
+  - `nice +1`
+  - `average +2`
+  - `big +3`
+  - `mega +4`
+- Added `duration_progression_rule = -10%` to the `data` worksheet so the reference is visible in one place.
+
+### 2026-03-13 09:45:00 +0100
+- Rebuilt `local-balance/ltm2sync.xml` from scratch to restore a clean sync-only workbook after a malformed intermediate edit.
+- All `difficulty x type` worksheets are now populated, not just scaffolded:
+  - `easy low/nice/average/big/mega/jolly sync`
+  - `medium low/nice/average/big/mega/jolly sync`
+  - `hard low/nice/average/big/mega/jolly sync`
+- The workbook now follows one consistent model:
+  - one row per parameter
+  - columns `parameter / value / unit / note`
+  - `low` is the per-difficulty timing baseline
+  - `nice/average/big/mega` apply `-10%` to wave and butterfly durations from the previous type
+  - `jolly` is temporarily filled as a neutral placeholder using the same timing/extra-wave profile as `average`
+- Current populated baselines:
+  - `easy`: fee `0.015`, base waves `15`, max butterflies/wave `4`, triple/quick points `3/4`, bombs `1 + 25% second chance`
+  - `medium`: fee `0.025`, base waves `13`, max butterflies/wave `5`, triple/quick points `4/6`, bombs `1 + 40% second chance`
+  - `hard`: fee `0.035`, base waves `8`, max butterflies/wave `6`, triple/quick points `5/8`, bombs `2 + 50% second chance`
+- Shared references remain:
+  - `ppp_shared_usdc_per_point = 0.000275`
+  - `bf_per_usdc_live_snapshot = 4,775,549.188156637`
+- Validation after rebuild:
+  - `19` worksheets
+  - SpreadsheetML parse OK
+  - row-count metadata mismatch `0`
+
+### 2026-03-13 10:02:00 +0100
+- Updated `local-balance/ltm2sync.xml` for the next manual tuning pass before Monte Carlo:
+  - `average` is no longer treated as a distinct active rung in the type ladder
+  - `average` now mirrors `nice` as a compatibility placeholder
+  - `jolly` currently mirrors `nice` as a neutral placeholder until per-wave type mixing is designed
+- Applied the first variance-shift adjustment to the `easy` branch:
+  - `triple_points: 3 -> 4`
+  - `quick_points: 4 -> 5`
+  - `bombs_second_chance: 0.25 -> 0.35`
+- Kept the rest of the current branch structure stable so the next manual edits can focus on a few numeric levers at a time.
+
+### 2026-03-13 10:08:00 +0100
+- Removed the `average` worksheets entirely from `local-balance/ltm2sync.xml`:
+  - `easy average sync`
+  - `medium average sync`
+  - `hard average sync`
+- The active type ladder in `ltm2sync.xml` is now explicitly:
+  - `low`
+  - `nice`
+  - `big`
+  - `mega`
+  - `jolly`
+- Updated the `data` worksheet note so it no longer references `average` as a compatibility placeholder.
+
+### 2026-03-13 10:18:00 +0100
+- Added three aggregate entry worksheets to `local-balance/ltm2sync.xml`:
+  - `all easy`
+  - `all medium`
+  - `all hard`
+- Each aggregate sheet now presents one row per parameter and one column per active type:
+  - `low`
+  - `nice`
+  - `big`
+  - `mega`
+  - `jolly`
+- Purpose:
+  - give a single per-difficulty entry point for manual tuning and cross-type comparison
+  - make it easier to set up spreadsheet formulas between type columns without jumping across many sync worksheets
+- The underlying sync sheets are still the canonical per-type definitions; the new `all *` sheets are comparison/entry views built from those current values.
+
+### 2026-03-13 10:27:00 +0100
+- Flipped the intended editing workflow in `local-balance/ltm2sync.xml`:
+  - `all easy`
+  - `all medium`
+  - `all hard`
+  are now the declared primary manual edit surfaces.
+- Added explicit guidance inside the workbook:
+  - `data.primary_edit_surface`
+  - `data.sync_generation_rule`
+  - stronger note-column copy in all `all *` sheets
+  - sync sheets now warn on key baseline rows that edits should start from the corresponding aggregate sheet
+- Operational rule from now on:
+  - edit the `all *` sheets first
+  - then let Codex resync the per-type `... sync` sheets from those values when needed
+
+### 2026-03-13 10:32:00 +0100
+- Added an `editing rules` worksheet to `local-balance/ltm2sync.xml`.
+- This sheet records the manual tuning workflow inside the workbook itself so the aggregate-edit rules are not lost:
+  - which sheets are primary
+  - which columns should not be touched
+  - how to use `data`
+  - how to think about waves, bombs, specials, and resync workflow
+
+### 2026-03-13 11:12:00 +0100
+- Updated `easy jolly` in `local-balance/ltm2sync.xml` so it is no longer a disguised `nice` placeholder.
+- New working rule:
+  - `easy jolly` keeps a stable nice-length run
+  - uses standard easy timings instead of a hidden global speed-up
+  - derives its variance from a weighted expected mix of `low`, `nice`, `big`, and `mega` sub-wave profiles
+- Synced both:
+  - `all easy`
+  - `easy jolly sync`
+  so the aggregate sheet remains the primary editing surface and the per-type sync sheet mirrors the same intent.
