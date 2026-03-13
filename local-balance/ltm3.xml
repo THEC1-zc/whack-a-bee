@@ -9,7 +9,7 @@
   <Author>Codex</Author>
   <LastAuthor>Fabio Viscarelli 1256/2024</LastAuthor>
   <Created>2026-03-13T13:30:00Z</Created>
-  <LastSaved>2026-03-13T13:49:06Z</LastSaved>
+  <LastSaved>2026-03-13T14:09:17Z</LastSaved>
   <Version>16.00</Version>
  </DocumentProperties>
  <OfficeDocumentSettings xmlns="urn:schemas-microsoft-com:office:office">
@@ -313,10 +313,10 @@
    </Row>
    <Row ss:AutoFitHeight="0">
     <Cell ss:StyleID="s63"><Data ss:Type="String">ppp_input_usdc_per_point</Data></Cell>
-    <Cell ss:StyleID="s64"><Data ss:Type="Number">2.72E-4</Data></Cell>
-    <Cell ss:StyleID="s64"><Data ss:Type="Number">2.72E-4</Data></Cell>
-    <Cell ss:StyleID="s64"><Data ss:Type="Number">2.72E-4</Data></Cell>
-    <Cell ss:StyleID="s64"><Data ss:Type="Number">2.72E-4</Data></Cell>
+    <Cell ss:StyleID="s64"><Data ss:Type="Number">2.9999999999999997E-4</Data></Cell>
+    <Cell ss:StyleID="s64"><Data ss:Type="Number">2.9999999999999997E-4</Data></Cell>
+    <Cell ss:StyleID="s64"><Data ss:Type="Number">2.9999999999999997E-4</Data></Cell>
+    <Cell ss:StyleID="s64"><Data ss:Type="Number">2.9999999999999997E-4</Data></Cell>
     <Cell ss:StyleID="s63"><Data ss:Type="String">usdc/pt</Data></Cell>
     <Cell ss:StyleID="s63"><Data ss:Type="String">manual tuning input</Data></Cell>
    </Row>
@@ -336,8 +336,8 @@
    <Panes>
     <Pane>
      <Number>3</Number>
-     <ActiveRow>28</ActiveRow>
-     <ActiveCol>4</ActiveCol>
+     <ActiveRow>21</ActiveRow>
+     <ActiveCol>7</ActiveCol>
     </Pane>
    </Panes>
    <ProtectObjects>False</ProtectObjects>

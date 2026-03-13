@@ -587,3 +587,14 @@ Payout bands:
   - max `1` Prizefly per run
   - no Mega multiplier on spawn chance
 - Synced the same `1%` rule into `local-balance/ltm3.xml` for easy, medium, and hard tuning sheets so the workbook stays aligned with runtime.
+
+### 2026-03-13 15:18:00 +0100
+- Aligned live easy run wave counts with the current tuning ladder:
+  - `low 14`
+  - `nice 15`
+  - `big 16`
+  - `mega 17`
+  - `jolly 14`
+- Updated runtime session creation to build `waveMultipliers` from the actual per-type wave count instead of always using `DIFFICULTY_CONFIG.easy.waves`.
+- Updated `GameScreen` to derive progress, share text, and payout wave totals from `session.waveMultipliers.length`.
+- Updated minimum-duration validation in `finishGameSession` to use the actual run wave count, preventing short jolly runs from being rejected as “finished too early”.

@@ -122,6 +122,14 @@ const EASY_WAVE_PROFILES: Record<CapTypeKey, WaveProfile> = {
   jolly: { minSpawns: 2, extraSpawnChances: [0.5, 0.25], baseBombs: 1, extraBombChances: [0.25] },
 };
 
+const EASY_RUN_WAVE_COUNTS: Record<Exclude<CapTypeKey, "average">, number> = {
+  low: 14,
+  nice: 15,
+  big: 16,
+  mega: 17,
+  jolly: 14,
+};
+
 export function pickCapProfile() {
   const roll = Math.random() * 100;
   let acc = 0;
@@ -220,6 +228,13 @@ export function getBaseWaveCount(difficulty: Difficulty, roll = Math.random()) {
   return 5;
 }
 
+export function getRunWaveCount(difficulty: Difficulty, capType: CapTypeKey) {
+  if (difficulty === "easy" && capType !== "average") {
+    return EASY_RUN_WAVE_COUNTS[capType];
+  }
+  return DIFFICULTY_CONFIG[difficulty].waves;
+}
+
 export function getWaveSpawnCount(difficulty: Difficulty, capMultiplier: number, roll = Math.random()) {
   return getWavePlanForMultiplier(difficulty, capMultiplier, [roll]).spawnCount;
 }
@@ -286,8 +301,7 @@ export function getWaveMaxBombCount(difficulty: Difficulty, capType: CapTypeKey)
   return Math.max(1, profile.baseBombs + profile.extraBombChances.length);
 }
 
-export function getWaveDelayMs(difficulty: Difficulty, waveIndex: number) {
-  const totalWaves = DIFFICULTY_CONFIG[difficulty].waves;
+export function getWaveDelayMs(difficulty: Difficulty, waveIndex: number, totalWaves = DIFFICULTY_CONFIG[difficulty].waves) {
   const cfg = SPAWN_CONFIG[difficulty];
   return Math.max(cfg.min, cfg.base - waveIndex * cfg.step * Math.max(1, Math.floor(10 / totalWaves)));
 }
@@ -326,11 +340,10 @@ export function getHitBoundsForWaveMultipliers(difficulty: Difficulty, waveMulti
   return totals;
 }
 
-export function estimateMinimumGameDurationMs(difficulty: Difficulty) {
-  const totalWaves = DIFFICULTY_CONFIG[difficulty].waves;
+export function estimateMinimumGameDurationMs(difficulty: Difficulty, totalWaves = DIFFICULTY_CONFIG[difficulty].waves) {
   let total = 3000; // countdown
   for (let waveIndex = 0; waveIndex < totalWaves; waveIndex += 1) {
-    total += waveIndex === 0 ? 180 : getWaveDelayMs(difficulty, waveIndex);
+    total += waveIndex === 0 ? 180 : getWaveDelayMs(difficulty, waveIndex, totalWaves);
   }
   total += Math.max(...Object.values(BEE_DURATIONS[difficulty])) + 250;
   return total;

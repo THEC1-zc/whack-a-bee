@@ -32,6 +32,7 @@ import {
   clampLiveScore,
   deriveScoreFromHits,
   estimateMinimumGameDurationMs,
+  getRunWaveCount,
   getFullValueThreshold,
   getHitBounds,
   getHitBoundsForWaveMultipliers,
@@ -464,9 +465,10 @@ export async function createGameSession(difficulty: Difficulty, callerAddress?: 
 
   const cfg = DIFFICULTY_CONFIG[difficulty];
   const capProfile = pickCapProfile();
+  const totalWaves = getRunWaveCount(difficulty, capProfile.key);
   const waveMultipliers = capProfile.key === "jolly"
-    ? pickJollyWaveMultipliers(cfg.waves)
-    : Array.from({ length: cfg.waves }, () => capProfile.mult);
+    ? pickJollyWaveMultipliers(totalWaves)
+    : Array.from({ length: totalWaves }, () => capProfile.mult);
   const capMultiplier = Number((waveMultipliers.reduce((sum, mult) => sum + mult, 0) / waveMultipliers.length).toFixed(4));
   const capInfo = capLabel(capMultiplier, capProfile.key);
   const gameId = crypto.randomUUID();
@@ -604,7 +606,7 @@ export async function finishGameSession(params: {
   }
 
   const now = Date.now();
-  const minDurationMs = estimateMinimumGameDurationMs(game.difficulty);
+  const minDurationMs = estimateMinimumGameDurationMs(game.difficulty, game.waveMultipliers?.length || undefined);
   if (!game.startedAt || now - game.startedAt < minDurationMs) {
     throw new Error("Game finished too early");
   }

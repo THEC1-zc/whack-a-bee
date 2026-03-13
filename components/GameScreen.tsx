@@ -94,6 +94,7 @@ export default function GameScreen({ user, difficulty, onGameEnd }: Props) {
   const [capInfo, setCapInfo] = useState(capLabel(1));
   const [ticketCount, setTicketCount] = useState(0);
   const [currentWave, setCurrentWave] = useState(0);
+  const totalWaves = session?.waveMultipliers?.length ?? cfg.waves;
 
   const beeIdRef = useRef(0);
   const scoreRef = useRef(0);
@@ -134,7 +135,7 @@ export default function GameScreen({ user, difficulty, onGameEnd }: Props) {
       let bombPlaced = 0;
       let fastPlaced = 0;
       let fuchsiaPlaced = false;
-      const shouldSpawnSuper = !superSpawnedRef.current && Math.random() < getSuperChance(waveMultiplier);
+      const shouldSpawnSuper = !superSpawnedRef.current && Math.random() < getSuperChance();
       const fastLimit = getFastLimit(waveMultiplier);
       const fuchsiaChance = getFuchsiaChance(waveMultiplier);
       const fastChance = getFastChance(difficulty, waveMultiplier);
@@ -324,7 +325,7 @@ export default function GameScreen({ user, difficulty, onGameEnd }: Props) {
 
   useEffect(() => {
     if (gameState !== "playing" || !session) return;
-    if (currentWave >= cfg.waves) return;
+    if (currentWave >= totalWaves) return;
     if (currentWave > 0 && bees.length > 0) return;
     if (nextWaveQueuedRef.current) return;
 
@@ -342,11 +343,11 @@ export default function GameScreen({ user, difficulty, onGameEnd }: Props) {
       clearTimeout(t);
       if (!fired) nextWaveQueuedRef.current = false;
     };
-  }, [bees.length, cfg.waves, currentWave, difficulty, gameState, getWaveMultiplierForIndex, session, spawnBees]);
+  }, [bees.length, currentWave, difficulty, gameState, getWaveMultiplierForIndex, session, spawnBees, totalWaves]);
 
   useEffect(() => {
     if (gameState !== "playing") return;
-    if (currentWave < cfg.waves) return;
+    if (currentWave < totalWaves) return;
     if (bees.length > 0) return;
     if (endTriggeredRef.current) return;
     endTriggeredRef.current = true;
@@ -355,9 +356,9 @@ export default function GameScreen({ user, difficulty, onGameEnd }: Props) {
       void handleGameEnd();
     }, 60);
     return () => clearTimeout(finish);
-  }, [bees.length, cfg.waves, currentWave, gameState, handleGameEnd]);
+  }, [bees.length, currentWave, gameState, handleGameEnd, totalWaves]);
 
-  const progressPercent = Math.min(100, Math.round((currentWave / cfg.waves) * 100));
+  const progressPercent = Math.min(100, Math.round((currentWave / totalWaves) * 100));
   const prize = calculatePrizeUsdc(score, difficulty, superBonus);
   const prizeBfGross = Math.round(prize * bfPerUsdc);
   const prizeBfNet = Math.round(prizeBfGross * 0.945);
@@ -369,8 +370,8 @@ export default function GameScreen({ user, difficulty, onGameEnd }: Props) {
   const ticketEstimate = ticketCount;
   const appUrl = process.env.NEXT_PUBLIC_APP_URL || "https://whack-a-bee.vercel.app";
   const pct = Math.round((score / capScore) * 100);
-  const displayedWave = Math.min(currentWave + 1, cfg.waves);
-  const activeWaveIndex = Math.max(0, Math.min(cfg.waves - 1, currentWave - 1));
+  const displayedWave = Math.min(currentWave + 1, totalWaves);
+  const activeWaveIndex = Math.max(0, Math.min(totalWaves - 1, currentWave - 1));
   const activeWaveMultiplier = getWaveMultiplierForIndex(activeWaveIndex);
   const activeWaveInfo = capLabel(activeWaveMultiplier);
   const weeklyBf = Math.floor(prizeBfGross * 0.045);
@@ -388,11 +389,11 @@ export default function GameScreen({ user, difficulty, onGameEnd }: Props) {
     fee: String(cfg.fee),
     difficulty: cfg.label,
     tickets: String(ticketEstimate),
-    waves: String(cfg.waves),
+    waves: String(totalWaves),
     v: "5",
   }).toString();
   const shareUrl = `${appUrl}/share/payout?${shareQuery}`;
-  const shareText = `I just cleared ${cfg.waves} waves on Whack-a-Butterfly by @Thec1, entered a ${cfg.fee} USDC ${cfg.label} run, hit ${pct}% of the cap and won ${prizeBfNet} BF plus ${ticketEstimate} weekly tickets. Can you beat it?`;
+  const shareText = `I just cleared ${totalWaves} waves on Whack-a-Butterfly by @Thec1, entered a ${cfg.fee} USDC ${cfg.label} run, hit ${pct}% of the cap and won ${prizeBfNet} BF plus ${ticketEstimate} weekly tickets. Can you beat it?`;
 
   if (["waiting", "preparing", "paying"].includes(feeStatus)) {
     return (
@@ -403,7 +404,7 @@ export default function GameScreen({ user, difficulty, onGameEnd }: Props) {
           <div className="text-center">
             <div className="text-amber-500 text-xs uppercase tracking-widest mb-1">Game Fee</div>
             <div className="text-4xl font-black text-amber-400">{cfg.fee} USDC</div>
-            <div className="text-amber-700 text-xs mt-1">{cfg.emoji} {cfg.label} Mode · {cfg.waves} waves</div>
+            <div className="text-amber-700 text-xs mt-1">{cfg.emoji} {cfg.label} Mode · {totalWaves} waves</div>
           </div>
         </div>
         <div className="text-amber-400 text-sm animate-pulse">
@@ -457,7 +458,7 @@ export default function GameScreen({ user, difficulty, onGameEnd }: Props) {
               {score} points made
             </div>
             <div className="mt-1 text-amber-200/80 text-xs leading-5">
-              {cfg.waves}/{cfg.waves} waves cleared
+              {totalWaves}/{totalWaves} waves cleared
             </div>
             <div className="mt-4 h-2 rounded-full bg-amber-950/80 border border-amber-900 overflow-hidden">
               <div
@@ -607,7 +608,7 @@ export default function GameScreen({ user, difficulty, onGameEnd }: Props) {
           <div className="h-4 bg-amber-950 rounded-full overflow-hidden border border-amber-900">
             <div className="h-full rounded-full transition-all duration-700" style={{ width: `${progressPercent}%`, background: cfg.color }} />
           </div>
-          <div className="text-center text-xs mt-0.5" style={{ color: cfg.color }}>Wave {displayedWave} / {cfg.waves}</div>
+          <div className="text-center text-xs mt-0.5" style={{ color: cfg.color }}>Wave {displayedWave} / {totalWaves}</div>
         </div>
 
         <div className="text-center min-w-[60px]">
@@ -706,7 +707,7 @@ export default function GameScreen({ user, difficulty, onGameEnd }: Props) {
                   {cfg.emoji} {cfg.label} Mode
                 </div>
                 <div className="mt-2 text-[11px] text-amber-100/90">
-                  {capInfo.icon} {capInfo.label} run · {cfg.waves} waves · up to {getFullValueThreshold(difficulty)} pts
+                  {capInfo.icon} {capInfo.label} run · {totalWaves} waves · up to {getFullValueThreshold(difficulty)} pts
                 </div>
                 <div className="mt-4 text-[5.5rem] leading-none font-black text-amber-200 drop-shadow-[0_8px_24px_rgba(0,0,0,0.45)]">
                   {countdown || "GO!"}
