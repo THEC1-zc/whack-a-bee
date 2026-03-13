@@ -4,12 +4,13 @@ import type { FarcasterUser } from "@/hooks/useFarcaster";
 import {
   BEE_LABELS,
   CAP_TYPES,
-  calculatePrizeUsdc,
   DIFFICULTY_CONFIG,
   getFullValueThreshold,
+  getMaxPrizeUsdc,
   getPrizeflyBonusUsdc,
   LIVE_POINT_VALUES,
   PRIZE_PER_POINT,
+  getRunWaveCount,
 } from "@/lib/gameRules";
 import { BF_PER_USDC_FALLBACK } from "@/lib/pricing";
 import UserPageHeader from "./UserPageHeader";
@@ -49,8 +50,8 @@ export default function RulesScreen({
           </p>
           <div className="mt-3 space-y-2">
             <BeeRule emoji="🦋" label={BEE_LABELS.normal} desc="Core scorer in every wave" points="+1 point" color="#fbbf24" />
-            <BeeRule emoji="🔵" label={BEE_LABELS.fast} desc={`Quick scorer, worth +${LIVE_POINT_VALUES.medium.fast} in Medium`} points="+2 / +3 / +4" color="#3b82f6" fast />
-            <BeeRule emoji="💖" label={BEE_LABELS.fuchsia} desc="Rare burst scorer, boosted in Mega waves" points="+3 / +5 / +7" color="#ec4899" fast />
+            <BeeRule emoji="🔵" label={BEE_LABELS.fast} desc={`Triplefly burst scorer, worth +${LIVE_POINT_VALUES.medium.fast} in Medium`} points={`+${LIVE_POINT_VALUES.easy.fast} / +${LIVE_POINT_VALUES.medium.fast} / +${LIVE_POINT_VALUES.hard.fast}`} color="#3b82f6" fast />
+            <BeeRule emoji="💖" label={BEE_LABELS.fuchsia} desc="Quickfly burst scorer. Rarer than Triplefly and tuned per difficulty." points={`+${LIVE_POINT_VALUES.easy.fuchsia} / +${LIVE_POINT_VALUES.medium.fuchsia} / +${LIVE_POINT_VALUES.hard.fuchsia}`} color="#ec4899" fast />
             <BeeRule emoji="🔴" label={BEE_LABELS.bomb} desc="Forced once per wave. Hit it and you lose points." points="-1 / -2 / -3" color="#dc2626" />
             <BeeRule
               emoji="💜"
@@ -73,7 +74,7 @@ export default function RulesScreen({
                 <div className="mt-1 text-amber-200 text-xs">
                   {item.key === "jolly"
                     ? "Each wave rerolls into Low, Nice, Big, or Mega using their current odds."
-                    : `${item.mult}x cap multiplier for the run.`}
+                    : `${item.pct}% of runs. Type now changes wave structure and pacing, not point value.`}
                 </div>
               </div>
             ))}
@@ -93,11 +94,11 @@ export default function RulesScreen({
                   <span className="font-black text-lg" style={{ color: cfg.color }}>{cfg.fee} USDC</span>
                 </div>
                 <div className="grid grid-cols-3 gap-2 text-center">
-                  <Stat label="Waves" value={`${cfg.waves}`} />
-                  <Stat label="Point cap" value={`${cfg.maxPts} pts`} />
-                  <Stat label="Max prize" value={`${calculatePrizeUsdc(cfg.maxPts, key as keyof typeof DIFFICULTY_CONFIG).toFixed(3)} USDC`} />
+                  <Stat label="Waves" value={`${getRunWaveCount(key, "low")}–${getRunWaveCount(key, "mega")}`} />
+                  <Stat label="Point cap" value={`${getFullValueThreshold(key, "mega")} pts`} />
+                  <Stat label="Max prize" value={`${getMaxPrizeUsdc(key, "mega").toFixed(3)} USDC`} />
                 </div>
-                <div className="text-amber-700 text-xs mt-2 text-center">Linear payout up to {getFullValueThreshold(key as keyof typeof DIFFICULTY_CONFIG)} pts.</div>
+                <div className="text-amber-700 text-xs mt-2 text-center">Linear payout, with run types increasing wave count from Low to Mega.</div>
               </div>
             ))}
           </div>
@@ -127,7 +128,7 @@ export default function RulesScreen({
                 ].map(ex => (
                   <div key={ex.pts} className="flex justify-between text-sm">
                     <span className="text-amber-200">{ex.pts} pts ({ex.mode})</span>
-                    <span className="text-amber-400 font-bold">{Math.round(calculatePrizeUsdc(ex.pts, ex.diff.toLowerCase() as keyof typeof PRIZE_PER_POINT) * BF_PER_USDC_FALLBACK)} BF</span>
+                    <span className="text-amber-400 font-bold">{Math.round(getMaxPrizeUsdc(ex.diff.toLowerCase() as keyof typeof PRIZE_PER_POINT, "low") * (ex.pts / getFullValueThreshold(ex.diff.toLowerCase() as keyof typeof PRIZE_PER_POINT, "low")) * BF_PER_USDC_FALLBACK)} BF</span>
                   </div>
                 ))}
               </div>

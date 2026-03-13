@@ -598,3 +598,25 @@ Payout bands:
 - Updated runtime session creation to build `waveMultipliers` from the actual per-type wave count instead of always using `DIFFICULTY_CONFIG.easy.waves`.
 - Updated `GameScreen` to derive progress, share text, and payout wave totals from `session.waveMultipliers.length`.
 - Updated minimum-duration validation in `finishGameSession` to use the actual run wave count, preventing short jolly runs from being rejected as “finished too early”.
+
+### 2026-03-13 17:05:00 +0100
+- Added a real `ltm3.xml` sync/codegen pipeline:
+  - new script `scripts/sync-ltm3.mjs`
+  - generated runtime config `lib/gameConfig.generated.ts`
+  - `npm run sync:ltm3`
+- `local-balance/ltm3.xml` is now the primary tuning workbook for the live game model, and medium/hard sheets are autocompiled from the easy structure as a starting point.
+- Refactored live game/runtime/server logic to consume the generated config instead of scattered hardcoded tables:
+  - `lib/gameRules.ts`
+  - `lib/gameSessions.ts`
+  - `components/GameScreen.tsx`
+  - `components/App.tsx`
+  - `components/RulesScreen.tsx`
+- Removed live `average` from the active run ladder; the standard types are now `low / nice / big / mega`, with `jolly` handled separately.
+- Prizefly is now enforced as a per-run event in session state:
+  - `prizeEligible`
+  - `prizeWaveIndex`
+- Runtime smoke checks completed:
+  - `npm run build` passed
+  - targeted lint passed with only the existing `<img>` warning in `components/GameScreen.tsx`
+  - local `/api/game/create` returned the new session shape with `waveTypes`, `prizeEligible`, and `prizeWaveIndex`
+  - local browser smoke screenshot captured in `output/web-game/shot-0.png`

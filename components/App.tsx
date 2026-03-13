@@ -11,9 +11,10 @@ import RulesScreen from "./RulesScreen";
 import UserPageHeader from "./UserPageHeader";
 import { BF_PER_USDC_FALLBACK } from "@/lib/pricing";
 import {
-  calculatePrizeUsdc,
   DIFFICULTY_CONFIG,
   getFullValueThreshold,
+  getMaxPrizeUsdc,
+  getRunWaveCount,
   PRIZE_PER_POINT,
   type Difficulty,
 } from "@/lib/gameRules";
@@ -155,7 +156,7 @@ export default function App() {
   const poolDisabled = poolEmpty || poolUnavailable;
   const liveBfPerUsdc = bfPerUsdc ?? BF_PER_USDC_FALLBACK;
   const bfPerPoint = PRIZE_PER_POINT[difficulty] * liveBfPerUsdc;
-  const maxPrizeBf = Math.round(calculatePrizeUsdc(cfg.maxPts, difficulty) * liveBfPerUsdc * 0.945);
+  const maxPrizeBf = Math.round(getMaxPrizeUsdc(difficulty, "mega") * liveBfPerUsdc * 0.945);
   const visibleTickets = user?.address ? myTickets : null;
   const ticketTotal = (visibleTickets?.claimed || 0) + (visibleTickets?.pending || 0);
 
@@ -256,8 +257,12 @@ export default function App() {
                 <div className="text-3xl mb-1">{item.emoji}</div>
                 <div className="text-white font-black text-lg">{item.label}</div>
                 <div className="text-amber-200 text-xs mt-1">{item.fee} USDC</div>
-                <div className="page-muted text-[11px] mt-1">{item.waves} waves · {item.maxPts}pt cap</div>
-                <div className="page-muted text-[11px] mt-1">Linear payout up to {getFullValueThreshold(key)} pt</div>
+                <div className="page-muted text-[11px] mt-1">
+                  {getRunWaveCount(key, "low")}–{getRunWaveCount(key, "mega")} waves
+                </div>
+                <div className="page-muted text-[11px] mt-1">
+                  up to {getFullValueThreshold(key, "mega")} pt in Mega
+                </div>
               </button>
             );
           })}
@@ -274,7 +279,7 @@ export default function App() {
         PLAY — {cfg.fee} USDC 🦋
       </button>
       <div className="page-muted text-center text-[11px]">
-        {cfg.label}: {cfg.waves} waves, base {bfPerPoint.toFixed(0)} BF per point, up to about {maxPrizeBf.toLocaleString()} BF net before Prizefly bonus.
+        {cfg.label}: {getRunWaveCount(difficulty, "low")}–{getRunWaveCount(difficulty, "mega")} waves, base {bfPerPoint.toFixed(0)} BF per point, up to about {maxPrizeBf.toLocaleString()} BF net before Prizefly bonus.
       </div>
       </div>
     </div>

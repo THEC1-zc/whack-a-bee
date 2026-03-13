@@ -40,6 +40,9 @@ type CreateGameResponse = {
   capLabel: string;
   capIcon: string;
   capScore: number;
+  prizeEligible: boolean;
+  prizeWaveIndex: number | null;
+  waveTypes: CapTypeKey[];
   waveMultipliers: number[];
   expiresAt: number;
 };

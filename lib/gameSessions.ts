@@ -25,6 +25,7 @@ import {
 import { getBfPerUsdc } from "@/lib/pricing";
 import {
   calculatePrizeUsdc,
+  CAP_TYPES,
   type CapTypeKey,
   DIFFICULTY_CONFIG,
   type Difficulty,
@@ -37,8 +38,10 @@ import {
   getHitBounds,
   getHitBoundsForWaveMultipliers,
   getPrizeflyBonusUsdc,
+  getPrizeflyChance,
+  getRunCapScore,
   pickCapProfile,
-  pickJollyWaveMultipliers,
+  pickJollyWaveTypes,
 } from "@/lib/gameRules";
 import { logTxRecord } from "@/lib/txLedger";
 import { getSundayWeekId } from "@/lib/weekWindow";
@@ -124,6 +127,9 @@ export type GameRecord = {
   capMultiplier: number;
   capLabel: string;
   capScore: number;
+  prizeEligible?: boolean;
+  prizeWaveIndex?: number | null;
+  waveTypes?: CapTypeKey[];
   waveMultipliers?: number[];
   createdAt: number;
   weekId: string;
@@ -466,13 +472,18 @@ export async function createGameSession(difficulty: Difficulty, callerAddress?: 
   const cfg = DIFFICULTY_CONFIG[difficulty];
   const capProfile = pickCapProfile();
   const totalWaves = getRunWaveCount(difficulty, capProfile.key);
+  const waveTypes = capProfile.key === "jolly"
+    ? pickJollyWaveTypes(totalWaves)
+    : Array.from({ length: totalWaves }, () => capProfile.key);
   const waveMultipliers = capProfile.key === "jolly"
-    ? pickJollyWaveMultipliers(totalWaves)
+    ? waveTypes.map((type) => CAP_TYPES.find((item) => item.key === type)?.mult ?? 1)
     : Array.from({ length: totalWaves }, () => capProfile.mult);
   const capMultiplier = Number((waveMultipliers.reduce((sum, mult) => sum + mult, 0) / waveMultipliers.length).toFixed(4));
   const capInfo = capLabel(capMultiplier, capProfile.key);
   const gameId = crypto.randomUUID();
   const gameSecret = crypto.randomBytes(24).toString("hex");
+  const prizeEligible = Math.random() < getPrizeflyChance(difficulty, capProfile.key);
+  const prizeWaveIndex = prizeEligible ? Math.floor(Math.random() * totalWaves) : null;
   const game: GameRecord = {
     gameId,
     gameSecretHash: sha256Hex(gameSecret),
@@ -481,7 +492,10 @@ export async function createGameSession(difficulty: Difficulty, callerAddress?: 
     capType: capProfile.key,
     capMultiplier,
     capLabel: capInfo.label,
-    capScore: Math.max(1, Math.floor(cfg.maxPts * capMultiplier)),
+    capScore: getRunCapScore(difficulty, capProfile.key, waveTypes),
+    prizeEligible,
+    prizeWaveIndex,
+    waveTypes,
     waveMultipliers,
     createdAt: Date.now(),
     weekId: getSundayWeekId(),
@@ -500,6 +514,9 @@ export async function createGameSession(difficulty: Difficulty, callerAddress?: 
     capLabel: capInfo.label,
     capIcon: capInfo.icon,
     capScore: game.capScore,
+    prizeEligible,
+    prizeWaveIndex,
+    waveTypes,
     waveMultipliers,
     expiresAt: game.createdAt + 30 * 60 * 1000,
   };
@@ -606,7 +623,7 @@ export async function finishGameSession(params: {
   }
 
   const now = Date.now();
-  const minDurationMs = estimateMinimumGameDurationMs(game.difficulty, game.waveMultipliers?.length || undefined);
+  const minDurationMs = estimateMinimumGameDurationMs(game.difficulty, game.waveTypes?.length || undefined, game.waveTypes);
   if (!game.startedAt || now - game.startedAt < minDurationMs) {
     throw new Error("Game finished too early");
   }
@@ -618,15 +635,18 @@ export async function finishGameSession(params: {
   const hitStats = normalizeHitStats(params.hitStats, game.difficulty, game.capMultiplier, game.waveMultipliers);
 
   const rawScore = deriveScoreFromHits(game.difficulty, hitStats);
-  const realizedScore = clampLiveScore(rawScore, game.difficulty, game.capMultiplier);
+  const realizedScore = clampLiveScore(rawScore, game.difficulty, game.capType, game.waveTypes);
   const reportedScore = Math.max(0, Math.floor(Number(params.score || 0)));
   if (reportedScore !== realizedScore) {
     throw new Error("Reported score does not match validated score");
   }
+  if (hitStats.super > 0 && !game.prizeEligible) {
+    throw new Error("Prizefly was not enabled for this run");
+  }
 
   const bfPerUsdc = await getBfPerUsdc();
   const bonusUsdc = hitStats.super > 0 ? getPrizeflyBonusUsdc(game.difficulty, game.capType) : 0;
-  const prizeUsdc = calculatePrizeUsdc(realizedScore, game.difficulty, bonusUsdc);
+  const prizeUsdc = calculatePrizeUsdc(realizedScore, game.difficulty, bonusUsdc, game.capType);
   const grossBf = prizeUsdc * bfPerUsdc;
   const grossUnits = toBFUnits(grossBf);
   const prizeBfGross = fromBFUnits(grossUnits);

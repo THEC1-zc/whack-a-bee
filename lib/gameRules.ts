@@ -1,7 +1,9 @@
-export type Difficulty = "easy" | "medium" | "hard";
+import { DIFFICULTIES, DIFFICULTY_META, GAME_TUNING, JOLLY_TUNING, RUN_TYPES, RUN_TYPE_META } from "@/lib/gameConfig.generated";
+
+export type Difficulty = (typeof DIFFICULTIES)[number];
+export type RunType = (typeof RUN_TYPES)[number];
+export type CapTypeKey = RunType | "jolly";
 export type HitType = "normal" | "fast" | "fuchsia" | "bomb" | "super";
-export type CapTypeKey = "low" | "nice" | "average" | "big" | "mega" | "jolly";
-type JollyWaveTypeKey = Exclude<CapTypeKey, "average" | "jolly">;
 
 type DifficultyConfig = {
   label: string;
@@ -12,27 +14,14 @@ type DifficultyConfig = {
   color: string;
 };
 
-export const DIFFICULTY_CONFIG: Record<Difficulty, DifficultyConfig> = {
-  easy: { label: "Easy", emoji: "🟢", waves: 15, maxPts: 45, fee: 0.015, color: "#16a34a" },
-  medium: { label: "Medium", emoji: "🟡", waves: 13, maxPts: 65, fee: 0.025, color: "#ca8a04" },
-  hard: { label: "Hard", emoji: "🔴", waves: 8, maxPts: 85, fee: 0.035, color: "#dc2626" },
+type RunTypeTuning = (typeof GAME_TUNING)[Difficulty][RunType];
+type WavePlan = { spawnCount: number; bombCount: number };
+
+const LEGACY_TYPE_ALIASES: Record<string, CapTypeKey> = {
+  average: "nice",
 };
 
-export const PRIZE_PER_POINT: Record<Difficulty, number> = {
-  easy: 0.000276,
-  medium: 0.000786,
-  hard: 0.00168,
-};
-
-export const LIVE_POINT_VALUES: Record<Difficulty, Record<HitType, number>> = {
-  easy: { normal: 1, fast: 2, fuchsia: 3, bomb: -1, super: 1 },
-  medium: { normal: 1, fast: 3, fuchsia: 5, bomb: -2, super: 1 },
-  hard: { normal: 1, fast: 4, fuchsia: 7, bomb: -3, super: 1 },
-};
-
-export const FUCHSIA_CHANCE = 0.15;
-export const FUCHSIA_MAX_PER_GAME = 3;
-export const SUPER_BEE_CHANCE_PER_GAME = 0.01;
+const CAP_TYPE_ORDER: CapTypeKey[] = ["low", "nice", "big", "mega", "jolly"];
 
 export const BEE_LABELS: Record<HitType, string> = {
   normal: "Butterfly",
@@ -42,93 +31,133 @@ export const BEE_LABELS: Record<HitType, string> = {
   super: "Prizefly",
 };
 
-export const BEE_CHANCES = {
-  easy: { fast: 0.22 },
-  medium: { fast: 0.25 },
-  hard: { fast: 0.30 },
-} as const;
-
-export const SPAWN_CONFIG = {
-  easy: { base: 900, min: 450, step: 16 },
-  medium: { base: 820, min: 420, step: 18 },
-  hard: { base: 720, min: 380, step: 22 },
-} as const;
-
-export const BEE_DURATIONS: Record<Difficulty, Record<HitType, number>> = {
-  easy: { normal: 1200, fast: 1050, fuchsia: 750, bomb: 1300, super: 1300 },
-  medium: { normal: 1000, fast: 850, fuchsia: 600, bomb: 1000, super: 1000 },
-  hard: { normal: 1800, fast: 1600, fuchsia: 1500, bomb: 1800, super: 1800 },
-};
-
-export const WAVE_TIMEOUT_MS: Partial<Record<Difficulty, number>> = {
-  hard: 1050,
-};
-
-const BASE_WAVE_MAX: Record<Difficulty, number> = {
-  easy: 2,
-  medium: 3,
-  hard: 5,
-};
-
-type WaveProfile = {
-  minSpawns: number;
-  extraSpawnChances: number[];
-  baseBombs: number;
-  extraBombChances: number[];
-};
-
 export const CAP_TYPES = [
-  { key: "low", icon: "🪫", label: "Low", mult: 0.9, pct: 15.0 },
-  { key: "nice", icon: "✅", label: "Nice", mult: 1.1, pct: 20.0 },
-  { key: "average", icon: "🔥", label: "Average", mult: 1.25, pct: 35.0 },
-  { key: "big", icon: "🌟", label: "Big", mult: 2.0, pct: 15.0 },
-  { key: "mega", icon: "💥", label: "Mega", mult: 3.0, pct: 5.0 },
-  { key: "jolly", icon: "🃏", label: "Jolly", mult: 1.0, pct: 10.0 },
+  ...RUN_TYPES.map((type) => ({
+    key: type,
+    icon: RUN_TYPE_META[type].icon,
+    label: RUN_TYPE_META[type].label,
+    mult: RUN_TYPE_META[type].mult,
+    pct: GAME_TUNING.easy[type].runRollPct,
+  })),
+  {
+    key: "jolly" as const,
+    icon: RUN_TYPE_META.jolly.icon,
+    label: RUN_TYPE_META.jolly.label,
+    mult: RUN_TYPE_META.jolly.mult,
+    pct: JOLLY_TUNING.runRollPct,
+  },
 ] as const satisfies readonly { key: CapTypeKey; icon: string; label: string; mult: number; pct: number }[];
 
-const STANDARD_CAP_TYPES = CAP_TYPES.filter((item) => item.key !== "jolly");
-const JOLLY_WAVE_CAP_TYPES = CAP_TYPES.filter((item) => item.key === "low" || item.key === "nice" || item.key === "big" || item.key === "mega") as readonly {
-  key: JollyWaveTypeKey;
-  icon: string;
-  label: string;
-  mult: number;
-  pct: number;
-}[];
+function normalizeCapType(capType?: string | null): CapTypeKey {
+  if (!capType) return "low";
+  if (capType === "jolly" || RUN_TYPES.includes(capType as RunType)) return capType as CapTypeKey;
+  return LEGACY_TYPE_ALIASES[capType] || "low";
+}
 
-const PRIZEFLY_DIFFICULTY_MULTIPLIER: Record<Difficulty, number> = {
-  easy: 0.42,
-  medium: 0.68,
-  hard: 1,
-};
+function getRunTypeTuning(difficulty: Difficulty, capType: CapTypeKey): RunTypeTuning {
+  if (capType === "jolly") return GAME_TUNING[difficulty].low;
+  return GAME_TUNING[difficulty][capType];
+}
 
-const PRIZEFLY_TYPE_MULTIPLIER: Record<CapTypeKey, number> = {
-  low: 0.45,
-  nice: 0.7,
-  average: 0.82,
-  big: 1,
-  mega: 1.5,
-  jolly: 0.9,
-};
+function getRunTypePpp(difficulty: Difficulty, capType: CapTypeKey) {
+  if (capType === "jolly") {
+    const mix = JOLLY_TUNING.waveTypePct;
+    const total = mix.low + mix.nice + mix.big + mix.mega;
+    return (
+      (GAME_TUNING[difficulty].low.pppInputUsdcPerPoint * mix.low +
+        GAME_TUNING[difficulty].nice.pppInputUsdcPerPoint * mix.nice +
+        GAME_TUNING[difficulty].big.pppInputUsdcPerPoint * mix.big +
+        GAME_TUNING[difficulty].mega.pppInputUsdcPerPoint * mix.mega) /
+      total
+    );
+  }
+  return GAME_TUNING[difficulty][capType].pppInputUsdcPerPoint;
+}
 
-const PRIZEFLY_HARD_BIG_FEE_MULTIPLIER = 2.5;
+function getRunTypePrizeBonus(difficulty: Difficulty, capType: CapTypeKey) {
+  if (capType === "jolly") {
+    return {
+      easy: JOLLY_TUNING.easyPrizeBonusUsdcGross,
+      medium: JOLLY_TUNING.mediumPrizeBonusUsdcGross,
+      hard: JOLLY_TUNING.hardPrizeBonusUsdcGross,
+    }[difficulty];
+  }
+  return GAME_TUNING[difficulty][capType].prizeBonusUsdcGross;
+}
 
-const EASY_WAVE_PROFILES: Record<CapTypeKey, WaveProfile> = {
-  low: { minSpawns: 2, extraSpawnChances: [0.35, 0.15], baseBombs: 1, extraBombChances: [0.25] },
-  nice: { minSpawns: 2, extraSpawnChances: [0.5, 0.25], baseBombs: 1, extraBombChances: [0.25] },
-  average: { minSpawns: 2, extraSpawnChances: [0.55, 0.3], baseBombs: 1, extraBombChances: [0.3] },
-  big: { minSpawns: 2, extraSpawnChances: [0.7, 0.45], baseBombs: 1, extraBombChances: [0.35] },
-  mega: { minSpawns: 3, extraSpawnChances: [0.8, 0.55], baseBombs: 1, extraBombChances: [0.35] },
-  // Jolly should vary by the underlying per-wave type, not by its own separate profile.
-  jolly: { minSpawns: 2, extraSpawnChances: [0.5, 0.25], baseBombs: 1, extraBombChances: [0.25] },
-};
+function getRunTypePerfectPositiveSlots(tuning: RunTypeTuning) {
+  return tuning.totalWaves * Math.max(1, tuning.maxButterfliesPerWave - tuning.bombsBasePerWave);
+}
 
-const EASY_RUN_WAVE_COUNTS: Record<Exclude<CapTypeKey, "average">, number> = {
-  low: 14,
-  nice: 15,
-  big: 16,
-  mega: 17,
-  jolly: 14,
-};
+function getRunTypePerfectScore(difficulty: Difficulty, capType: CapTypeKey) {
+  const tuning = getRunTypeTuning(difficulty, capType);
+  const positiveSlots = getRunTypePerfectPositiveSlots(tuning);
+  const triples = Math.min(positiveSlots, tuning.tripleMaxPerGame, tuning.totalWaves * tuning.tripleMaxPerWave);
+  const quicks = Math.min(
+    positiveSlots - triples,
+    tuning.quickMaxPerGame,
+    tuning.totalWaves * tuning.quickMaxPerWave
+  );
+  const prize = Math.min(tuning.prizeMaxPerGame, Math.max(0, positiveSlots - triples - quicks));
+  const normals = Math.max(0, positiveSlots - triples - quicks - prize);
+  return Math.max(
+    1,
+    Math.floor(
+      normals * tuning.normalPoints +
+        triples * tuning.triplePoints +
+        quicks * tuning.quickPoints +
+        prize * tuning.prizePoints
+    )
+  );
+}
+
+function buildDifficultyPointValues(difficulty: Difficulty) {
+  const low = GAME_TUNING[difficulty].low;
+  return {
+    normal: low.normalPoints,
+    fast: low.triplePoints,
+    fuchsia: low.quickPoints,
+    bomb: low.bombPoints,
+    super: low.prizePoints,
+  };
+}
+
+function buildDifficultyDurations(difficulty: Difficulty) {
+  const low = GAME_TUNING[difficulty].low;
+  return {
+    normal: low.normalDurationMs,
+    fast: low.tripleDurationMs,
+    fuchsia: low.quickDurationMs,
+    bomb: low.bombDurationMs,
+    super: low.prizeDurationMs,
+  };
+}
+
+export const DIFFICULTY_CONFIG: Record<Difficulty, DifficultyConfig> = Object.fromEntries(
+  DIFFICULTIES.map((difficulty) => [
+    difficulty,
+    {
+      label: DIFFICULTY_META[difficulty].label,
+      emoji: DIFFICULTY_META[difficulty].emoji,
+      waves: GAME_TUNING[difficulty].low.totalWaves,
+      maxPts: getRunTypePerfectScore(difficulty, "low"),
+      fee: DIFFICULTY_META[difficulty].fee,
+      color: DIFFICULTY_META[difficulty].color,
+    },
+  ])
+) as Record<Difficulty, DifficultyConfig>;
+
+export const PRIZE_PER_POINT: Record<Difficulty, number> = Object.fromEntries(
+  DIFFICULTIES.map((difficulty) => [difficulty, GAME_TUNING[difficulty].low.pppInputUsdcPerPoint])
+) as Record<Difficulty, number>;
+
+export const LIVE_POINT_VALUES: Record<Difficulty, Record<HitType, number>> = Object.fromEntries(
+  DIFFICULTIES.map((difficulty) => [difficulty, buildDifficultyPointValues(difficulty)])
+) as Record<Difficulty, Record<HitType, number>>;
+
+export const BEE_DURATIONS: Record<Difficulty, Record<HitType, number>> = Object.fromEntries(
+  DIFFICULTIES.map((difficulty) => [difficulty, buildDifficultyDurations(difficulty)])
+) as Record<Difficulty, Record<HitType, number>>;
 
 export function pickCapProfile() {
   const roll = Math.random() * 100;
@@ -144,213 +173,200 @@ export function pickCapMultiplier() {
   return pickCapProfile().mult;
 }
 
+export function pickJollyWaveCapProfile() {
+  const roll = Math.random() * 100;
+  let acc = 0;
+  for (const type of RUN_TYPES) {
+    acc += JOLLY_TUNING.waveTypePct[type];
+    if (roll <= acc) {
+      return {
+        key: type,
+        icon: RUN_TYPE_META[type].icon,
+        label: RUN_TYPE_META[type].label,
+        mult: RUN_TYPE_META[type].mult,
+        pct: JOLLY_TUNING.waveTypePct[type],
+      };
+    }
+  }
+  return {
+    key: "low" as const,
+    icon: RUN_TYPE_META.low.icon,
+    label: RUN_TYPE_META.low.label,
+    mult: RUN_TYPE_META.low.mult,
+    pct: JOLLY_TUNING.waveTypePct.low,
+  };
+}
+
 export function pickJollyWaveMultipliers(totalWaves: number) {
   return Array.from({ length: totalWaves }, () => pickJollyWaveCapProfile().mult);
 }
 
-export function pickStandardCapProfile() {
-  const roll = Math.random() * 90;
-  let acc = 0;
-  for (const item of STANDARD_CAP_TYPES) {
-    acc += item.pct;
-    if (roll <= acc) return item;
-  }
-  return STANDARD_CAP_TYPES[0];
-}
-
-export function pickJollyWaveCapProfile() {
-  const totalPct = JOLLY_WAVE_CAP_TYPES.reduce((sum, item) => sum + item.pct, 0);
-  const roll = Math.random() * totalPct;
-  let acc = 0;
-  for (const item of JOLLY_WAVE_CAP_TYPES) {
-    acc += item.pct;
-    if (roll <= acc) return item;
-  }
-  return JOLLY_WAVE_CAP_TYPES[0];
+export function pickJollyWaveTypes(totalWaves: number): RunType[] {
+  return Array.from({ length: totalWaves }, () => pickJollyWaveCapProfile().key);
 }
 
 export function getCapTypeKeyForMultiplier(mult: number): CapTypeKey {
   if (mult >= 3) return "mega";
   if (mult >= 2) return "big";
-  if (mult >= 1.25) return "average";
   if (mult >= 1.1) return "nice";
   return "low";
 }
 
-export function capLabel(mult: number, capType?: CapTypeKey) {
-  if (capType === "jolly") return { icon: "🃏", label: "Jolly" };
-  if (mult >= 3) return { icon: "💥", label: "Mega" };
-  if (mult >= 2) return { icon: "🌟", label: "Big" };
-  if (mult >= 1.25) return { icon: "🔥", label: "Average" };
-  if (mult >= 1.1) return { icon: "✅", label: "Nice" };
-  return { icon: "🪫", label: "Low" };
+export function getCapMultiplier(capType: CapTypeKey) {
+  return RUN_TYPE_META[normalizeCapType(capType)].mult;
 }
 
-export function isMegaRound(capMultiplier: number) {
-  return capMultiplier >= 3;
+export function capLabel(mult: number, capType?: string) {
+  const normalized = normalizeCapType(capType || getCapTypeKeyForMultiplier(mult));
+  return {
+    icon: RUN_TYPE_META[normalized].icon,
+    label: RUN_TYPE_META[normalized].label,
+  };
 }
 
-export function getFastChance(difficulty: Difficulty, capMultiplier: number) {
-  const base = BEE_CHANCES[difficulty].fast;
-  return Math.min(0.95, isMegaRound(capMultiplier) ? base * 2 : base);
+export function getRunWaveCount(difficulty: Difficulty, capType: string) {
+  const normalized = normalizeCapType(capType);
+  if (normalized === "jolly") return GAME_TUNING[difficulty].low.totalWaves;
+  return GAME_TUNING[difficulty][normalized].totalWaves;
 }
 
-export function getFastLimit(capMultiplier: number) {
-  return isMegaRound(capMultiplier) ? 2 : 1;
+export function getRunTypeConfig(difficulty: Difficulty, capType: string) {
+  return getRunTypeTuning(difficulty, normalizeCapType(capType));
 }
 
-export function getFuchsiaChance(capMultiplier: number) {
-  return Math.min(0.95, isMegaRound(capMultiplier) ? FUCHSIA_CHANCE * 2 : FUCHSIA_CHANCE);
-}
-
-export function getSuperChance() {
-  return SUPER_BEE_CHANCE_PER_GAME;
-}
-
-export function getPrizeflyBonusUsdc(difficulty: Difficulty, capType: CapTypeKey) {
-  const hardBigAnchorUsdc = DIFFICULTY_CONFIG.hard.fee * PRIZEFLY_HARD_BIG_FEE_MULTIPLIER;
-  return Number(
-    (hardBigAnchorUsdc * PRIZEFLY_DIFFICULTY_MULTIPLIER[difficulty] * PRIZEFLY_TYPE_MULTIPLIER[capType]).toFixed(6)
+export function getWavePlan(difficulty: Difficulty, capType: string, rolls?: number[]): WavePlan {
+  const tuning = getRunTypeTuning(difficulty, normalizeCapType(capType));
+  const spawnCount = tuning.maxButterfliesPerWave;
+  const extraBombRoll = rolls?.[0] ?? Math.random();
+  const bombCount = Math.min(
+    Math.max(1, spawnCount - 1),
+    tuning.bombsBasePerWave + (extraBombRoll < tuning.bombsSecondChance ? 1 : 0)
   );
-}
-
-export function getBaseWaveCount(difficulty: Difficulty, roll = Math.random()) {
-  if (difficulty === "easy") return 2;
-  if (difficulty === "medium") {
-    if (roll < 0.6) return 1;
-    if (roll < 0.9) return 2;
-    return 3;
-  }
-  if (roll < 0.15) return 1;
-  if (roll < 0.4) return 2;
-  if (roll < 0.7) return 3;
-  if (roll < 0.9) return 4;
-  return 5;
-}
-
-export function getRunWaveCount(difficulty: Difficulty, capType: CapTypeKey) {
-  if (difficulty === "easy" && capType !== "average") {
-    return EASY_RUN_WAVE_COUNTS[capType];
-  }
-  return DIFFICULTY_CONFIG[difficulty].waves;
-}
-
-export function getWaveSpawnCount(difficulty: Difficulty, capMultiplier: number, roll = Math.random()) {
-  return getWavePlanForMultiplier(difficulty, capMultiplier, [roll]).spawnCount;
-}
-
-function getFallbackWaveSpawnCount(difficulty: Difficulty, capMultiplier: number, roll = Math.random()) {
-  const baseCount = getBaseWaveCount(difficulty, roll);
-  return Math.min(9, Math.max(2, Math.round(baseCount * capMultiplier)));
-}
-
-function getWaveProfile(difficulty: Difficulty, capType: CapTypeKey): WaveProfile | null {
-  if (difficulty === "easy") return EASY_WAVE_PROFILES[capType];
-  return null;
-}
-
-function countExtra(chances: number[], rolls: number[]) {
-  let extra = 0;
-  for (let i = 0; i < chances.length; i += 1) {
-    const roll = rolls[i] ?? Math.random();
-    if (roll < chances[i]) extra += 1;
-  }
-  return extra;
-}
-
-export function getWavePlan(difficulty: Difficulty, capType: CapTypeKey, rolls?: number[]) {
-  const profile = getWaveProfile(difficulty, capType);
-  if (!profile) {
-    const fallbackMultiplier = CAP_TYPES.find((item) => item.key === capType)?.mult ?? 1;
-    return {
-      spawnCount: getFallbackWaveSpawnCount(difficulty, fallbackMultiplier, rolls?.[0]),
-      bombCount: 1,
-    };
-  }
-
-  const spawnCount = Math.min(
-    9,
-    profile.minSpawns + countExtra(profile.extraSpawnChances, rolls?.slice(0, profile.extraSpawnChances.length) ?? [])
-  );
-  const bombCount = Math.max(
-    1,
-    profile.baseBombs + countExtra(
-      profile.extraBombChances,
-      rolls?.slice(profile.extraSpawnChances.length, profile.extraSpawnChances.length + profile.extraBombChances.length) ?? []
-    )
-  );
-  return { spawnCount: Math.min(9, Math.max(2, spawnCount)), bombCount };
+  return { spawnCount, bombCount };
 }
 
 export function getWavePlanForMultiplier(difficulty: Difficulty, capMultiplier: number, rolls?: number[]) {
   return getWavePlan(difficulty, getCapTypeKeyForMultiplier(capMultiplier), rolls);
 }
 
-export function getWaveMaxSpawnCount(difficulty: Difficulty, capType: CapTypeKey) {
-  const profile = getWaveProfile(difficulty, capType);
-  if (!profile) {
-    const fallbackMultiplier = CAP_TYPES.find((item) => item.key === capType)?.mult ?? 1;
-    return Math.min(9, Math.max(2, Math.round(BASE_WAVE_MAX[difficulty] * fallbackMultiplier)));
-  }
-  return Math.min(9, profile.minSpawns + profile.extraSpawnChances.length);
+export function getWaveMaxSpawnCount(difficulty: Difficulty, capType: string) {
+  return getRunTypeTuning(difficulty, normalizeCapType(capType)).maxButterfliesPerWave;
 }
 
-export function getWaveMaxBombCount(difficulty: Difficulty, capType: CapTypeKey) {
-  const profile = getWaveProfile(difficulty, capType);
-  if (!profile) return 1;
-  return Math.max(1, profile.baseBombs + profile.extraBombChances.length);
+export function getWaveMaxBombCount(difficulty: Difficulty, capType: string) {
+  const tuning = getRunTypeTuning(difficulty, normalizeCapType(capType));
+  return Math.min(Math.max(1, tuning.maxButterfliesPerWave - 1), tuning.bombsBasePerWave + 1);
 }
 
-export function getWaveDelayMs(difficulty: Difficulty, waveIndex: number, totalWaves = DIFFICULTY_CONFIG[difficulty].waves) {
-  const cfg = SPAWN_CONFIG[difficulty];
-  return Math.max(cfg.min, cfg.base - waveIndex * cfg.step * Math.max(1, Math.floor(10 / totalWaves)));
+export function getWaveDelayMs(difficulty: Difficulty, waveIndex: number, totalWaves = DIFFICULTY_CONFIG[difficulty].waves, capType: string = "low") {
+  const tuning = getRunTypeTuning(difficulty, normalizeCapType(capType));
+  return Math.max(0, tuning.waveDurationMs - waveIndex * Math.max(1, Math.floor(120 / Math.max(1, totalWaves))));
 }
 
-export function getWaveTimeoutMs(difficulty: Difficulty) {
-  return WAVE_TIMEOUT_MS[difficulty] ?? null;
+export function getWaveTimeoutMs(difficulty: Difficulty, capType: string = "low") {
+  return getRunTypeTuning(difficulty, normalizeCapType(capType)).waveDurationMs;
 }
 
-export function getHitBounds(difficulty: Difficulty, capMultiplier: number): Record<HitType, number> {
-  const totalWaves = DIFFICULTY_CONFIG[difficulty].waves;
-  const capType = getCapTypeKeyForMultiplier(capMultiplier);
-  const totalSpawns = totalWaves * getWaveMaxSpawnCount(difficulty, capType);
+export function getFastChance(difficulty: Difficulty, capTypeOrMultiplier: string | number) {
+  const capType =
+    typeof capTypeOrMultiplier === "number" ? getCapTypeKeyForMultiplier(capTypeOrMultiplier) : normalizeCapType(capTypeOrMultiplier);
+  return getRunTypeTuning(difficulty, capType).tripleChancePerWave;
+}
+
+export function getFastLimit(difficulty: Difficulty, capTypeOrMultiplier: string | number) {
+  const capType =
+    typeof capTypeOrMultiplier === "number" ? getCapTypeKeyForMultiplier(capTypeOrMultiplier) : normalizeCapType(capTypeOrMultiplier);
+  return getRunTypeTuning(difficulty, capType).tripleMaxPerWave;
+}
+
+export function getFuchsiaChance(difficulty: Difficulty, capTypeOrMultiplier: string | number) {
+  const capType =
+    typeof capTypeOrMultiplier === "number" ? getCapTypeKeyForMultiplier(capTypeOrMultiplier) : normalizeCapType(capTypeOrMultiplier);
+  return getRunTypeTuning(difficulty, capType).quickChancePerWave;
+}
+
+export function getQuickLimit(difficulty: Difficulty, capTypeOrMultiplier: string | number) {
+  const capType =
+    typeof capTypeOrMultiplier === "number" ? getCapTypeKeyForMultiplier(capTypeOrMultiplier) : normalizeCapType(capTypeOrMultiplier);
+  return getRunTypeTuning(difficulty, capType).quickMaxPerWave;
+}
+
+export function getPrizeflyChance(difficulty: Difficulty, capType: string) {
+  return getRunTypeTuning(difficulty, normalizeCapType(capType)).prizeChance;
+}
+
+export function getPrizeflyBonusUsdc(difficulty: Difficulty, capType: string) {
+  return getRunTypePrizeBonus(difficulty, normalizeCapType(capType));
+}
+
+export function getRunCapScore(difficulty: Difficulty, capType: string, waveTypes?: string[]) {
+  const normalized = normalizeCapType(capType);
+  if (!waveTypes?.length || normalized !== "jolly") return getRunTypePerfectScore(difficulty, normalized);
+  return Math.max(
+    1,
+    waveTypes.reduce((total, waveType) => {
+      const tuning = getRunTypeTuning(difficulty, normalizeCapType(waveType));
+      const positiveSlots = Math.max(1, tuning.maxButterfliesPerWave - tuning.bombsBasePerWave);
+      const tripleCount = Math.min(tuning.tripleMaxPerWave, positiveSlots);
+      const quickCount = Math.min(tuning.quickMaxPerWave, Math.max(0, positiveSlots - tripleCount));
+      const prizeCount = 0;
+      const normals = Math.max(0, positiveSlots - tripleCount - quickCount - prizeCount);
+      return (
+        total +
+        normals * tuning.normalPoints +
+        tripleCount * tuning.triplePoints +
+        quickCount * tuning.quickPoints
+      );
+    }, 0)
+  );
+}
+
+export function getHitBounds(difficulty: Difficulty, capTypeOrMultiplier: string | number): Record<HitType, number> {
+  const capType =
+    typeof capTypeOrMultiplier === "number" ? getCapTypeKeyForMultiplier(capTypeOrMultiplier) : normalizeCapType(capTypeOrMultiplier);
+  const tuning = getRunTypeTuning(difficulty, capType);
+  const totalWaves = getRunWaveCount(difficulty, capType);
+  const positiveSlots = totalWaves * Math.max(1, tuning.maxButterfliesPerWave - tuning.bombsBasePerWave);
   return {
-    normal: totalSpawns,
-    fast: totalWaves * getFastLimit(capMultiplier),
-    fuchsia: FUCHSIA_MAX_PER_GAME,
+    normal: positiveSlots,
+    fast: totalWaves * tuning.tripleMaxPerWave,
+    fuchsia: totalWaves * tuning.quickMaxPerWave,
     bomb: totalWaves * getWaveMaxBombCount(difficulty, capType),
-    super: 1,
+    super: tuning.prizeMaxPerGame,
   };
 }
 
 export function getHitBoundsForWaveMultipliers(difficulty: Difficulty, waveMultipliers: number[]): Record<HitType, number> {
-  const totals = waveMultipliers.reduce<Record<HitType, number>>(
+  return waveMultipliers.reduce<Record<HitType, number>>(
     (acc, mult) => {
-      const capType = getCapTypeKeyForMultiplier(mult);
-      const waveSpawnCount = getWaveMaxSpawnCount(difficulty, capType);
-      acc.normal += waveSpawnCount;
-      acc.fast += getFastLimit(mult);
-      acc.fuchsia += 1;
-      acc.bomb += getWaveMaxBombCount(difficulty, capType);
+      const type = getCapTypeKeyForMultiplier(mult);
+      const tuning = getRunTypeTuning(difficulty, type);
+      acc.normal += Math.max(1, tuning.maxButterfliesPerWave - tuning.bombsBasePerWave);
+      acc.fast += tuning.tripleMaxPerWave;
+      acc.fuchsia += tuning.quickMaxPerWave;
+      acc.bomb += getWaveMaxBombCount(difficulty, type);
       return acc;
     },
     { normal: 0, fast: 0, fuchsia: 0, bomb: 0, super: 1 }
   );
-  totals.fuchsia = Math.min(FUCHSIA_MAX_PER_GAME, totals.fuchsia);
-  return totals;
 }
 
-export function estimateMinimumGameDurationMs(difficulty: Difficulty, totalWaves = DIFFICULTY_CONFIG[difficulty].waves) {
-  let total = 3000; // countdown
-  for (let waveIndex = 0; waveIndex < totalWaves; waveIndex += 1) {
-    total += waveIndex === 0 ? 180 : getWaveDelayMs(difficulty, waveIndex, totalWaves);
+export function estimateMinimumGameDurationMs(difficulty: Difficulty, totalWaves = DIFFICULTY_CONFIG[difficulty].waves, waveTypes?: string[]) {
+  let total = 3000;
+  const effectiveTypes =
+    waveTypes?.length
+      ? waveTypes
+      : Array.from({ length: totalWaves }, () => "low");
+  for (let i = 0; i < effectiveTypes.length; i += 1) {
+    total += getWaveTimeoutMs(difficulty, effectiveTypes[i]) + 80;
   }
-  total += Math.max(...Object.values(BEE_DURATIONS[difficulty])) + 250;
   return total;
 }
 
-export function clampLiveScore(score: number, difficulty: Difficulty, capMultiplier: number) {
-  const capScore = Math.max(1, Math.floor(DIFFICULTY_CONFIG[difficulty].maxPts * capMultiplier));
+export function clampLiveScore(score: number, difficulty: Difficulty, capTypeOrMultiplier: string | number, waveTypes?: string[]) {
+  const capType =
+    typeof capTypeOrMultiplier === "number" ? getCapTypeKeyForMultiplier(capTypeOrMultiplier) : normalizeCapType(capTypeOrMultiplier);
+  const capScore = getRunCapScore(difficulty, capType, waveTypes);
   return Math.max(0, Math.min(score, capScore));
 }
 
@@ -372,16 +388,20 @@ export function getEffectivePayoutPoints(score: number) {
   return Number(Math.max(0, score).toFixed(2));
 }
 
-export function calculatePrizeUsdc(score: number, difficulty: Difficulty, bonusUsdc = 0) {
+export function calculatePrizeUsdc(score: number, difficulty: Difficulty, bonusUsdc = 0, capType: string = "low") {
   const effectivePoints = getEffectivePayoutPoints(score);
-  return Number((effectivePoints * PRIZE_PER_POINT[difficulty] + bonusUsdc).toFixed(6));
+  return Number((effectivePoints * getRunTypePpp(difficulty, normalizeCapType(capType)) + bonusUsdc).toFixed(6));
 }
 
-export function getFullValueThreshold(difficulty: Difficulty) {
-  return DIFFICULTY_CONFIG[difficulty].maxPts;
+export function getFullValueThreshold(difficulty: Difficulty, capType: string = "low") {
+  return getRunCapScore(difficulty, capType);
 }
 
-export function getMaxPrizeUsdc(difficulty: Difficulty, capMultiplier = 1) {
-  const cappedScore = Math.max(1, Math.floor(DIFFICULTY_CONFIG[difficulty].maxPts * capMultiplier));
-  return calculatePrizeUsdc(cappedScore, difficulty);
+export function getMaxPrizeUsdc(difficulty: Difficulty, capType: string = "low") {
+  const cappedScore = getRunCapScore(difficulty, capType);
+  return calculatePrizeUsdc(cappedScore, difficulty, 0, capType);
+}
+
+export function getDifficultyTypes() {
+  return CAP_TYPE_ORDER;
 }

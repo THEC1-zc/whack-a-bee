@@ -7,20 +7,18 @@ import type { FarcasterUser } from "@/hooks/useFarcaster";
 import { BF_PER_USDC_FALLBACK } from "@/lib/pricing";
 import {
   BEE_LABELS,
-  BEE_DURATIONS,
   calculatePrizeUsdc,
   capLabel,
   DIFFICULTY_CONFIG,
-  FUCHSIA_MAX_PER_GAME,
   getFastChance,
   getFastLimit,
   getFuchsiaChance,
   getFullValueThreshold,
   getPrizeflyBonusUsdc,
-  getWavePlanForMultiplier,
+  getQuickLimit,
+  getRunTypeConfig,
   getWaveTimeoutMs,
   LIVE_POINT_VALUES,
-  getSuperChance,
   type CapTypeKey,
   type Difficulty,
 } from "@/lib/gameRules";
@@ -64,6 +62,9 @@ type GameSessionInfo = {
   capLabel: string;
   capIcon: string;
   capScore: number;
+  prizeEligible: boolean;
+  prizeWaveIndex: number | null;
+  waveTypes: CapTypeKey[];
   waveMultipliers: number[];
 };
 
@@ -91,10 +92,10 @@ export default function GameScreen({ user, difficulty, onGameEnd }: Props) {
   const [bfPerUsdc, setBfPerUsdc] = useState(BF_PER_USDC_FALLBACK);
   const [hitStats, setHitStats] = useState<HitStats>({ normal: 0, fast: 0, fuchsia: 0, bomb: 0, super: 0 });
   const [capScore, setCapScore] = useState(cfg.maxPts);
-  const [capInfo, setCapInfo] = useState(capLabel(1));
+  const [capInfo, setCapInfo] = useState<{ icon: string; label: string }>(capLabel(1));
   const [ticketCount, setTicketCount] = useState(0);
   const [currentWave, setCurrentWave] = useState(0);
-  const totalWaves = session?.waveMultipliers?.length ?? cfg.waves;
+  const totalWaves = session?.waveTypes?.length ?? cfg.waves;
 
   const beeIdRef = useRef(0);
   const scoreRef = useRef(0);
@@ -102,7 +103,8 @@ export default function GameScreen({ user, difficulty, onGameEnd }: Props) {
   const feeTxHashRef = useRef<string | null>(null);
   const bonusRef = useRef(0);
   const superSpawnedRef = useRef(false);
-  const fuchsiaCountRef = useRef(0);
+  const tripleCountRef = useRef(0);
+  const quickCountRef = useRef(0);
   const capScoreRef = useRef<number>(cfg.maxPts);
   const gameStartedRef = useRef(false);
   const endTriggeredRef = useRef(false);
@@ -123,23 +125,29 @@ export default function GameScreen({ user, difficulty, onGameEnd }: Props) {
       .catch(() => {});
   }, []);
 
-  const getWaveMultiplierForIndex = useCallback((waveIndex: number) => {
-    if (!session) return 1;
-    return session.waveMultipliers?.[waveIndex] ?? session.capMultiplier;
+  const getWaveTypeForIndex = useCallback((waveIndex: number): CapTypeKey => {
+    if (!session) return "low";
+    return session.waveTypes?.[waveIndex] ?? session.capType;
   }, [session]);
 
-  const spawnBees = useCallback((count: number, bombTarget: number, waveMultiplier: number, waveIndex: number) => {
+  const spawnBees = useCallback((waveType: CapTypeKey, waveIndex: number) => {
     setBees((prev) => {
       let next = prev.filter((bee) => bee.visible);
       const usedSlots = new Set(next.filter((bee) => bee.visible && !bee.hit).map((bee) => bee.slot));
+      const tuning = getRunTypeConfig(difficulty, waveType);
+      const bombTarget = Math.min(
+        Math.max(1, tuning.maxButterfliesPerWave - 1),
+        tuning.bombsBasePerWave + (Math.random() < tuning.bombsSecondChance ? 1 : 0)
+      );
+      const spawnCount = tuning.maxButterfliesPerWave;
       let bombPlaced = 0;
       let fastPlaced = 0;
-      let fuchsiaPlaced = false;
-      const shouldSpawnSuper = !superSpawnedRef.current && Math.random() < getSuperChance();
-      const fastLimit = getFastLimit(waveMultiplier);
-      const fuchsiaChance = getFuchsiaChance(waveMultiplier);
-      const fastChance = getFastChance(difficulty, waveMultiplier);
-      const spawnCount = count;
+      let quickPlaced = 0;
+      const shouldSpawnSuper = !!session?.prizeEligible && session.prizeWaveIndex === waveIndex && !superSpawnedRef.current;
+      const fastLimit = getFastLimit(difficulty, waveType);
+      const quickLimit = getQuickLimit(difficulty, waveType);
+      const quickChance = getFuchsiaChance(difficulty, waveType);
+      const fastChance = getFastChance(difficulty, waveType);
 
       for (let i = 0; i < spawnCount; i += 1) {
         const available = Array.from({ length: SLOTS }, (_, idx) => idx).filter((slot) => !usedSlots.has(slot));
@@ -155,17 +163,24 @@ export default function GameScreen({ user, difficulty, onGameEnd }: Props) {
         } else if (shouldSpawnSuper && !superSpawnedRef.current) {
           type = "super";
           superSpawnedRef.current = true;
-        } else if (!fuchsiaPlaced && fuchsiaCountRef.current < FUCHSIA_MAX_PER_GAME && rand < fuchsiaChance) {
+        } else if (quickPlaced < quickLimit && quickCountRef.current < tuning.quickMaxPerGame && rand < quickChance) {
           type = "fuchsia";
-          fuchsiaPlaced = true;
-          fuchsiaCountRef.current += 1;
-        } else if (fastPlaced < fastLimit && rand < fastChance) {
+          quickPlaced += 1;
+          quickCountRef.current += 1;
+        } else if (fastPlaced < fastLimit && tripleCountRef.current < tuning.tripleMaxPerGame && rand < fastChance) {
           type = "fast";
           fastPlaced += 1;
+          tripleCountRef.current += 1;
         }
 
         const id = beeIdRef.current++;
-        const duration = BEE_DURATIONS[difficulty][type];
+        const duration = {
+          normal: tuning.normalDurationMs,
+          fast: tuning.tripleDurationMs,
+          fuchsia: tuning.quickDurationMs,
+          bomb: tuning.bombDurationMs,
+          super: tuning.prizeDurationMs,
+        }[type];
 
         setTimeout(() => setBees((current) => current.filter((bee) => bee.id !== id)), duration);
         next = [...next, { id, slot, wave: waveIndex, type, visible: true, hit: false }];
@@ -173,13 +188,10 @@ export default function GameScreen({ user, difficulty, onGameEnd }: Props) {
       }
       return next;
     });
-    const waveTimeoutMs = getWaveTimeoutMs(difficulty);
-    if (waveTimeoutMs) {
-      setTimeout(() => {
-        setBees((current) => current.filter((bee) => bee.wave !== waveIndex || bee.hit));
-      }, waveTimeoutMs);
-    }
-  }, [difficulty]);
+    setTimeout(() => {
+      setBees((current) => current.filter((bee) => bee.wave !== waveIndex || bee.hit));
+    }, getWaveTimeoutMs(difficulty, waveType));
+  }, [difficulty, session]);
 
   const whackBee = useCallback((bee: Bee) => {
     if (bee.hit || !bee.visible) return;
@@ -251,8 +263,13 @@ export default function GameScreen({ user, difficulty, onGameEnd }: Props) {
       const start = setTimeout(() => {
         endTriggeredRef.current = false;
         nextWaveQueuedRef.current = false;
+        tripleCountRef.current = 0;
+        quickCountRef.current = 0;
+        superSpawnedRef.current = false;
+        bonusRef.current = 0;
         setCurrentWave(0);
         setBees([]);
+        setSuperBonus(0);
         setGameState("playing");
       }, 450);
       return () => clearTimeout(start);
@@ -334,16 +351,15 @@ export default function GameScreen({ user, difficulty, onGameEnd }: Props) {
     const t = setTimeout(() => {
       fired = true;
       nextWaveQueuedRef.current = false;
-      const waveMultiplier = getWaveMultiplierForIndex(currentWave);
-      const plan = getWavePlanForMultiplier(difficulty, waveMultiplier);
-      spawnBees(plan.spawnCount, plan.bombCount, waveMultiplier, currentWave);
+      const waveType = getWaveTypeForIndex(currentWave);
+      spawnBees(waveType, currentWave);
       setCurrentWave((value) => value + 1);
     }, 0);
     return () => {
       clearTimeout(t);
       if (!fired) nextWaveQueuedRef.current = false;
     };
-  }, [bees.length, currentWave, difficulty, gameState, getWaveMultiplierForIndex, session, spawnBees, totalWaves]);
+  }, [bees.length, currentWave, difficulty, gameState, getWaveTypeForIndex, session, spawnBees, totalWaves]);
 
   useEffect(() => {
     if (gameState !== "playing") return;
@@ -359,7 +375,7 @@ export default function GameScreen({ user, difficulty, onGameEnd }: Props) {
   }, [bees.length, currentWave, gameState, handleGameEnd, totalWaves]);
 
   const progressPercent = Math.min(100, Math.round((currentWave / totalWaves) * 100));
-  const prize = calculatePrizeUsdc(score, difficulty, superBonus);
+  const prize = calculatePrizeUsdc(score, difficulty, superBonus, session?.capType || "low");
   const prizeBfGross = Math.round(prize * bfPerUsdc);
   const prizeBfNet = Math.round(prizeBfGross * 0.945);
   const shortPaymentError = paymentError
@@ -372,8 +388,8 @@ export default function GameScreen({ user, difficulty, onGameEnd }: Props) {
   const pct = Math.round((score / capScore) * 100);
   const displayedWave = Math.min(currentWave + 1, totalWaves);
   const activeWaveIndex = Math.max(0, Math.min(totalWaves - 1, currentWave - 1));
-  const activeWaveMultiplier = getWaveMultiplierForIndex(activeWaveIndex);
-  const activeWaveInfo = capLabel(activeWaveMultiplier);
+  const activeWaveType = getWaveTypeForIndex(activeWaveIndex);
+  const activeWaveInfo = capLabel(1, activeWaveType);
   const weeklyBf = Math.floor(prizeBfGross * 0.045);
   const burnBf = Math.floor(prizeBfGross * 0.01);
   const payoutRows = [
@@ -618,9 +634,9 @@ export default function GameScreen({ user, difficulty, onGameEnd }: Props) {
         </div>
       </div>
 
-      {session && activeWaveMultiplier >= 3 && (
+      {session && activeWaveType === "mega" && (
         <div className="mx-4 mb-2 rounded-xl border border-purple-700 bg-purple-900/40 text-purple-200 text-xs font-black text-center py-1">
-          💥 MEGA JACKPOT ROUND — 3× CAP
+          💥 MEGA JACKPOT ROUND
         </div>
       )}
 
@@ -707,7 +723,7 @@ export default function GameScreen({ user, difficulty, onGameEnd }: Props) {
                   {cfg.emoji} {cfg.label} Mode
                 </div>
                 <div className="mt-2 text-[11px] text-amber-100/90">
-                  {capInfo.icon} {capInfo.label} run · {totalWaves} waves · up to {getFullValueThreshold(difficulty)} pts
+                  {capInfo.icon} {capInfo.label} run · {totalWaves} waves · up to {getFullValueThreshold(difficulty, session?.capType || "low")} pts
                 </div>
                 <div className="mt-4 text-[5.5rem] leading-none font-black text-amber-200 drop-shadow-[0_8px_24px_rgba(0,0,0,0.45)]">
                   {countdown || "GO!"}

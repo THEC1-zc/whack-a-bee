@@ -6,7 +6,8 @@
     "dev": "next dev",
     "build": "next build",
     "start": "next start",
-    "lint": "eslint"
+    "lint": "eslint",
+    "sync:ltm3": "node scripts/sync-ltm3.mjs"
   },
   "dependencies": {
     "@farcaster/miniapp-sdk": "^0.2.3",
