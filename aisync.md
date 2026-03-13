@@ -644,3 +644,13 @@ Payout bands:
 - Validation completed:
   - `npm run sync:ltm3` passed
   - `npm run build` passed
+
+### 2026-03-13 18:33:00 +0100
+- Lowered PPP by `10%` for `medium` and `hard` only:
+  - medium `0.00036 -> 0.000324`
+  - hard `0.0005 -> 0.00045`
+- Kept `easy` unchanged at `0.000295`.
+- Updated `scripts/sync-ltm3.mjs` so generated `DIFFICULTY_META.ppp` now comes from the workbook instead of stale hardcoded defaults, preventing future drift between `ltm3.xml` and `lib/gameConfig.generated.ts`.
+- Validation completed:
+  - `npm run sync:ltm3` passed
+  - `npm run build` passed

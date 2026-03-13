@@ -7,7 +7,7 @@ export const DIFFICULTY_META = {
     "color": "#16a34a",
     "fee": 0.015,
     "baseWaves": 14,
-    "ppp": 0.0003
+    "ppp": 0.000295
   },
   "medium": {
     "label": "Medium",
