@@ -27,7 +27,6 @@ import {
   calculatePrizeUsdc,
   type CapTypeKey,
   DIFFICULTY_CONFIG,
-  SUPER_BEE_BONUS_BF,
   type Difficulty,
   capLabel,
   clampLiveScore,
@@ -36,6 +35,7 @@ import {
   getFullValueThreshold,
   getHitBounds,
   getHitBoundsForWaveMultipliers,
+  getPrizeflyBonusUsdc,
   pickCapProfile,
   pickJollyWaveMultipliers,
 } from "@/lib/gameRules";
@@ -623,7 +623,7 @@ export async function finishGameSession(params: {
   }
 
   const bfPerUsdc = await getBfPerUsdc();
-  const bonusUsdc = (hitStats.super * SUPER_BEE_BONUS_BF) / bfPerUsdc;
+  const bonusUsdc = hitStats.super > 0 ? getPrizeflyBonusUsdc(game.difficulty, game.capType) : 0;
   const prizeUsdc = calculatePrizeUsdc(realizedScore, game.difficulty, bonusUsdc);
   const grossBf = prizeUsdc * bfPerUsdc;
   const grossUnits = toBFUnits(grossBf);

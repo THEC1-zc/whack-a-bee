@@ -525,3 +525,12 @@ Payout bands:
   - wave logic can now produce more than 2 spawns per wave on `easy`
   - bomb count is now part of the runtime plan instead of always forcing exactly one bomb
 - Updated server-side hit bounds in `lib/gameRules.ts` to use the same per-type max-wave logic, keeping client and anti-cheat validation aligned.
+
+### 2026-03-13 12:24:00 +0100
+- Replaced the old fixed Prizefly bonus (`100000 BF`) with a `difficulty x type` matrix anchored at `hard big = 2.5x fee`.
+- Prizefly is now priced in USDC first and then converted into BF through the live BF/USDC rate used during game finish.
+- Updated both server and client preview paths:
+  - `lib/gameSessions.ts`
+  - `components/GameScreen.tsx`
+  - `components/RulesScreen.tsx`
+- Removed stale UI copy that still advertised Prizefly as a fixed `+100000 BF`.

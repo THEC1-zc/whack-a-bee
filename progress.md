@@ -127,6 +127,12 @@ Original prompt: end game: aggiungiamo pulsante share to farcaster, che pubblich
     - easy types use explicit per-type profiles instead of only multiplier math
     - server-side hit bounds now reuse the same per-type max-wave logic to stay anti-cheat compatible
   - `components/GameScreen.tsx` now consumes the wave plan and can spawn more than one bomb when the profile allows it.
+
+- 2026-03-13 prizefly metric change:
+  - Removed the old fixed `100000 BF` Prizefly model.
+  - Prizefly bonus is now `difficulty x type` and anchored at `hard big = 2.5x fee`.
+  - Server payout uses a live BF/USDC fetch to convert the USDC-denominated Prizefly bonus at finish time.
+  - Client preview and rules text now use the same matrix.
     - Playwright client run succeeded with screenshot at `output/web-game/shot-0.png`
     - limitation: outside Farcaster the app still renders the disconnected fallback, so the new authenticated header state needs visual confirmation inside the miniapp host
 

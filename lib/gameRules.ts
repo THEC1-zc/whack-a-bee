@@ -29,7 +29,6 @@ export const LIVE_POINT_VALUES: Record<Difficulty, Record<HitType, number>> = {
   hard: { normal: 1, fast: 4, fuchsia: 7, bomb: -3, super: 1 },
 };
 
-export const SUPER_BEE_BONUS_BF = 100000;
 export const FUCHSIA_CHANCE = 0.15;
 export const FUCHSIA_MAX_PER_GAME = 3;
 export const SUPER_BEE_CHANCE_PER_GAME = 0.025;
@@ -87,6 +86,23 @@ export const CAP_TYPES = [
 ] as const satisfies readonly { key: CapTypeKey; icon: string; label: string; mult: number; pct: number }[];
 
 const STANDARD_CAP_TYPES = CAP_TYPES.filter((item) => item.key !== "jolly");
+
+const PRIZEFLY_DIFFICULTY_MULTIPLIER: Record<Difficulty, number> = {
+  easy: 0.42,
+  medium: 0.68,
+  hard: 1,
+};
+
+const PRIZEFLY_TYPE_MULTIPLIER: Record<CapTypeKey, number> = {
+  low: 0.45,
+  nice: 0.7,
+  average: 0.82,
+  big: 1,
+  mega: 1.5,
+  jolly: 0.9,
+};
+
+const PRIZEFLY_HARD_BIG_FEE_MULTIPLIER = 2.5;
 
 const EASY_WAVE_PROFILES: Record<CapTypeKey, WaveProfile> = {
   low: { minSpawns: 2, extraSpawnChances: [0.35, 0.15], baseBombs: 1, extraBombChances: [0.25] },
@@ -162,6 +178,13 @@ export function getFuchsiaChance(capMultiplier: number) {
 
 export function getSuperChance(capMultiplier: number) {
   return SUPER_BEE_CHANCE_PER_GAME * (isMegaRound(capMultiplier) ? 3 : 1);
+}
+
+export function getPrizeflyBonusUsdc(difficulty: Difficulty, capType: CapTypeKey) {
+  const hardBigAnchorUsdc = DIFFICULTY_CONFIG.hard.fee * PRIZEFLY_HARD_BIG_FEE_MULTIPLIER;
+  return Number(
+    (hardBigAnchorUsdc * PRIZEFLY_DIFFICULTY_MULTIPLIER[difficulty] * PRIZEFLY_TYPE_MULTIPLIER[capType]).toFixed(6)
+  );
 }
 
 export function getBaseWaveCount(difficulty: Difficulty, roll = Math.random()) {

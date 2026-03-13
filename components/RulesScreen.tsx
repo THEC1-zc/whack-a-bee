@@ -7,6 +7,7 @@ import {
   calculatePrizeUsdc,
   DIFFICULTY_CONFIG,
   getFullValueThreshold,
+  getPrizeflyBonusUsdc,
   LIVE_POINT_VALUES,
   PRIZE_PER_POINT,
 } from "@/lib/gameRules";
@@ -51,7 +52,13 @@ export default function RulesScreen({
             <BeeRule emoji="🔵" label={BEE_LABELS.fast} desc={`Quick scorer, worth +${LIVE_POINT_VALUES.medium.fast} in Medium`} points="+2 / +3 / +4" color="#3b82f6" fast />
             <BeeRule emoji="💖" label={BEE_LABELS.fuchsia} desc="Rare burst scorer, boosted in Mega waves" points="+3 / +5 / +7" color="#ec4899" fast />
             <BeeRule emoji="🔴" label={BEE_LABELS.bomb} desc="Forced once per wave. Hit it and you lose points." points="-1 / -2 / -3" color="#dc2626" />
-            <BeeRule emoji="💜" label={BEE_LABELS.super} desc="One per run max. Adds 100,000 BF on top of score payout." points="+100000 BF" color="#a855f7" />
+            <BeeRule
+              emoji="💜"
+              label={BEE_LABELS.super}
+              desc="One per run max. Bonus depends on difficulty and run type, with Hard Big anchored at 2.5x fee."
+              points={`+${getPrizeflyBonusUsdc("hard", "big").toFixed(4)} USDC gross`}
+              color="#a855f7"
+            />
           </div>
         </Section>
 

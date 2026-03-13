@@ -16,10 +16,10 @@ import {
   getFastLimit,
   getFuchsiaChance,
   getFullValueThreshold,
+  getPrizeflyBonusUsdc,
   getWavePlanForMultiplier,
   getWaveTimeoutMs,
   LIVE_POINT_VALUES,
-  SUPER_BEE_BONUS_BF,
   getSuperChance,
   type CapTypeKey,
   type Difficulty,
@@ -195,8 +195,8 @@ export default function GameScreen({ user, difficulty, onGameEnd }: Props) {
     else if (bee.type === "bomb") { points = pointsTable.bomb; text = `💥 ${points}`; }
     else if (bee.type === "super") {
       points = pointsTable.super;
-      text = "💜 +100K BF";
-      const bonusUsdc = SUPER_BEE_BONUS_BF / bfPerUsdc;
+      text = "💜 PRIZE!";
+      const bonusUsdc = session ? getPrizeflyBonusUsdc(difficulty, session.capType) : 0;
       bonusRef.current = parseFloat((bonusRef.current + bonusUsdc).toFixed(6));
       setSuperBonus(bonusRef.current);
     }
@@ -205,7 +205,7 @@ export default function GameScreen({ user, difficulty, onGameEnd }: Props) {
     const nextScore = scoreRef.current + points;
     scoreRef.current = Math.max(0, Math.min(nextScore, capScoreRef.current));
     setScore(scoreRef.current);
-  }, [addHitEffect, bfPerUsdc, difficulty]);
+  }, [addHitEffect, difficulty, session]);
 
   useEffect(() => {
     if (gameStartedRef.current) return;
