@@ -664,3 +664,9 @@ Payout bands:
 - Validation completed:
   - targeted lint passed with only the known `<img>` warnings
   - `npm run build` passed
+
+### 2026-03-13 18:59:00 +0100
+- Shifted the app shell from the old brown/amber dominant palette to a green-first palette in `app/globals.css`.
+- Updated shared background, overlay, chrome, chip, divider, and text accent variables so home, rules, weekly, admin, and payout inherit the new tone without per-page rewrites.
+- Validation completed:
+  - `npm run build` passed
