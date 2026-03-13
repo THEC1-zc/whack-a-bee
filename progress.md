@@ -116,8 +116,17 @@ Original prompt: end game: aggiungiamo pulsante share to farcaster, che pubblich
   - Static verification:
     - `npm run build` ✅
     - `npm run lint -- components/App.tsx components/GameScreen.tsx components/RulesScreen.tsx components/LeaderboardScreen.tsx components/UserPageHeader.tsx app/weekly/page.tsx` ✅ with only existing `no-img-element` warnings on avatar/sprite images
-  - Local smoke:
-    - `npm run dev` ✅
+- Local smoke:
+  - `npm run dev` ✅
+
+- 2026-03-13 gameplay spawn-model refactor:
+  - Confirmed human tests were correct: `easy low` and `easy nice` stayed stuck at 2 spawns per wave because runtime still used `round(baseCount * capMultiplier)` with `easy baseCount = 2`.
+  - Also confirmed runtime ignored any concept equivalent to `bombs_second_chance`; each wave forced exactly one bomb regardless of tuning intent.
+  - Refactored wave generation toward explicit wave plans in `lib/gameRules.ts`:
+    - wave plan now determines both `spawnCount` and `bombCount`
+    - easy types use explicit per-type profiles instead of only multiplier math
+    - server-side hit bounds now reuse the same per-type max-wave logic to stay anti-cheat compatible
+  - `components/GameScreen.tsx` now consumes the wave plan and can spawn more than one bomb when the profile allows it.
     - Playwright client run succeeded with screenshot at `output/web-game/shot-0.png`
     - limitation: outside Farcaster the app still renders the disconnected fallback, so the new authenticated header state needs visual confirmation inside the miniapp host
 

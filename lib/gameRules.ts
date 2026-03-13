@@ -70,6 +70,13 @@ const BASE_WAVE_MAX: Record<Difficulty, number> = {
   hard: 5,
 };
 
+type WaveProfile = {
+  minSpawns: number;
+  extraSpawnChances: number[];
+  baseBombs: number;
+  extraBombChances: number[];
+};
+
 export const CAP_TYPES = [
   { key: "low", icon: "🪫", label: "Low", mult: 0.9, pct: 15.0 },
   { key: "nice", icon: "✅", label: "Nice", mult: 1.1, pct: 20.0 },
@@ -80,6 +87,16 @@ export const CAP_TYPES = [
 ] as const satisfies readonly { key: CapTypeKey; icon: string; label: string; mult: number; pct: number }[];
 
 const STANDARD_CAP_TYPES = CAP_TYPES.filter((item) => item.key !== "jolly");
+
+const EASY_WAVE_PROFILES: Record<CapTypeKey, WaveProfile> = {
+  low: { minSpawns: 2, extraSpawnChances: [0.35, 0.15], baseBombs: 1, extraBombChances: [0.25] },
+  nice: { minSpawns: 2, extraSpawnChances: [0.5, 0.25], baseBombs: 1, extraBombChances: [0.25] },
+  average: { minSpawns: 2, extraSpawnChances: [0.55, 0.3], baseBombs: 1, extraBombChances: [0.3] },
+  big: { minSpawns: 2, extraSpawnChances: [0.7, 0.45], baseBombs: 1, extraBombChances: [0.35] },
+  mega: { minSpawns: 3, extraSpawnChances: [0.8, 0.55], baseBombs: 1, extraBombChances: [0.35] },
+  // Jolly should vary by the underlying per-wave type, not by its own separate profile.
+  jolly: { minSpawns: 2, extraSpawnChances: [0.5, 0.25], baseBombs: 1, extraBombChances: [0.25] },
+};
 
 export function pickCapProfile() {
   const roll = Math.random() * 100;
@@ -107,6 +124,14 @@ export function pickStandardCapProfile() {
     if (roll <= acc) return item;
   }
   return STANDARD_CAP_TYPES[0];
+}
+
+export function getCapTypeKeyForMultiplier(mult: number): CapTypeKey {
+  if (mult >= 3) return "mega";
+  if (mult >= 2) return "big";
+  if (mult >= 1.25) return "average";
+  if (mult >= 1.1) return "nice";
+  return "low";
 }
 
 export function capLabel(mult: number, capType?: CapTypeKey) {
@@ -154,8 +179,69 @@ export function getBaseWaveCount(difficulty: Difficulty, roll = Math.random()) {
 }
 
 export function getWaveSpawnCount(difficulty: Difficulty, capMultiplier: number, roll = Math.random()) {
+  return getWavePlanForMultiplier(difficulty, capMultiplier, [roll]).spawnCount;
+}
+
+function getFallbackWaveSpawnCount(difficulty: Difficulty, capMultiplier: number, roll = Math.random()) {
   const baseCount = getBaseWaveCount(difficulty, roll);
   return Math.min(9, Math.max(2, Math.round(baseCount * capMultiplier)));
+}
+
+function getWaveProfile(difficulty: Difficulty, capType: CapTypeKey): WaveProfile | null {
+  if (difficulty === "easy") return EASY_WAVE_PROFILES[capType];
+  return null;
+}
+
+function countExtra(chances: number[], rolls: number[]) {
+  let extra = 0;
+  for (let i = 0; i < chances.length; i += 1) {
+    const roll = rolls[i] ?? Math.random();
+    if (roll < chances[i]) extra += 1;
+  }
+  return extra;
+}
+
+export function getWavePlan(difficulty: Difficulty, capType: CapTypeKey, rolls?: number[]) {
+  const profile = getWaveProfile(difficulty, capType);
+  if (!profile) {
+    const fallbackMultiplier = CAP_TYPES.find((item) => item.key === capType)?.mult ?? 1;
+    return {
+      spawnCount: getFallbackWaveSpawnCount(difficulty, fallbackMultiplier, rolls?.[0]),
+      bombCount: 1,
+    };
+  }
+
+  const spawnCount = Math.min(
+    9,
+    profile.minSpawns + countExtra(profile.extraSpawnChances, rolls?.slice(0, profile.extraSpawnChances.length) ?? [])
+  );
+  const bombCount = Math.max(
+    1,
+    profile.baseBombs + countExtra(
+      profile.extraBombChances,
+      rolls?.slice(profile.extraSpawnChances.length, profile.extraSpawnChances.length + profile.extraBombChances.length) ?? []
+    )
+  );
+  return { spawnCount: Math.min(9, Math.max(2, spawnCount)), bombCount };
+}
+
+export function getWavePlanForMultiplier(difficulty: Difficulty, capMultiplier: number, rolls?: number[]) {
+  return getWavePlan(difficulty, getCapTypeKeyForMultiplier(capMultiplier), rolls);
+}
+
+export function getWaveMaxSpawnCount(difficulty: Difficulty, capType: CapTypeKey) {
+  const profile = getWaveProfile(difficulty, capType);
+  if (!profile) {
+    const fallbackMultiplier = CAP_TYPES.find((item) => item.key === capType)?.mult ?? 1;
+    return Math.min(9, Math.max(2, Math.round(BASE_WAVE_MAX[difficulty] * fallbackMultiplier)));
+  }
+  return Math.min(9, profile.minSpawns + profile.extraSpawnChances.length);
+}
+
+export function getWaveMaxBombCount(difficulty: Difficulty, capType: CapTypeKey) {
+  const profile = getWaveProfile(difficulty, capType);
+  if (!profile) return 1;
+  return Math.max(1, profile.baseBombs + profile.extraBombChances.length);
 }
 
 export function getWaveDelayMs(difficulty: Difficulty, waveIndex: number) {
@@ -170,12 +256,13 @@ export function getWaveTimeoutMs(difficulty: Difficulty) {
 
 export function getHitBounds(difficulty: Difficulty, capMultiplier: number): Record<HitType, number> {
   const totalWaves = DIFFICULTY_CONFIG[difficulty].waves;
-  const totalSpawns = totalWaves * Math.min(9, Math.max(2, Math.round(BASE_WAVE_MAX[difficulty] * capMultiplier)));
+  const capType = getCapTypeKeyForMultiplier(capMultiplier);
+  const totalSpawns = totalWaves * getWaveMaxSpawnCount(difficulty, capType);
   return {
     normal: totalSpawns,
     fast: totalWaves * getFastLimit(capMultiplier),
     fuchsia: FUCHSIA_MAX_PER_GAME,
-    bomb: totalWaves,
+    bomb: totalWaves * getWaveMaxBombCount(difficulty, capType),
     super: 1,
   };
 }
@@ -183,11 +270,12 @@ export function getHitBounds(difficulty: Difficulty, capMultiplier: number): Rec
 export function getHitBoundsForWaveMultipliers(difficulty: Difficulty, waveMultipliers: number[]): Record<HitType, number> {
   const totals = waveMultipliers.reduce<Record<HitType, number>>(
     (acc, mult) => {
-      const waveSpawnCount = getWaveSpawnCount(difficulty, mult);
+      const capType = getCapTypeKeyForMultiplier(mult);
+      const waveSpawnCount = getWaveMaxSpawnCount(difficulty, capType);
       acc.normal += waveSpawnCount;
       acc.fast += getFastLimit(mult);
       acc.fuchsia += 1;
-      acc.bomb += 1;
+      acc.bomb += getWaveMaxBombCount(difficulty, capType);
       return acc;
     },
     { normal: 0, fast: 0, fuchsia: 0, bomb: 0, super: 1 }

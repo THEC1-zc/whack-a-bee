@@ -518,3 +518,10 @@ Payout bands:
   - `all easy`
   - `easy jolly sync`
   so the aggregate sheet remains the primary editing surface and the per-type sync sheet mirrors the same intent.
+
+### 2026-03-13 12:05:00 +0100
+- Refactored live wave generation in `lib/gameRules.ts` and `components/GameScreen.tsx` so `easy` no longer derives spawns purely from `round(baseCount * capMultiplier)`.
+- Added explicit easy wave-plan profiles:
+  - wave logic can now produce more than 2 spawns per wave on `easy`
+  - bomb count is now part of the runtime plan instead of always forcing exactly one bomb
+- Updated server-side hit bounds in `lib/gameRules.ts` to use the same per-type max-wave logic, keeping client and anti-cheat validation aligned.

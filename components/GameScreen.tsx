@@ -16,7 +16,7 @@ import {
   getFastLimit,
   getFuchsiaChance,
   getFullValueThreshold,
-  getWaveSpawnCount,
+  getWavePlanForMultiplier,
   getWaveTimeoutMs,
   LIVE_POINT_VALUES,
   SUPER_BEE_BONUS_BF,
@@ -127,7 +127,7 @@ export default function GameScreen({ user, difficulty, onGameEnd }: Props) {
     return session.waveMultipliers?.[waveIndex] ?? session.capMultiplier;
   }, [session]);
 
-  const spawnBees = useCallback((count: number, ensureRed: boolean, waveMultiplier: number, waveIndex: number) => {
+  const spawnBees = useCallback((count: number, bombTarget: number, waveMultiplier: number, waveIndex: number) => {
     setBees((prev) => {
       let next = prev.filter((bee) => bee.visible);
       const usedSlots = new Set(next.filter((bee) => bee.visible && !bee.hit).map((bee) => bee.slot));
@@ -138,7 +138,6 @@ export default function GameScreen({ user, difficulty, onGameEnd }: Props) {
       const fastLimit = getFastLimit(waveMultiplier);
       const fuchsiaChance = getFuchsiaChance(waveMultiplier);
       const fastChance = getFastChance(difficulty, waveMultiplier);
-      const bombTarget = ensureRed ? 1 : 0;
       const spawnCount = count;
 
       for (let i = 0; i < spawnCount; i += 1) {
@@ -335,8 +334,8 @@ export default function GameScreen({ user, difficulty, onGameEnd }: Props) {
       fired = true;
       nextWaveQueuedRef.current = false;
       const waveMultiplier = getWaveMultiplierForIndex(currentWave);
-      const count = getWaveSpawnCount(difficulty, waveMultiplier);
-      spawnBees(count, true, waveMultiplier, currentWave);
+      const plan = getWavePlanForMultiplier(difficulty, waveMultiplier);
+      spawnBees(plan.spawnCount, plan.bombCount, waveMultiplier, currentWave);
       setCurrentWave((value) => value + 1);
     }, 0);
     return () => {
