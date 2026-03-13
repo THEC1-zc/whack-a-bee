@@ -630,3 +630,17 @@ Payout bands:
 - Validation completed:
   - targeted lint passed
   - `npm run build` passed
+
+### 2026-03-13 18:12:00 +0100
+- Repaired `local-balance/ltm3.xml` after the `all easy / all medium / all hard` worksheets had collapsed rows and were breaking both `sync:ltm3` and local Monte Carlo tooling.
+- Updated PPP test values in `ltm3.xml` and regenerated `lib/gameConfig.generated.ts`:
+  - easy `0.000295`
+  - medium `0.00036`
+  - hard `0.0005`
+- Narrowed git tracking for local balance workbooks:
+  - keep `local-balance/ltm3.xml`
+  - ignore legacy `local-balance/LTM.xml`
+  - ignore legacy `local-balance/ltm2sync.xml`
+- Validation completed:
+  - `npm run sync:ltm3` passed
+  - `npm run build` passed

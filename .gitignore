@@ -42,7 +42,8 @@ next-env.d.ts
 
 # local historical memory
 LOCAL_WORKING_MEMORY.md
-# local balance workbook
-/local-balance/
+# local balance workbooks
+/local-balance/*
+!/local-balance/ltm3.xml
 
 aisync.md

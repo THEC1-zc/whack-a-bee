@@ -271,10 +271,10 @@
     </Row>
     <Row>
       <Cell><Data ss:Type="String">ppp_input_usdc_per_point</Data></Cell>
-      <Cell><Data ss:Type="String">2.9999999999999997E-4</Data></Cell>
-      <Cell><Data ss:Type="String">2.9999999999999997E-4</Data></Cell>
-      <Cell><Data ss:Type="String">2.9999999999999997E-4</Data></Cell>
-      <Cell><Data ss:Type="String">2.9999999999999997E-4</Data></Cell>
+      <Cell><Data ss:Type="String">2.95E-4</Data></Cell>
+      <Cell><Data ss:Type="String">2.95E-4</Data></Cell>
+      <Cell><Data ss:Type="String">2.95E-4</Data></Cell>
+      <Cell><Data ss:Type="String">2.95E-4</Data></Cell>
       <Cell><Data ss:Type="String">usdc/pt</Data></Cell>
       <Cell><Data ss:Type="String">authoritative point-to-USDC conversion</Data></Cell>
     </Row>

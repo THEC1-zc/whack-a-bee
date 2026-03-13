@@ -86,7 +86,7 @@ export const GAME_TUNING = {
       "bombsSecondChance": 0.25,
       "bombPoints": -2,
       "bombDurationMs": 1300,
-      "pppInputUsdcPerPoint": 0.0003,
+      "pppInputUsdcPerPoint": 0.000295,
       "bfPerUsdcLiveSnapshot": 4775549.188156637
     },
     "nice": {
@@ -118,7 +118,7 @@ export const GAME_TUNING = {
       "bombsSecondChance": 0.25,
       "bombPoints": -2,
       "bombDurationMs": 1300,
-      "pppInputUsdcPerPoint": 0.0003,
+      "pppInputUsdcPerPoint": 0.000295,
       "bfPerUsdcLiveSnapshot": 4775549.188156637
     },
     "big": {
@@ -150,7 +150,7 @@ export const GAME_TUNING = {
       "bombsSecondChance": 0.35,
       "bombPoints": -2,
       "bombDurationMs": 1300,
-      "pppInputUsdcPerPoint": 0.0003,
+      "pppInputUsdcPerPoint": 0.000295,
       "bfPerUsdcLiveSnapshot": 4775549.188156637
     },
     "mega": {
@@ -182,7 +182,7 @@ export const GAME_TUNING = {
       "bombsSecondChance": 0.35,
       "bombPoints": -2,
       "bombDurationMs": 1300,
-      "pppInputUsdcPerPoint": 0.0003,
+      "pppInputUsdcPerPoint": 0.000295,
       "bfPerUsdcLiveSnapshot": 4775549.188156637
     }
   },
