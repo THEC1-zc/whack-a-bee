@@ -1,10 +1,17 @@
 import { ImageResponse } from "next/og";
+import { getRunWaveCount } from "@/lib/gameRules";
 
 export const runtime = "edge";
 export const size = { width: 1200, height: 630 };
 export const contentType = "image/png";
 
 export default function OpenGraphImage() {
+  const waveLine = [
+    `Easy ${getRunWaveCount("easy", "low")}-${getRunWaveCount("easy", "mega")}`,
+    `Medium ${getRunWaveCount("medium", "low")}-${getRunWaveCount("medium", "mega")}`,
+    `Hard ${getRunWaveCount("hard", "low")}-${getRunWaveCount("hard", "mega")}`,
+  ].join(" / ");
+
   return new ImageResponse(
     (
       <div
@@ -81,7 +88,7 @@ export default function OpenGraphImage() {
 
             <div style={{ display: "flex", gap: "18px" }}>
               {[
-                { label: "3 difficulties", value: "15 / 12 / 9 waves" },
+                { label: "3 difficulties", value: waveLine + " waves" },
                 { label: "On-chain payouts", value: "BF rewards + weekly pot" },
                 { label: "Shareable runs", value: "Post your score to Farcaster" },
               ].map((item) => (

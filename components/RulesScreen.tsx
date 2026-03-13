@@ -4,6 +4,7 @@ import type { FarcasterUser } from "@/hooks/useFarcaster";
 import {
   BEE_LABELS,
   CAP_TYPES,
+  calculatePrizeUsdc,
   DIFFICULTY_CONFIG,
   getFullValueThreshold,
   getMaxPrizeUsdc,
@@ -52,7 +53,13 @@ export default function RulesScreen({
             <BeeRule emoji="🦋" label={BEE_LABELS.normal} desc="Core scorer in every wave" points="+1 point" color="#fbbf24" />
             <BeeRule emoji="🔵" label={BEE_LABELS.fast} desc={`Triplefly burst scorer, worth +${LIVE_POINT_VALUES.medium.fast} in Medium`} points={`+${LIVE_POINT_VALUES.easy.fast} / +${LIVE_POINT_VALUES.medium.fast} / +${LIVE_POINT_VALUES.hard.fast}`} color="#3b82f6" fast />
             <BeeRule emoji="💖" label={BEE_LABELS.fuchsia} desc="Quickfly burst scorer. Rarer than Triplefly and tuned per difficulty." points={`+${LIVE_POINT_VALUES.easy.fuchsia} / +${LIVE_POINT_VALUES.medium.fuchsia} / +${LIVE_POINT_VALUES.hard.fuchsia}`} color="#ec4899" fast />
-            <BeeRule emoji="🔴" label={BEE_LABELS.bomb} desc="Forced once per wave. Hit it and you lose points." points="-1 / -2 / -3" color="#dc2626" />
+            <BeeRule
+              emoji="🔴"
+              label={BEE_LABELS.bomb}
+              desc="Forced once per wave. Hit it and you lose points."
+              points={`${LIVE_POINT_VALUES.easy.bomb} / ${LIVE_POINT_VALUES.medium.bomb} / ${LIVE_POINT_VALUES.hard.bomb}`}
+              color="#dc2626"
+            />
             <BeeRule
               emoji="💜"
               label={BEE_LABELS.super}
@@ -109,8 +116,15 @@ export default function RulesScreen({
           <div className="space-y-3">
             <div className="page-panel-soft rounded-[22px] p-3 border border-green-300/15">
               <div className="text-green-400 font-bold text-sm mb-1">Reward per point</div>
-              <div className="text-green-300 text-2xl font-black">{(PRIZE_PER_POINT.medium * BF_PER_USDC_FALLBACK).toFixed(0)} BF</div>
-              <div className="text-green-700 text-xs mt-1">base value for each point</div>
+              <div className="grid grid-cols-3 gap-2">
+                {(["easy", "medium", "hard"] as const).map((difficulty) => (
+                  <div key={difficulty} className="rounded-[16px] border border-white/8 bg-white/5 px-2 py-2 text-center">
+                    <div className="text-[10px] uppercase tracking-widest text-green-200/80">{DIFFICULTY_CONFIG[difficulty].label}</div>
+                    <div className="text-green-300 text-lg font-black">{Math.round(PRIZE_PER_POINT[difficulty] * BF_PER_USDC_FALLBACK).toLocaleString()} BF</div>
+                  </div>
+                ))}
+              </div>
+              <div className="text-green-700 text-xs mt-2">approximate base value for each point at the current BF/USDC reference</div>
             </div>
 
             <p className="text-amber-300 text-xs leading-relaxed">
@@ -128,7 +142,16 @@ export default function RulesScreen({
                 ].map(ex => (
                   <div key={ex.pts} className="flex justify-between text-sm">
                     <span className="text-amber-200">{ex.pts} pts ({ex.mode})</span>
-                    <span className="text-amber-400 font-bold">{Math.round(getMaxPrizeUsdc(ex.diff.toLowerCase() as keyof typeof PRIZE_PER_POINT, "low") * (ex.pts / getFullValueThreshold(ex.diff.toLowerCase() as keyof typeof PRIZE_PER_POINT, "low")) * BF_PER_USDC_FALLBACK)} BF</span>
+                    <span className="text-amber-400 font-bold">
+                      {Math.round(
+                        calculatePrizeUsdc(
+                          ex.pts,
+                          ex.diff.toLowerCase() as keyof typeof PRIZE_PER_POINT,
+                          0,
+                          "low"
+                        ) * BF_PER_USDC_FALLBACK
+                      ).toLocaleString()} BF
+                    </span>
                   </div>
                 ))}
               </div>

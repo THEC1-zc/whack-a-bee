@@ -620,3 +620,13 @@ Payout bands:
   - targeted lint passed with only the existing `<img>` warning in `components/GameScreen.tsx`
   - local `/api/game/create` returned the new session shape with `waveTypes`, `prizeEligible`, and `prizeWaveIndex`
   - local browser smoke screenshot captured in `output/web-game/shot-0.png`
+
+### 2026-03-13 17:34:00 +0100
+- Verified that live gameplay for easy/medium/hard is now driven through `lib/gameConfig.generated.ts`, which is generated from `local-balance/ltm3.xml`.
+- Cleaned remaining stale UI references after the `ltm3` migration:
+  - `components/RulesScreen.tsx` now shows live bomb penalties and per-difficulty BF-per-point estimates instead of the old shared medium fallback card.
+  - `components/RulesScreen.tsx` prize examples now use `calculatePrizeUsdc(...)` instead of the older cap-proportion approximation.
+  - `app/opengraph-image.tsx` now renders current wave ranges from the game rules instead of the stale `15 / 12 / 9 waves` text.
+- Validation completed:
+  - targeted lint passed
+  - `npm run build` passed
