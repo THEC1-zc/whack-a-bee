@@ -49,7 +49,7 @@ export default function WeeklyPage() {
 
         <div className="page-panel px-5 py-5 text-center">
           <div className="page-kicker">Current Pot</div>
-          <div className="mt-2 text-3xl font-black text-amber-50">
+          <div className="mt-2 text-3xl font-black text-emerald-50">
             {state ? `${Math.round(state.potBf).toLocaleString()} BF` : "—"}
           </div>
           {state?.payoutAt && (

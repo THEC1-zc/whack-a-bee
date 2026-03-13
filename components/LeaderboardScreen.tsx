@@ -72,8 +72,8 @@ export default function LeaderboardScreen({
             onClick={() => setFilter(f)}
             className="page-chip flex-1 py-2 rounded-full text-xs font-bold transition-all"
             style={{
-              background: filter === f ? "rgba(255, 222, 114, 0.94)" : "rgba(255, 248, 230, 0.08)",
-              color: filter === f ? "#291400" : "#fff2cf",
+              background: filter === f ? "rgba(220, 252, 231, 0.94)" : "rgba(236, 253, 245, 0.08)",
+              color: filter === f ? "#052e16" : "#f0fdf4",
             }}
           >
             {f === "all" ? "All" : DIFFICULTY_CONFIG[f].emoji + " " + DIFFICULTY_CONFIG[f].label}
@@ -83,12 +83,12 @@ export default function LeaderboardScreen({
 
       <div className="page-wrap mx-auto flex-1 px-4 space-y-3 overflow-y-auto">
         {loading ? (
-          <div className="page-panel rounded-[28px] text-center text-amber-100 py-10">
+          <div className="page-panel rounded-[28px] text-center text-emerald-50 py-10">
             <div className="text-3xl animate-bounce">🐝</div>
             <div className="text-sm mt-2">Loading...</div>
           </div>
         ) : entries.length === 0 ? (
-          <div className="page-panel rounded-[28px] text-center text-amber-100 py-10">
+          <div className="page-panel rounded-[28px] text-center text-emerald-50 py-10">
             <div className="text-3xl">😔</div>
             <div className="text-sm mt-2">No scores yet.</div>
           </div>
@@ -102,31 +102,31 @@ export default function LeaderboardScreen({
                 key={entry.fid}
                 className="flex items-center gap-3 rounded-[24px] p-3 border"
                 style={{
-                  background: i === 0 ? "rgba(255, 214, 122, 0.13)" : "rgba(255, 248, 230, 0.08)",
-                  borderColor: i === 0 ? "rgba(247,189,43,0.4)" : "rgba(255,214,122,0.12)",
-                  boxShadow: i === 0 ? "0 16px 28px rgba(247,189,43,0.08)" : "none",
+                  background: i === 0 ? "rgba(187, 247, 208, 0.12)" : "rgba(236, 253, 245, 0.08)",
+                  borderColor: i === 0 ? "rgba(110,231,159,0.34)" : "rgba(167,243,208,0.12)",
+                  boxShadow: i === 0 ? "0 16px 28px rgba(16,185,129,0.08)" : "none",
                 }}
               >
                 <div className="text-xl w-7 text-center font-black" style={{ color: "#aaa" }}>
                   {medals[i] || `${i + 1}`}
                 </div>
                 {entry.pfpUrl
-                  ? <img src={entry.pfpUrl} alt="" className="w-10 h-10 rounded-full flex-shrink-0 ring-1 ring-amber-200/25" />
+                  ? <img src={entry.pfpUrl} alt="" className="w-10 h-10 rounded-full flex-shrink-0 ring-1 ring-emerald-100/25" />
                   : <div className="w-10 h-10 rounded-full page-chip flex items-center justify-center">🐝</div>
                 }
                 <div className="flex-1 min-w-0">
                   <div className="text-white font-bold text-sm truncate">{entry.displayName}</div>
-                  <div className="flex items-center gap-2 mt-0.5 text-xs text-amber-200/85">
+                  <div className="flex items-center gap-2 mt-0.5 text-xs text-lime-100/85">
                     <span>@{entry.username}</span>
-                    {entry.address && <span className="text-amber-100/55">{shortAddr(entry.address)}</span>}
+                    {entry.address && <span className="text-emerald-50/55">{shortAddr(entry.address)}</span>}
                   </div>
-                  <div className="mt-1 text-[11px] text-amber-100/55">
+                  <div className="mt-1 text-[11px] text-emerald-50/55">
                     Games {entry.games} · Wins {entry.wins} ({winRate}%)
                   </div>
                 </div>
                 <div className="text-right">
                   <div className={`font-black ${net >= 0 ? "text-green-300" : "text-red-300"}`}>{netText}</div>
-                  <div className="text-xs text-amber-100/55">{entry.totalPrize.toFixed(3)} in / {entry.totalFees.toFixed(3)} out</div>
+                  <div className="text-xs text-emerald-50/55">{entry.totalPrize.toFixed(3)} in / {entry.totalFees.toFixed(3)} out</div>
                 </div>
               </div>
             );

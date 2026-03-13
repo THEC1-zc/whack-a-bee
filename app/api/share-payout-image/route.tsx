@@ -29,8 +29,8 @@ export async function GET(req: Request) {
           position: "relative",
           overflow: "hidden",
           background:
-            "radial-gradient(circle at top, rgba(255,245,191,0.18) 0%, rgba(255,245,191,0) 24%), linear-gradient(180deg, rgba(24,11,1,0.1) 0%, rgba(24,11,1,0.24) 100%), linear-gradient(145deg, #b69f1f 0%, #d8c14d 44%, #b38e0d 100%)",
-          color: "#fff9eb",
+            "radial-gradient(circle at top, rgba(221,255,205,0.18) 0%, rgba(221,255,205,0) 24%), linear-gradient(180deg, rgba(4,24,13,0.18) 0%, rgba(4,24,13,0.36) 100%), linear-gradient(145deg, #195235 0%, #2f7c4b 44%, #133a27 100%)",
+          color: "#f4fff5",
           fontFamily: "Arial, sans-serif",
         }}
       >
@@ -59,10 +59,11 @@ export async function GET(req: Request) {
               width: "150px",
               height: "150px",
               borderRadius: "38px",
-              background: "linear-gradient(180deg, rgba(255,214,73,0.98) 0%, rgba(247,189,43,0.92) 100%)",
+              background: "linear-gradient(180deg, rgba(221,255,205,0.16) 0%, rgba(221,255,205,0.06) 100%)",
+              border: "1px solid rgba(167,243,208,0.18)",
               alignItems: "center",
               justifyContent: "center",
-              boxShadow: "0 20px 46px rgba(20,10,0,0.18)",
+              boxShadow: "0 20px 46px rgba(3,19,11,0.18)",
             }}
           >
             <img
@@ -81,8 +82,8 @@ export async function GET(req: Request) {
               fontWeight: 900,
               letterSpacing: "0.24em",
               textTransform: "uppercase",
-              color: "#ffe08a",
-              textShadow: "0 3px 14px rgba(20,10,0,0.26)",
+              color: "#d9f46b",
+              textShadow: "0 3px 14px rgba(3,19,11,0.26)",
             }}
           >
             Payout Summary
@@ -112,9 +113,9 @@ export async function GET(req: Request) {
                 display: "flex",
                 borderRadius: "999px",
                 padding: "14px 26px",
-                background: "rgba(42,20,3,0.2)",
-                border: "1px solid rgba(255,222,114,0.18)",
-                color: "#fff4d4",
+                background: "rgba(10,44,26,0.22)",
+                border: "1px solid rgba(167,243,208,0.18)",
+                color: "#f4fff5",
                 fontSize: "28px",
                 fontWeight: 800,
               }}
@@ -126,9 +127,9 @@ export async function GET(req: Request) {
                 display: "flex",
                 borderRadius: "999px",
                 padding: "14px 26px",
-                background: "rgba(42,20,3,0.2)",
-                border: "1px solid rgba(255,222,114,0.18)",
-                color: "#fff4d4",
+                background: "rgba(10,44,26,0.22)",
+                border: "1px solid rgba(167,243,208,0.18)",
+                color: "#f4fff5",
                 fontSize: "28px",
                 fontWeight: 800,
               }}
@@ -143,8 +144,8 @@ export async function GET(req: Request) {
               maxWidth: "760px",
               fontSize: "28px",
               lineHeight: 1.28,
-              color: "rgba(255,244,212,0.96)",
-              textShadow: "0 3px 14px rgba(20,10,0,0.24)",
+              color: "rgba(244,255,245,0.96)",
+              textShadow: "0 3px 14px rgba(3,19,11,0.24)",
             }}
           >
             Cleared a {type.toLowerCase()} {difficulty.toLowerCase()} run on Farcaster and claimed a live BF payout on-chain.

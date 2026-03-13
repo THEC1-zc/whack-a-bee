@@ -22,12 +22,12 @@ function HeaderAction({ label, title, icon, active, href, onClick }: ActionProps
   const iconOnly = Boolean(icon);
   const className = `page-chip font-black transition-all duration-200 hover:translate-y-[-1px] ${
     iconOnly
-      ? "flex h-11 w-11 items-center justify-center text-lg"
+      ? "flex h-10 w-10 items-center justify-center text-base sm:h-11 sm:w-11 sm:text-lg"
       : "px-3 py-2 text-[11px]"
   } ${
     active
-      ? "bg-amber-200/95 text-amber-950 shadow-[0_10px_20px_rgba(247,189,43,0.18)]"
-      : "text-amber-50"
+      ? "bg-emerald-100/95 text-emerald-950 shadow-[0_10px_20px_rgba(74,222,128,0.18)]"
+      : "text-emerald-50"
   }`;
   const content = iconOnly ? <span aria-hidden="true">{icon}</span> : label;
 
@@ -79,56 +79,56 @@ export default function UserPageHeader({
 }) {
   return (
     <div className="user-page-chrome page-fade-top w-full rounded-[30px] px-4 py-3.5">
-      <div className="grid grid-cols-[minmax(0,1fr)_auto_minmax(0,1fr)] items-center gap-3">
+      <div className="grid grid-cols-[minmax(0,1fr)_auto] gap-3 sm:grid-cols-[minmax(0,1fr)_auto_minmax(0,1fr)] sm:items-center">
         <div className="min-w-0 flex items-center gap-3">
           {user.pfpUrl ? (
             // eslint-disable-next-line @next/next/no-img-element
             <img
               src={user.pfpUrl}
               alt={user.username}
-              className="h-14 w-14 rounded-full border border-amber-200/45 object-cover shadow-[0_10px_24px_rgba(247,189,43,0.16)]"
+              className="h-12 w-12 rounded-full border border-emerald-100/40 object-cover shadow-[0_10px_24px_rgba(74,222,128,0.14)] sm:h-14 sm:w-14"
             />
           ) : (
-            <div className="page-chip flex h-14 w-14 items-center justify-center rounded-full text-2xl">
+            <div className="page-chip flex h-12 w-12 items-center justify-center rounded-full text-xl sm:h-14 sm:w-14 sm:text-2xl">
               🦋
             </div>
           )}
           <div className="min-w-0">
-            <div className="truncate text-sm font-black text-white">{user.displayName}</div>
-            <div className="truncate text-xs text-amber-200">@{user.username}</div>
-            <div className="truncate text-[11px] text-amber-50/72">{shortWallet(user.address)}</div>
+            <div className="truncate text-sm font-black text-white sm:text-[15px]">{user.displayName}</div>
+            <div className="truncate text-xs text-lime-100/90">@{user.username}</div>
+            <div className="truncate text-[11px] text-emerald-50/72">{shortWallet(user.address)}</div>
           </div>
         </div>
 
-        <div className="flex justify-center">
+        <div className="flex justify-center sm:justify-center">
           {isAdmin ? (
-            <Link href={adminHref} className="relative block h-16 w-16 rounded-[22px] sm:h-20 sm:w-20" title="Admin">
-              <span className="absolute inset-0 rounded-[22px] bg-[radial-gradient(circle,rgba(255,228,156,0.2)_0%,rgba(255,228,156,0.05)_45%,transparent_75%)]" />
+            <Link href={adminHref} className="relative block h-14 w-14 rounded-[20px] sm:h-20 sm:w-20 sm:rounded-[22px]" title="Admin">
+              <span className="absolute inset-0 rounded-[20px] sm:rounded-[22px] bg-[radial-gradient(circle,rgba(187,247,208,0.22)_0%,rgba(187,247,208,0.05)_45%,transparent_75%)]" />
               <Image
                 src="/icon.png"
                 alt="Whack-a-Butterfly"
                 fill
                 sizes="80px"
-                className="object-contain drop-shadow-[0_0_18px_rgba(247,189,43,0.32)] transition-transform hover:scale-[1.04]"
+                className="object-contain drop-shadow-[0_0_18px_rgba(74,222,128,0.32)] transition-transform hover:scale-[1.04]"
                 priority
               />
             </Link>
           ) : (
-            <div className="relative h-16 w-16 sm:h-20 sm:w-20">
-              <span className="absolute inset-0 rounded-[22px] bg-[radial-gradient(circle,rgba(255,228,156,0.16)_0%,rgba(255,228,156,0.04)_45%,transparent_75%)]" />
+            <div className="relative h-14 w-14 sm:h-20 sm:w-20">
+              <span className="absolute inset-0 rounded-[20px] sm:rounded-[22px] bg-[radial-gradient(circle,rgba(187,247,208,0.2)_0%,rgba(187,247,208,0.04)_45%,transparent_75%)]" />
               <Image
                 src="/icon.png"
                 alt="Whack-a-Butterfly"
                 fill
                 sizes="80px"
-                className="object-contain drop-shadow-[0_0_18px_rgba(247,189,43,0.3)]"
+                className="object-contain drop-shadow-[0_0_18px_rgba(74,222,128,0.3)]"
                 priority
               />
             </div>
           )}
         </div>
 
-        <div className="justify-self-end flex min-w-0 flex-col items-end gap-2">
+        <div className="col-span-2 justify-self-end flex min-w-0 flex-col items-end gap-2 sm:col-span-1">
           <div className="flex flex-wrap justify-end gap-2">
             <HeaderAction
               label="Rulebook"

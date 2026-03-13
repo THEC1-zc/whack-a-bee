@@ -45,7 +45,7 @@ export default function RulesScreen({
 
         {/* Come si gioca */}
         <Section title="🎮 How to Play">
-          <p className="text-amber-200 text-sm leading-relaxed">
+          <p className="page-copy text-sm leading-relaxed">
             Each run is a fixed number of waves on a 3×3 grid. Tap butterflies before they disappear, survive the guaranteed Bombfly in every wave,
             and push your score as high as possible before you hit the point cap.
           </p>
@@ -78,7 +78,7 @@ export default function RulesScreen({
                   <div className="text-white font-black">{item.icon} {item.label}</div>
                   <div className="text-violet-300 text-sm font-bold">{item.pct}% chance</div>
                 </div>
-                <div className="mt-1 text-amber-200 text-xs">
+                <div className="mt-1 page-copy text-xs">
                   {item.key === "jolly"
                     ? "Each wave rerolls into Low, Nice, Big, or Mega using their current odds."
                     : `${item.pct}% of runs. Type now changes wave structure and pacing, not point value.`}
@@ -105,7 +105,7 @@ export default function RulesScreen({
                   <Stat label="Point cap" value={`${getFullValueThreshold(key, "mega")} pts`} />
                   <Stat label="Max prize" value={`${getMaxPrizeUsdc(key, "mega").toFixed(3)} USDC`} />
                 </div>
-                <div className="text-amber-700 text-xs mt-2 text-center">Linear payout, with run types increasing wave count from Low to Mega.</div>
+                <div className="page-muted text-xs mt-2 text-center">Linear payout, with run types increasing wave count from Low to Mega.</div>
               </div>
             ))}
           </div>
@@ -127,13 +127,13 @@ export default function RulesScreen({
               <div className="text-green-700 text-xs mt-2">approximate base value for each point at the current BF/USDC reference</div>
             </div>
 
-            <p className="text-amber-300 text-xs leading-relaxed">
+            <p className="page-copy text-xs leading-relaxed">
               Prize payout is now linear: every point pays the same base value for that difficulty, up to the current point cap.
               Claims are executed on-chain in BF from your connected Farcaster wallet.
             </p>
 
             <div className="page-panel-soft rounded-[22px] p-3">
-              <div className="text-amber-500 text-xs uppercase tracking-widest mb-2">Prize examples</div>
+              <div className="page-kicker mb-2">Prize examples</div>
               <div className="space-y-1">
                 {[
                   { pts: 20, mode: "Easy", diff: "Easy" },
@@ -141,8 +141,8 @@ export default function RulesScreen({
                   { pts: 60, mode: "Hard", diff: "Hard" },
                 ].map(ex => (
                   <div key={ex.pts} className="flex justify-between text-sm">
-                    <span className="text-amber-200">{ex.pts} pts ({ex.mode})</span>
-                    <span className="text-amber-400 font-bold">
+                    <span className="page-copy">{ex.pts} pts ({ex.mode})</span>
+                    <span className="text-lime-200 font-bold">
                       {Math.round(
                         calculatePrizeUsdc(
                           ex.pts,
@@ -157,27 +157,27 @@ export default function RulesScreen({
               </div>
             </div>
             <div className="page-panel-soft rounded-[22px] p-3">
-              <div className="text-amber-500 text-xs uppercase tracking-widest mb-2">Weekly tickets</div>
-              <div className="text-amber-200 text-sm">1 base ticket, +1 for reaching the point cap, +1 for a profitable run, +1 every 10th claimed win.</div>
+              <div className="page-kicker mb-2">Weekly tickets</div>
+              <div className="page-copy text-sm">1 base ticket, +1 for reaching the point cap, +1 for a profitable run, +1 every 10th claimed win.</div>
             </div>
           </div>
         </Section>
 
         {/* Prize Pool */}
         <Section title="🏦 Prize Pool">
-          <p className="text-amber-200 text-sm leading-relaxed mb-3">
-            All prizes are paid from a dedicated pool. If the balance drops below <span className="text-amber-400 font-bold">100,000 BF</span>, the game is temporarily suspended until the pool is refilled.
+          <p className="page-copy text-sm leading-relaxed mb-3">
+            All prizes are paid from a dedicated pool. If the balance drops below <span className="text-lime-200 font-bold">100,000 BF</span>, the game is temporarily suspended until the pool is refilled.
           </p>
           <div className="page-panel-soft rounded-[22px] p-3">
-            <div className="text-amber-500 text-xs uppercase tracking-widest mb-1">Prize pool wallet</div>
-            <div className="text-amber-300 font-mono text-sm break-all">{PRIZE_WALLET}</div>
+            <div className="page-kicker mb-1">Prize pool wallet</div>
+            <div className="text-lime-100 font-mono text-sm break-all">{PRIZE_WALLET}</div>
           </div>
         </Section>
 
         {/* Fee */}
         <Section title="💳 Game Fee">
-          <p className="text-amber-200 text-sm leading-relaxed mb-3">
-            The fee is charged before each game via your Farcaster wallet. Payment is made on the <span className="text-amber-400 font-bold">Base</span> network in <span className="text-amber-400 font-bold">USDC</span>.
+          <p className="page-copy text-sm leading-relaxed mb-3">
+            The fee is charged before each game via your Farcaster wallet. Payment is made on the <span className="text-lime-200 font-bold">Base</span> network in <span className="text-lime-200 font-bold">USDC</span>.
           </p>
           <div className="grid grid-cols-3 gap-2 text-center">
             <div className="page-panel-soft rounded-[18px] p-2 border border-green-300/15">
@@ -196,14 +196,14 @@ export default function RulesScreen({
               <div className="text-red-800 text-xs">USDC</div>
             </div>
           </div>
-          <p className="text-amber-300 text-xs mt-3">
+          <p className="page-muted text-xs mt-3">
             ⚠️ Fees are non-refundable. Make sure you have USDC on Base before playing.
           </p>
         </Section>
 
         {/* Fair play */}
         <Section title="⚖️ Fair Play">
-          <ul className="text-amber-200 text-xs space-y-1 leading-relaxed">
+          <ul className="page-copy text-xs space-y-1 leading-relaxed">
             <li>• The game is fully on-chain and transparent</li>
             <li>• Scores are recorded on the public leaderboard</li>
             <li>• Any wallet can play unlimited games</li>
@@ -231,8 +231,8 @@ function Section({ title, children }: { title: string; children: React.ReactNode
 function Stat({ label, value }: { label: string; value: string }) {
   return (
     <div className="page-panel-soft rounded-[18px] p-2.5">
-      <div className="text-amber-100 text-xs">{label}</div>
-      <div className="text-amber-50 font-bold text-sm">{value}</div>
+      <div className="text-lime-100 text-xs">{label}</div>
+      <div className="text-emerald-50 font-bold text-sm">{value}</div>
     </div>
   );
 }

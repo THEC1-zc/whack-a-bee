@@ -414,27 +414,27 @@ export default function GameScreen({ user, difficulty, onGameEnd }: Props) {
 
   if (["waiting", "preparing", "paying"].includes(feeStatus)) {
     return (
-      <div className="min-h-dvh flex flex-col items-center justify-center gap-6 p-6" style={{ background: "#1a0a00" }}>
+      <div className="min-h-dvh flex flex-col items-center justify-center gap-6 p-6" style={{ background: "#07140d" }}>
         <div className="text-6xl animate-bounce">💳</div>
         <h2 className="text-2xl font-black text-white">Confirm Payment</h2>
-        <div className="w-full max-w-xs rounded-2xl p-5 border border-amber-800" style={{ background: "#2a1500" }}>
+        <div className="w-full max-w-xs rounded-2xl p-5 border border-emerald-300/20 bg-emerald-950/55 backdrop-blur-sm">
           <div className="text-center">
-            <div className="text-amber-500 text-xs uppercase tracking-widest mb-1">Game Fee</div>
-            <div className="text-4xl font-black text-amber-400">{cfg.fee} USDC</div>
-            <div className="text-amber-700 text-xs mt-1">{cfg.emoji} {cfg.label} Mode · {totalWaves} waves</div>
+            <div className="text-lime-200/80 text-xs uppercase tracking-widest mb-1">Game Fee</div>
+            <div className="text-4xl font-black text-emerald-50">{cfg.fee} USDC</div>
+            <div className="text-emerald-100/70 text-xs mt-1">{cfg.emoji} {cfg.label} Mode · {totalWaves} waves</div>
           </div>
         </div>
-        <div className="text-amber-400 text-sm animate-pulse">
+        <div className="text-lime-200 text-sm animate-pulse">
           {feeStatus === "preparing" ? "⏳ Preparing secure game session..." : "⏳ Waiting for wallet confirmation..."}
         </div>
-        <button onClick={() => onGameEnd(0, 0)} className="text-amber-700 text-sm underline">Cancel</button>
+        <button onClick={() => onGameEnd(0, 0)} className="text-emerald-100/75 text-sm underline">Cancel</button>
       </div>
     );
   }
 
   if (feeStatus === "failed") {
     return (
-      <div className="min-h-dvh flex flex-col items-center justify-center gap-6 p-6 text-center" style={{ background: "#1a0a00" }}>
+      <div className="min-h-dvh flex flex-col items-center justify-center gap-6 p-6 text-center" style={{ background: "#07140d" }}>
         <div className="text-6xl">❌</div>
         <h2 className="text-2xl font-black text-white">Payment Failed</h2>
         <p className="text-red-400 text-sm max-w-xs">{feeError || "Transaction was rejected or failed."}</p>
@@ -465,19 +465,19 @@ export default function GameScreen({ user, difficulty, onGameEnd }: Props) {
 
           <div className="user-page-chrome rounded-[28px] px-5 py-5 text-center">
             <div className="text-4xl">{prizeBfNet > 0 ? "🎉" : "😔"}</div>
-            <div className="mt-2 text-[10px] uppercase tracking-[0.24em] text-amber-300">Payout Summary</div>
+            <div className="mt-2 text-[10px] uppercase tracking-[0.24em] text-lime-200/85">Payout Summary</div>
             <h2 className="mt-2 text-[2.1rem] leading-none font-black text-white">BF Won</h2>
-            <div className="mt-4 text-[4.6rem] leading-[0.9] font-black text-amber-300 sm:text-[5.1rem]">{prizeBfNet.toLocaleString()}</div>
+            <div className="mt-4 text-[4.6rem] leading-[0.9] font-black text-lime-200 sm:text-[5.1rem]">{prizeBfNet.toLocaleString()}</div>
             <div className="mt-1 text-sm font-bold text-emerald-300">
               {prizeBfNet > 0 ? (paymentStatus === "paid" ? "Claimed payout" : "Claimable payout") : "Run complete"}
             </div>
-            <div className="mt-3 text-amber-100 text-sm leading-5">
+            <div className="mt-3 text-emerald-50 text-sm leading-5">
               {score} points made
             </div>
-            <div className="mt-1 text-amber-200/80 text-xs leading-5">
+            <div className="mt-1 text-emerald-100/75 text-xs leading-5">
               {totalWaves}/{totalWaves} waves cleared
             </div>
-            <div className="mt-4 h-2 rounded-full bg-amber-950/80 border border-amber-900 overflow-hidden">
+            <div className="mt-4 h-2 rounded-full bg-emerald-950/80 border border-emerald-300/15 overflow-hidden">
               <div
                 className="h-full"
                 style={{
@@ -490,10 +490,10 @@ export default function GameScreen({ user, difficulty, onGameEnd }: Props) {
 
           <div
             className="user-page-chrome rounded-2xl px-4 py-3 border"
-            style={{ borderColor: "rgba(251,191,36,0.18)" }}
+            style={{ borderColor: "rgba(134,239,172,0.18)" }}
           >
-            <div className="text-[10px] uppercase tracking-[0.18em] text-amber-400/80">Game ID</div>
-            <div className="mt-2 font-mono text-[13px] leading-5 text-amber-50 break-all">
+            <div className="text-[10px] uppercase tracking-[0.18em] text-lime-200/70">Game ID</div>
+            <div className="mt-2 font-mono text-[13px] leading-5 text-emerald-50 break-all">
               {session?.gameId || "—"}
             </div>
           </div>
@@ -503,9 +503,9 @@ export default function GameScreen({ user, difficulty, onGameEnd }: Props) {
               <div
                 key={row.label}
                 className="user-page-chrome rounded-2xl px-4 py-3 border"
-                style={{ borderColor: "rgba(251,191,36,0.18)" }}
+                style={{ borderColor: "rgba(134,239,172,0.18)" }}
               >
-                <div className="text-[10px] uppercase tracking-[0.18em] text-amber-400/80">{row.label}</div>
+                <div className="text-[10px] uppercase tracking-[0.18em] text-lime-200/70">{row.label}</div>
                 <div className="mt-2 text-[15px] leading-5 font-black" style={{ color: row.tone }}>
                   {row.value}
                 </div>
@@ -513,10 +513,10 @@ export default function GameScreen({ user, difficulty, onGameEnd }: Props) {
             ))}
             <div
               className="user-page-chrome rounded-2xl px-4 py-3 border"
-              style={{ borderColor: "rgba(251,191,36,0.18)" }}
+              style={{ borderColor: "rgba(134,239,172,0.18)" }}
             >
-              <div className="text-[10px] uppercase tracking-[0.18em] text-amber-400/80">Tickets</div>
-              <div className="mt-2 text-[15px] leading-5 font-black text-amber-100">
+              <div className="text-[10px] uppercase tracking-[0.18em] text-lime-200/70">Tickets</div>
+              <div className="mt-2 text-[15px] leading-5 font-black text-emerald-50">
                 {ticketCount}
               </div>
             </div>
@@ -556,12 +556,12 @@ export default function GameScreen({ user, difficulty, onGameEnd }: Props) {
           )}
 
           <div className="user-page-chrome rounded-[24px] px-4 py-4">
-            <div className="text-[11px] uppercase tracking-[0.22em] text-amber-300">Split</div>
+            <div className="text-[11px] uppercase tracking-[0.22em] text-lime-200/85">Split</div>
             <div className="mt-3 grid grid-cols-2 gap-3">
               <MetricTile label="Weekly" value="4.5%" tone="#fbbf24" />
               <MetricTile label="Burn" value="1%" tone="#f87171" />
             </div>
-            <div className="mt-3 text-[11px] leading-5 text-amber-200/80">
+            <div className="mt-3 text-[11px] leading-5 text-emerald-100/75">
               Weekly pot share and burn share are derived from the gross payout before the player net amount is sent.
             </div>
             {superBonus > 0 && (
@@ -574,7 +574,7 @@ export default function GameScreen({ user, difficulty, onGameEnd }: Props) {
                   : paymentStatus === "failed"
                     ? "bg-red-900/80 text-red-300"
                     : paymentStatus === "claiming"
-                      ? "bg-amber-900/80 text-amber-300"
+                      ? "bg-emerald-900/80 text-emerald-200"
                       : "bg-sky-950/80 text-sky-200"
               }`}>
                 {paymentStatus === "paid"
@@ -592,12 +592,12 @@ export default function GameScreen({ user, difficulty, onGameEnd }: Props) {
               </div>
             )}
             {paymentStatus === "failed" && paymentNote && (
-              <div className="mt-1 text-[11px] leading-5 text-amber-200">{paymentNote}</div>
+              <div className="mt-1 text-[11px] leading-5 text-emerald-100/75">{paymentNote}</div>
             )}
           </div>
 
           <div className="user-page-chrome rounded-[24px] px-4 py-4">
-            <div className="text-[11px] uppercase tracking-[0.22em] text-amber-300">Hit Counter</div>
+            <div className="text-[11px] uppercase tracking-[0.22em] text-lime-200/85">Hit Counter</div>
             <div className="mt-3 grid grid-cols-2 gap-2 text-xs">
               <CounterRow label={BEE_DISPLAY_NAMES.normal} value={hitStats.normal} />
               <CounterRow label={BEE_DISPLAY_NAMES.fast} value={hitStats.fast} />
@@ -617,19 +617,19 @@ export default function GameScreen({ user, difficulty, onGameEnd }: Props) {
     <div className="min-h-dvh flex flex-col" style={{ background: honeyBg, backgroundSize: "cover", backgroundPosition: "center" }}>
       <div className="flex items-center gap-3 px-4 pt-4 pb-2">
         <div className="text-center min-w-[60px]">
-          <div className="text-xs text-amber-600 uppercase">Score</div>
-          <div className="text-2xl font-black text-amber-400">{score}</div>
+          <div className="text-xs text-emerald-200/70 uppercase">Score</div>
+          <div className="text-2xl font-black text-lime-200">{score}</div>
         </div>
 
         <div className="flex-1">
-          <div className="h-4 bg-amber-950 rounded-full overflow-hidden border border-amber-900">
+          <div className="h-4 bg-emerald-950 rounded-full overflow-hidden border border-emerald-300/20">
             <div className="h-full rounded-full transition-all duration-700" style={{ width: `${progressPercent}%`, background: cfg.color }} />
           </div>
           <div className="text-center text-xs mt-0.5" style={{ color: cfg.color }}>Wave {displayedWave} / {totalWaves}</div>
         </div>
 
         <div className="text-center min-w-[60px]">
-          <div className="text-xs text-amber-600 uppercase">Prize</div>
+          <div className="text-xs text-emerald-200/70 uppercase">Prize</div>
           <div className="text-lg font-black text-green-400">{prizeBfNet.toLocaleString()}</div>
           <div className="text-xs text-green-700">BF</div>
         </div>
@@ -645,10 +645,10 @@ export default function GameScreen({ user, difficulty, onGameEnd }: Props) {
         <div
           className="rounded-full border px-3 py-1.5 text-center text-[11px] font-black tracking-[0.18em] uppercase"
           style={{
-            background: "rgba(24, 12, 2, 0.68)",
-            borderColor: "rgba(255, 214, 122, 0.24)",
-            color: "#fff2cf",
-            textShadow: "0 1px 8px rgba(16, 7, 1, 0.32)",
+            background: "rgba(6, 28, 17, 0.68)",
+            borderColor: "rgba(134, 239, 172, 0.24)",
+            color: "#f4fff5",
+            textShadow: "0 1px 8px rgba(3, 19, 11, 0.32)",
           }}
         >
           {capInfo.icon} {capInfo.label} Run
@@ -682,10 +682,10 @@ export default function GameScreen({ user, difficulty, onGameEnd }: Props) {
                 className="relative aspect-square rounded-2xl flex items-center justify-center cursor-pointer active:scale-90 transition-transform select-none"
                 style={{
                   background: bee
-                    ? (bee.type === "bomb" ? "#7f1d1d" : bee.type === "fast" ? "#1e3a5f" : bee.type === "fuchsia" ? "#3b0a24" : bee.type === "super" ? "#2a1540" : "#2a1500")
-                    : "#1a0a00",
-                  border: `2px solid ${bee ? (bee.type === "bomb" ? "#dc2626" : bee.type === "fast" ? "#3b82f6" : bee.type === "fuchsia" ? "#ec4899" : bee.type === "super" ? "#a855f7" : "#92400e") : "#2a1000"}`,
-                  boxShadow: bee ? "0 0 12px rgba(251,191,36,0.25)" : "none",
+                    ? (bee.type === "bomb" ? "#7f1d1d" : bee.type === "fast" ? "#1e3a5f" : bee.type === "fuchsia" ? "#3b0a24" : bee.type === "super" ? "#2a1540" : "#10341d")
+                    : "#082114",
+                  border: `2px solid ${bee ? (bee.type === "bomb" ? "#dc2626" : bee.type === "fast" ? "#3b82f6" : bee.type === "fuchsia" ? "#ec4899" : bee.type === "super" ? "#a855f7" : "#34d399") : "#0f3a22"}`,
+                  boxShadow: bee ? "0 0 12px rgba(74,222,128,0.22)" : "none",
                 }}
               >
                 {bee && (
@@ -718,15 +718,15 @@ export default function GameScreen({ user, difficulty, onGameEnd }: Props) {
           })}
           </div>
           {gameState === "countdown" && (
-            <div className="absolute inset-0 flex items-center justify-center rounded-[28px] bg-[rgba(8,4,1,0.56)] backdrop-blur-[2px]">
+            <div className="absolute inset-0 flex items-center justify-center rounded-[28px] bg-[rgba(4,20,12,0.56)] backdrop-blur-[2px]">
               <div className="text-center px-5">
-                <div className="text-[11px] font-black uppercase tracking-[0.22em] text-amber-300">
+                <div className="text-[11px] font-black uppercase tracking-[0.22em] text-lime-200/85">
                   {cfg.emoji} {cfg.label} Mode
                 </div>
-                <div className="mt-2 text-[11px] text-amber-100/90">
+                <div className="mt-2 text-[11px] text-emerald-50/90">
                   {capInfo.icon} {capInfo.label} run · {totalWaves} waves · up to {getFullValueThreshold(difficulty, session?.capType || "low")} pts
                 </div>
-                <div className="mt-4 text-[5.5rem] leading-none font-black text-amber-200 drop-shadow-[0_8px_24px_rgba(0,0,0,0.45)]">
+                <div className="mt-4 text-[5.5rem] leading-none font-black text-lime-200 drop-shadow-[0_8px_24px_rgba(0,0,0,0.45)]">
                   {countdown || "GO!"}
                 </div>
               </div>
@@ -747,8 +747,8 @@ export default function GameScreen({ user, difficulty, onGameEnd }: Props) {
 
 function MetricTile({ label, value, tone }: { label: string; value: string; tone: string }) {
   return (
-    <div className="rounded-2xl px-3 py-3 border border-amber-900/50" style={{ background: "rgba(20, 10, 0, 0.42)" }}>
-      <div className="text-[10px] uppercase tracking-[0.16em] text-amber-400/80">{label}</div>
+    <div className="rounded-2xl px-3 py-3 border border-emerald-300/15" style={{ background: "rgba(10, 44, 26, 0.34)" }}>
+      <div className="text-[10px] uppercase tracking-[0.16em] text-lime-200/70">{label}</div>
       <div className="mt-2 text-[15px] leading-5 font-black" style={{ color: tone }}>{value}</div>
     </div>
   );
@@ -756,9 +756,9 @@ function MetricTile({ label, value, tone }: { label: string; value: string; tone
 
 function CounterRow({ label, value }: { label: string; value: number }) {
   return (
-    <div className="rounded-xl px-3 py-2.5 border border-amber-900/45" style={{ background: "rgba(20, 10, 0, 0.34)" }}>
-      <div className="text-[13px] leading-5 text-amber-200">{label}</div>
-      <div className="mt-1 text-lg leading-none text-amber-300 font-black">{value}</div>
+    <div className="rounded-xl px-3 py-2.5 border border-emerald-300/12" style={{ background: "rgba(10, 44, 26, 0.26)" }}>
+      <div className="text-[13px] leading-5 text-emerald-50">{label}</div>
+      <div className="mt-1 text-lg leading-none text-lime-200 font-black">{value}</div>
     </div>
   );
 }

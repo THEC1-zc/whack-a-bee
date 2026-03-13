@@ -670,3 +670,14 @@ Payout bands:
 - Updated shared background, overlay, chrome, chip, divider, and text accent variables so home, rules, weekly, admin, and payout inherit the new tone without per-page rewrites.
 - Validation completed:
   - `npm run build` passed
+
+### 2026-03-13 19:00:00 +0100
+- Ran a second mobile/readability pass across the player-facing shell:
+  - strengthened translucent panel surfaces in `app/globals.css` so text stays readable over the illustrated background
+  - compacted `components/UserPageHeader.tsx` for narrow screens and aligned its accents to the green shell
+  - updated `components/LeaderboardScreen.tsx`, `components/App.tsx`, `components/RulesScreen.tsx`, `app/weekly/page.tsx`, `components/GameScreen.tsx`, and `app/api/share-payout-image/route.tsx` to remove most remaining amber-dominant text/surfaces while keeping gold only as accent/CTA color
+  - improved payout, rules, and weekly copy contrast on mobile
+- Validation completed:
+  - targeted lint passed with only the known `<img>` warnings
+  - `npm run build` passed
+  - attempted a local Playwright smoke on mobile viewport, but Chromium headless launch is blocked by the macOS sandbox in this environment

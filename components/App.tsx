@@ -190,7 +190,7 @@ export default function App() {
           Share app to Farcaster
         </button>
         {shareError && <div className="mt-2 text-xs text-red-300">{shareError}</div>}
-        <div className="mt-4 flex justify-center gap-4 text-[11px] text-amber-100/80">
+        <div className="mt-4 flex justify-center gap-4 text-[11px] text-emerald-50/80">
           <button onClick={logout} className="underline underline-offset-4">Logout</button>
           {!user.address && (
             <button onClick={connectWallet} className="underline underline-offset-4">Connect wallet</button>
@@ -199,10 +199,10 @@ export default function App() {
       </div>
 
       <div className="page-panel px-5 py-5 text-center">
-        <div className="text-xs uppercase tracking-widest mb-1 text-center text-amber-200/80">
+        <div className="text-xs uppercase tracking-widest mb-1 text-center text-lime-100/80">
           {poolUnavailable ? "⚠️ Prize Pool Unavailable" : poolEmpty ? "⚠️ Prize Pool Empty" : "💰 Prize Pool (approx)"}
         </div>
-        <div className={`text-center text-[2.6rem] font-black leading-none ${poolEmpty || poolUnavailable ? "text-red-300" : "text-amber-100"}`}>
+        <div className={`text-center text-[2.6rem] font-black leading-none ${poolEmpty || poolUnavailable ? "text-red-300" : "text-emerald-50"}`}>
           {poolLoading ? "..." : poolUnavailable ? "—" : `${Math.round(poolBalanceBf).toLocaleString()} BF`}
         </div>
         {poolEmpty && <div className="mt-2 text-xs text-red-300">Game temporarily suspended</div>}
@@ -213,19 +213,19 @@ export default function App() {
       <div className="page-stat-grid sm:grid-cols-3">
         <div className="page-panel-soft px-4 py-4 text-center text-xs">
           <div className="page-kicker mb-2">Rate</div>
-          <div className="text-sm font-bold text-amber-50">1 USDC ≈ {Math.round(liveBfPerUsdc).toLocaleString()} BF</div>
+          <div className="text-sm font-bold text-emerald-50">1 USDC ≈ {Math.round(liveBfPerUsdc).toLocaleString()} BF</div>
         </div>
 
         <div className="page-panel-soft px-4 py-4 text-center text-xs">
           <div className="page-kicker mb-2">Weekly Pot</div>
-          <div className="text-sm font-bold text-amber-50">{weeklyPot == null ? "—" : `${Math.round(weeklyPot).toLocaleString()} BF`}</div>
+          <div className="text-sm font-bold text-emerald-50">{weeklyPot == null ? "—" : `${Math.round(weeklyPot).toLocaleString()} BF`}</div>
           {nextReset && <div className="page-muted mt-2">Resets {new Date(nextReset).toLocaleString("en-GB", { timeZone: "Europe/Rome" })} CET</div>}
           <Link href="/weekly" className="page-link mt-2 inline-block">Weekly details</Link>
         </div>
 
         <div className="page-panel-soft px-4 py-4 text-center text-xs">
           <div className="page-kicker mb-2">My Weekly Tickets</div>
-          <div className="text-sm font-bold text-amber-50">{ticketTotal}</div>
+          <div className="text-sm font-bold text-emerald-50">{ticketTotal}</div>
           <div className="page-muted mt-2">1 base ticket, +1 cap-cleared run, +1 profitable run, +1 every 10th win.</div>
         </div>
       </div>
@@ -256,7 +256,7 @@ export default function App() {
               >
                 <div className="text-3xl mb-1">{item.emoji}</div>
                 <div className="text-white font-black text-lg">{item.label}</div>
-                <div className="text-amber-200 text-xs mt-1">{item.fee} USDC</div>
+                <div className="text-lime-100 text-xs mt-1">{item.fee} USDC</div>
                 <div className="page-muted text-[11px] mt-1">
                   {getRunWaveCount(key, "low")}–{getRunWaveCount(key, "mega")} waves
                 </div>
@@ -298,13 +298,13 @@ function NotConnected({ onConnect, canConnect }: { onConnect: () => Promise<stri
         {canConnect ? (
           <button
             onClick={() => void onConnect()}
-            className="mt-5 w-full py-4 rounded-[24px] text-lg font-black text-amber-950"
+            className="mt-5 w-full py-4 rounded-[24px] text-lg font-black text-emerald-950"
             style={{ background: "linear-gradient(135deg, #f7bd2b, #ffdc72)" }}
           >
             Connect Wallet
           </button>
         ) : (
-          <div className="mt-5 w-full py-4 rounded-[24px] text-sm font-black text-amber-950" style={{ background: "linear-gradient(135deg, #f7bd2b, #ffdc72)" }}>
+          <div className="mt-5 w-full py-4 rounded-[24px] text-sm font-black text-emerald-950" style={{ background: "linear-gradient(135deg, #f7bd2b, #ffdc72)" }}>
             Launch in Farcaster
           </div>
         )}
