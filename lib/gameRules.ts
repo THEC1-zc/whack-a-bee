@@ -352,13 +352,18 @@ export function getHitBoundsForWaveMultipliers(difficulty: Difficulty, waveMulti
 }
 
 export function estimateMinimumGameDurationMs(difficulty: Difficulty, totalWaves = DIFFICULTY_CONFIG[difficulty].waves, waveTypes?: string[]) {
-  let total = 3000;
   const effectiveTypes =
     waveTypes?.length
       ? waveTypes
       : Array.from({ length: totalWaves }, () => "low");
+
+  // Waves advance as soon as the board is cleared, so using full wave timeout
+  // causes false "too fast" failures on strong runs. Keep a smaller server-side
+  // minimum that still rejects instant finish abuse right after fee verify.
+  let total = 3200;
   for (let i = 0; i < effectiveTypes.length; i += 1) {
-    total += getWaveTimeoutMs(difficulty, effectiveTypes[i]) + 80;
+    const timeoutMs = getWaveTimeoutMs(difficulty, effectiveTypes[i]);
+    total += Math.max(160, Math.floor(timeoutMs * 0.14));
   }
   return total;
 }

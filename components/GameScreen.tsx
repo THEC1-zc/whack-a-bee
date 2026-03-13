@@ -469,7 +469,13 @@ export default function GameScreen({ user, difficulty, onGameEnd }: Props) {
             <h2 className="mt-2 text-[2.1rem] leading-none font-black text-white">BF Won</h2>
             <div className="mt-4 text-[4.6rem] leading-[0.9] font-black text-lime-200 sm:text-[5.1rem]">{prizeBfNet.toLocaleString()}</div>
             <div className="mt-1 text-sm font-bold text-emerald-300">
-              {prizeBfNet > 0 ? (paymentStatus === "paid" ? "Claimed payout" : "Claimable payout") : "Run complete"}
+              {prizeBfNet > 0
+                ? paymentStatus === "paid"
+                  ? "Claimed payout"
+                  : paymentStatus === "claimable" || paymentStatus === "claiming" || paymentStatus === "failed"
+                    ? "Claimable payout"
+                    : "Finalizing payout"
+                : "Run complete"}
             </div>
             <div className="mt-3 text-emerald-50 text-sm leading-5">
               {score} points made
@@ -543,7 +549,7 @@ export default function GameScreen({ user, difficulty, onGameEnd }: Props) {
             </button>
           </div>
 
-          {prizeBfNet > 0 && paymentStatus !== "paid" && (
+          {prizeBfNet > 0 && ["claimable", "claiming", "failed"].includes(paymentStatus) && (
             <button
               type="button"
               onClick={() => void handleClaimPrize()}

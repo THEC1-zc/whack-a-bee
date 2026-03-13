@@ -681,3 +681,11 @@ Payout bands:
   - targeted lint passed with only the known `<img>` warnings
   - `npm run build` passed
   - attempted a local Playwright smoke on mobile viewport, but Chromium headless launch is blocked by the macOS sandbox in this environment
+
+### 2026-03-14 19:10:00 +0100
+- Fixed urgent payout-claim timing issues:
+  - reduced the server-side minimum finish duration in `lib/gameRules.ts` so strong runs that clear waves instantly no longer fail with `Game finished too early`
+  - updated `components/GameScreen.tsx` so `Claim Prize` is only shown once the server has actually moved the game into a claimable state, preventing premature `Game not ready for claim` requests
+- Validation completed:
+  - targeted lint passed with only the known `<img>` warning in `components/GameScreen.tsx`
+  - `npm run build` passed
