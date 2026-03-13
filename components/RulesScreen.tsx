@@ -55,7 +55,7 @@ export default function RulesScreen({
             <BeeRule
               emoji="💜"
               label={BEE_LABELS.super}
-              desc="One per run max. Bonus depends on difficulty and run type, with Hard Big anchored at 2.5x fee."
+              desc="Max one per run. Flat 1% chance per run on every difficulty and type. Bonus depends on difficulty and run type, with Hard Big anchored at 2.5x fee."
               points={`+${getPrizeflyBonusUsdc("hard", "big").toFixed(4)} USDC gross`}
               color="#a855f7"
             />

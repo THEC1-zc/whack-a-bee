@@ -580,3 +580,10 @@ Payout bands:
     - treat Prizefly as an external jackpot event
     - use `prize_max_per_game = 0` for Monte Carlo purposes on every type unless explicitly requested otherwise
 - These rules apply to future balancing runs by default unless the user overrides them.
+
+### 2026-03-13 15:02:00 +0100
+- Tightened live Prizefly rarity across the app:
+  - flat `1%` chance per run
+  - max `1` Prizefly per run
+  - no Mega multiplier on spawn chance
+- Synced the same `1%` rule into `local-balance/ltm3.xml` for easy, medium, and hard tuning sheets so the workbook stays aligned with runtime.

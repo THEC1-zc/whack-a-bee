@@ -223,10 +223,10 @@
    </Row>
    <Row ss:AutoFitHeight="0">
     <Cell ss:StyleID="s63"><Data ss:Type="String">prize_chance</Data></Cell>
-    <Cell ss:StyleID="s64"><Data ss:Type="Number">1.4999999999999999E-2</Data></Cell>
-    <Cell ss:StyleID="s64"><Data ss:Type="Number">1.4999999999999999E-2</Data></Cell>
-    <Cell ss:StyleID="s64"><Data ss:Type="Number">1.4999999999999999E-2</Data></Cell>
-    <Cell ss:StyleID="s64"><Data ss:Type="Number">7.4999999999999997E-2</Data></Cell>
+    <Cell ss:StyleID="s64"><Data ss:Type="Number">1.0000000000000000E-2</Data></Cell>
+    <Cell ss:StyleID="s64"><Data ss:Type="Number">1.0000000000000000E-2</Data></Cell>
+    <Cell ss:StyleID="s64"><Data ss:Type="Number">1.0000000000000000E-2</Data></Cell>
+    <Cell ss:StyleID="s64"><Data ss:Type="Number">1.0000000000000000E-2</Data></Cell>
     <Cell ss:StyleID="s63"><Data ss:Type="String">ratio</Data></Cell>
     <Cell ss:StyleID="s63"><Data ss:Type="String">manual tuning input</Data></Cell>
    </Row>
@@ -514,10 +514,10 @@
    </Row>
    <Row ss:AutoFitHeight="0">
     <Cell ss:StyleID="s63"><Data ss:Type="String">prize_chance</Data></Cell>
-    <Cell ss:StyleID="s64"><Data ss:Type="Number">2.5000000000000001E-2</Data></Cell>
-    <Cell ss:StyleID="s64"><Data ss:Type="Number">2.5000000000000001E-2</Data></Cell>
-    <Cell ss:StyleID="s64"><Data ss:Type="Number">2.5000000000000001E-2</Data></Cell>
-    <Cell ss:StyleID="s64"><Data ss:Type="Number">7.4999999999999997E-2</Data></Cell>
+    <Cell ss:StyleID="s64"><Data ss:Type="Number">1.0000000000000000E-2</Data></Cell>
+    <Cell ss:StyleID="s64"><Data ss:Type="Number">1.0000000000000000E-2</Data></Cell>
+    <Cell ss:StyleID="s64"><Data ss:Type="Number">1.0000000000000000E-2</Data></Cell>
+    <Cell ss:StyleID="s64"><Data ss:Type="Number">1.0000000000000000E-2</Data></Cell>
     <Cell ss:StyleID="s63"><Data ss:Type="String">ratio</Data></Cell>
     <Cell ss:StyleID="s63"><Data ss:Type="String">live runtime shape</Data></Cell>
    </Row>
@@ -797,10 +797,10 @@
    </Row>
    <Row ss:AutoFitHeight="0">
     <Cell ss:StyleID="s63"><Data ss:Type="String">prize_chance</Data></Cell>
-    <Cell ss:StyleID="s64"><Data ss:Type="Number">2.5000000000000001E-2</Data></Cell>
-    <Cell ss:StyleID="s64"><Data ss:Type="Number">2.5000000000000001E-2</Data></Cell>
-    <Cell ss:StyleID="s64"><Data ss:Type="Number">2.5000000000000001E-2</Data></Cell>
-    <Cell ss:StyleID="s64"><Data ss:Type="Number">7.4999999999999997E-2</Data></Cell>
+    <Cell ss:StyleID="s64"><Data ss:Type="Number">1.0000000000000000E-2</Data></Cell>
+    <Cell ss:StyleID="s64"><Data ss:Type="Number">1.0000000000000000E-2</Data></Cell>
+    <Cell ss:StyleID="s64"><Data ss:Type="Number">1.0000000000000000E-2</Data></Cell>
+    <Cell ss:StyleID="s64"><Data ss:Type="Number">1.0000000000000000E-2</Data></Cell>
     <Cell ss:StyleID="s63"><Data ss:Type="String">ratio</Data></Cell>
     <Cell ss:StyleID="s63"><Data ss:Type="String">live runtime shape</Data></Cell>
    </Row>

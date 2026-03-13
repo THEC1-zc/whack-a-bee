@@ -32,7 +32,7 @@ export const LIVE_POINT_VALUES: Record<Difficulty, Record<HitType, number>> = {
 
 export const FUCHSIA_CHANCE = 0.15;
 export const FUCHSIA_MAX_PER_GAME = 3;
-export const SUPER_BEE_CHANCE_PER_GAME = 0.025;
+export const SUPER_BEE_CHANCE_PER_GAME = 0.01;
 
 export const BEE_LABELS: Record<HitType, string> = {
   normal: "Butterfly",
@@ -195,8 +195,8 @@ export function getFuchsiaChance(capMultiplier: number) {
   return Math.min(0.95, isMegaRound(capMultiplier) ? FUCHSIA_CHANCE * 2 : FUCHSIA_CHANCE);
 }
 
-export function getSuperChance(capMultiplier: number) {
-  return SUPER_BEE_CHANCE_PER_GAME * (isMegaRound(capMultiplier) ? 3 : 1);
+export function getSuperChance() {
+  return SUPER_BEE_CHANCE_PER_GAME;
 }
 
 export function getPrizeflyBonusUsdc(difficulty: Difficulty, capType: CapTypeKey) {
