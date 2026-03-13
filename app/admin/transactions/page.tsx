@@ -57,6 +57,10 @@ type RescueGame = {
   prizeUsdc?: number;
   prizeBfGross?: number;
   claimMethod?: "player" | "admin_rescue";
+  rescuePending?: boolean;
+  rescuePrizeTxHash?: string;
+  rescuePotTxHash?: string;
+  rescueBurnTxHash?: string;
 };
 type Msg = { type: "ok" | "err"; text: string } | null;
 
@@ -141,8 +145,11 @@ export default function AdminTransactions() {
           const games = Array.isArray(gamesData.games) ? gamesData.games : [];
           setRescueGames(
             games.filter((game: RescueGame) =>
-              ["finished", "claim_signed"].includes(game.status) &&
-              Number(game.prizeUsdc || 0) > 0
+              Number(game.prizeUsdc || 0) > 0 &&
+              (
+                ["finished", "claim_signed"].includes(game.status) ||
+                game.rescuePending
+              )
             )
           );
           setMsg(null);
@@ -371,14 +378,23 @@ export default function AdminTransactions() {
                       {game.gameId}
                     </div>
                   </div>
-                  <div className="text-[11px] font-black uppercase text-amber-300">
-                    {game.status}
+                    <div className="text-[11px] font-black uppercase text-amber-300">
+                    {game.rescuePending ? "rescue pending" : game.status}
                   </div>
                 </div>
                 <div className="mt-2 flex flex-wrap gap-x-3 gap-y-1 text-[11px] text-amber-100/80">
                   <span>{game.username ? `@${game.username}` : short(game.playerAddress)}</span>
                   <span>Fee {game.feeExpectedUsdc.toFixed(3)} USDC</span>
                   <span>Score {Math.round(game.scoreRealized || 0)}</span>
+                  {game.rescuePending && (
+                    <span>
+                      Legs {[
+                        game.rescuePrizeTxHash ? "prize" : null,
+                        game.rescuePotTxHash ? "pot" : null,
+                        game.rescueBurnTxHash ? "burn" : null,
+                      ].filter(Boolean).length}/3 done
+                    </span>
+                  )}
                 </div>
                 <button
                   type="button"

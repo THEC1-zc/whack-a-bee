@@ -186,6 +186,10 @@ export type AdminGameRow = {
   claimTxHash?: string;
   claimTxUrl?: string;
   claimMethod?: "player" | "admin_rescue";
+  rescuePrizeTxHash?: string;
+  rescuePotTxHash?: string;
+  rescueBurnTxHash?: string;
+  rescuePending?: boolean;
   ticketAssigned?: boolean;
   ticketCount?: number;
 };
@@ -259,6 +263,29 @@ function normalizeHash(hash: string) {
 
 function txUrl(hash?: string) {
   return hash ? `https://basescan.org/tx/${hash}` : undefined;
+}
+
+function isRetryableMissingTxError(error: unknown) {
+  const message = error instanceof Error ? error.message : String(error || "");
+  return /could not be found|not found|unknown transaction|No transaction found/i.test(message);
+}
+
+async function waitForIndexedClaimTx(publicClient: ReturnType<typeof getPublicClient>, hash: `0x${string}`) {
+  let lastError: unknown = null;
+  for (let attempt = 0; attempt < 8; attempt += 1) {
+    try {
+      const [tx, receipt] = await Promise.all([
+        publicClient.getTransaction({ hash }),
+        publicClient.getTransactionReceipt({ hash }),
+      ]);
+      return { tx, receipt };
+    } catch (error) {
+      lastError = error;
+      if (!isRetryableMissingTxError(error) || attempt === 7) break;
+      await new Promise((resolve) => setTimeout(resolve, 1200 * (attempt + 1)));
+    }
+  }
+  throw lastError instanceof Error ? lastError : new Error("Claim transaction could not be found");
 }
 
 async function getIndex() {
@@ -751,8 +778,7 @@ export async function confirmClaimForGame(params: { gameId: string; gameSecret: 
   }
 
   const publicClient = getPublicClient();
-  const tx = await publicClient.getTransaction({ hash: params.txHash });
-  const receipt = await publicClient.getTransactionReceipt({ hash: params.txHash });
+  const { tx, receipt } = await waitForIndexedClaimTx(publicClient, params.txHash);
   if (receipt.status !== "success") throw new Error("Claim transaction failed");
   if (!tx.to || tx.to.toLowerCase() !== CONTRACT_ADDRESS.toLowerCase()) {
     throw new Error("Invalid claim target contract");
@@ -970,7 +996,11 @@ export async function listAllGames() {
 
 export async function getAdminGames(limit = 300): Promise<AdminGameRow[]> {
   const games = await listGames(limit);
-  return games.map((game) => ({
+  return games.map((game) => {
+    const rescuePending =
+      game.claimMethod === "admin_rescue" &&
+      (!game.rescuePrizeTxHash || !game.rescuePotTxHash || !game.rescueBurnTxHash);
+    return {
     gameId: game.gameId,
     createdAt: game.createdAt,
     weekId: game.weekId,
@@ -990,9 +1020,14 @@ export async function getAdminGames(limit = 300): Promise<AdminGameRow[]> {
     claimTxHash: game.claimTxHash,
     claimTxUrl: txUrl(game.claimTxHash),
     claimMethod: game.claimMethod,
+    rescuePrizeTxHash: game.rescuePrizeTxHash,
+    rescuePotTxHash: game.rescuePotTxHash,
+    rescueBurnTxHash: game.rescueBurnTxHash,
+    rescuePending,
     ticketAssigned: game.ticketAssigned,
     ticketCount: game.ticketCount,
-  }));
+    };
+  });
 }
 
 export async function getLeaderboardEntries(limit = 20, difficulty?: Difficulty | string): Promise<LeaderboardEntry[]> {

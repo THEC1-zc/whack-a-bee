@@ -689,3 +689,12 @@ Payout bands:
 - Validation completed:
   - targeted lint passed with only the known `<img>` warning in `components/GameScreen.tsx`
   - `npm run build` passed
+
+### 2026-03-14 19:22:00 +0100
+- Hardened payout recovery and admin visibility:
+  - `lib/gameSessions.ts` now retries server-side transaction/receipt lookup for fresh claim confirmations instead of failing immediately on lagging RPC indexing
+  - `getAdminGames()` now exposes pending admin-rescue legs so incomplete rescues remain visible
+  - `app/admin/transactions/page.tsx` now keeps rescue-pending games in the force-claim list and shows how many payout legs are already completed
+- Validation completed:
+  - targeted lint passed
+  - `npm run build` passed
