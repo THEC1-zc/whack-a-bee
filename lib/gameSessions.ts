@@ -778,6 +778,7 @@ export async function confirmClaimForGame(params: { gameId: string; gameSecret: 
 
   const playerAmountBf = fromBFUnits(BigInt(game.playerBfUnits || "0"));
   const potAmountBf = fromBFUnits(BigInt(game.potBfUnits || "0"));
+  const burnAmountBf = fromBFUnits(BigInt(game.burnBfUnits || "0"));
   await logTxRecord({
     kind: "game_prize_out",
     status: "ok",
@@ -799,6 +800,17 @@ export async function confirmClaimForGame(params: { gameId: string; gameSecret: 
     amountBf: potAmountBf,
     txHash: params.txHash,
     stage: "pot_transfer_contract_split",
+    meta: { gameId: game.gameId },
+  });
+  await logTxRecord({
+    kind: "game_burn_out",
+    status: "ok",
+    fid: game.fid,
+    playerUsername: game.username,
+    playerAddress: game.playerAddress,
+    amountBf: burnAmountBf,
+    txHash: params.txHash,
+    stage: "burn_transfer_contract_split",
     meta: { gameId: game.gameId },
   });
 

@@ -46,7 +46,7 @@ export default function RulesScreen({
         {/* Come si gioca */}
         <Section title="🎮 How to Play">
           <p className="text-amber-200 text-sm leading-relaxed">
-            Each run is a fixed number of waves on a 3×3 grid. Tap butterflies before they disappear, survive the forced Bombfly in every wave,
+            Each run is a fixed number of waves on a 3×3 grid. Tap butterflies before they disappear, survive the guaranteed Bombfly in every wave,
             and push your score as high as possible before you hit the point cap.
           </p>
           <div className="mt-3 space-y-2">
@@ -56,7 +56,7 @@ export default function RulesScreen({
             <BeeRule
               emoji="🔴"
               label={BEE_LABELS.bomb}
-              desc="Forced once per wave. Hit it and you lose points."
+              desc="At least one Bombfly appears every wave, and some types can add a second one. Hit it and you lose points."
               points={`${LIVE_POINT_VALUES.easy.bomb} / ${LIVE_POINT_VALUES.medium.bomb} / ${LIVE_POINT_VALUES.hard.bomb}`}
               color="#dc2626"
             />

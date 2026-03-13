@@ -654,3 +654,13 @@ Payout bands:
 - Validation completed:
   - `npm run sync:ltm3` passed
   - `npm run build` passed
+
+### 2026-03-13 18:48:00 +0100
+- Completed a deeper text/claim consistency pass across the game:
+  - `app/weekly/page.tsx` now reflects the live split correctly: `4.5% weekly` and `1% burn`
+  - `components/RulesScreen.tsx` now describes Bombfly correctly as guaranteed every wave with some types able to add a second bomb
+  - payout share routes now include and display run `type` and `waves`, so share metadata matches the new ladder structure
+  - normal player claim confirmation now logs burn output too, matching admin rescue reporting
+- Validation completed:
+  - targeted lint passed with only the known `<img>` warnings
+  - `npm run build` passed

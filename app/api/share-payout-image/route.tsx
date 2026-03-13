@@ -14,6 +14,8 @@ export async function GET(req: Request) {
   const score = Math.max(0, Math.floor(readNumber(searchParams.get("score"), 0)));
   const prizeBf = Math.max(0, Math.floor(readNumber(searchParams.get("prizeBf"), 0)));
   const difficulty = (searchParams.get("difficulty") || "Battle").slice(0, 16);
+  const type = (searchParams.get("type") || "Run").slice(0, 16);
+  const waves = Math.max(0, Math.floor(readNumber(searchParams.get("waves"), 0)));
 
   return new ImageResponse(
     (
@@ -117,7 +119,7 @@ export async function GET(req: Request) {
                 fontWeight: 800,
               }}
             >
-              {difficulty}
+              {type} {difficulty}
             </div>
             <div
               style={{
@@ -131,7 +133,7 @@ export async function GET(req: Request) {
                 fontWeight: 800,
               }}
             >
-              {score} points
+              {score} points{waves > 0 ? ` • ${waves} waves` : ""}
             </div>
           </div>
 
@@ -145,7 +147,7 @@ export async function GET(req: Request) {
               textShadow: "0 3px 14px rgba(20,10,0,0.24)",
             }}
           >
-            Cleared a run on Farcaster and claimed a live BF payout on-chain.
+            Cleared a {type.toLowerCase()} {difficulty.toLowerCase()} run on Farcaster and claimed a live BF payout on-chain.
           </div>
 
           <div

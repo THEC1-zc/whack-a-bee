@@ -67,7 +67,8 @@ export default function WeeklyPage() {
         <div className="page-panel px-5 py-5">
           <div className="page-kicker mb-3">How it works</div>
           <ul className="page-copy text-sm space-y-2 leading-6">
-            <li>• Pot = 5% of every win paid</li>
+            <li>• Weekly pot = 4.5% of every claimed payout</li>
+            <li>• Burn = 1% of every claimed payout</li>
             <li>• Top 3 (overall net gain) split 60% (50/30/20)</li>
             <li>• 7 lottery prizes split 40% equally</li>
             <li>• Tickets: 1 base, +1 cap-cleared run, +1 profitable run, +1 every 10th claimed win</li>
