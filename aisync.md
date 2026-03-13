@@ -534,3 +534,49 @@ Payout bands:
   - `components/GameScreen.tsx`
   - `components/RulesScreen.tsx`
 - Removed stale UI copy that still advertised Prizefly as a fixed `+100000 BF`.
+
+### 2026-03-13 13:05:00 +0100
+- Resynced `local-balance/ltm2sync.xml` against the current live runtime.
+- The `easy` branch now mirrors live code on the main economic/gameplay rows:
+  - PPP
+  - points per butterfly type
+  - easy per-type spawn caps/chances
+  - bomb penalty and second-bomb chance
+  - Prizefly gross bonus by type
+- Added/filled `prize_bonus_usdc_gross` in `all easy` and the `easy ... sync` sheets.
+- Kept the existing workbook structure, but clarified one mismatch in-place:
+  - `wave_duration_ms` is currently used as a practical pacing reference for easy, not a true fixed runtime wave timeout.
+
+### 2026-03-13 13:42:00 +0100
+- Added `local-balance/ltm3.xml` as the next-step tuning workbook intended to replace the older multi-sheet sync layout for gameplay balancing work.
+- `ltm3.xml` contains only four worksheets:
+  - `all easy`
+  - `all medium`
+  - `all hard`
+  - `jolly`
+- `jolly` is explicitly separated so the main difficulty sheets can be tuned without treating jolly as a normal fifth type.
+- Verified the new workbook parses as SpreadsheetML and exposes the expected four worksheet names.
+- Added current runtime jolly per-wave type percentages to the `jolly` worksheet, normalized from live `CAP_TYPES` excluding `jolly` itself:
+  - `low 16.666667%`
+  - `nice 22.222222%`
+  - `average 38.888889%`
+  - `big 16.666667%`
+  - `mega 5.555556%`
+
+### 2026-03-13 13:56:00 +0100
+- Aligned runtime jolly wave selection with the new tuning model used in `local-balance/ltm3.xml`.
+- Jolly waves no longer sample `average`; they now reroll only into:
+  - `low 27.272727%`
+  - `nice 36.363636%`
+  - `big 27.272727%`
+  - `mega 9.090909%`
+- Updated the `jolly` worksheet in `ltm3.xml` to match the new runtime percentages.
+
+### 2026-03-13 14:18:00 +0100
+- Monte Carlo hard rules for local tuning work:
+  - always read the current values from `local-balance/ltm3.xml` before running a simulation
+  - always use an updated BF/USDC rate snapshot, never a stale fixed fallback when reporting Monte Carlo results
+  - always simulate with Prizefly excluded from the score/payout model:
+    - treat Prizefly as an external jackpot event
+    - use `prize_max_per_game = 0` for Monte Carlo purposes on every type unless explicitly requested otherwise
+- These rules apply to future balancing runs by default unless the user overrides them.

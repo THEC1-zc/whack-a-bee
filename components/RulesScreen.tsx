@@ -72,7 +72,7 @@ export default function RulesScreen({
                 </div>
                 <div className="mt-1 text-amber-200 text-xs">
                   {item.key === "jolly"
-                    ? "Each wave rerolls into one of the standard game types using their current odds."
+                    ? "Each wave rerolls into Low, Nice, Big, or Mega using their current odds."
                     : `${item.mult}x cap multiplier for the run.`}
                 </div>
               </div>

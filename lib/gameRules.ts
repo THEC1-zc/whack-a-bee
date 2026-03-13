@@ -1,6 +1,7 @@
 export type Difficulty = "easy" | "medium" | "hard";
 export type HitType = "normal" | "fast" | "fuchsia" | "bomb" | "super";
 export type CapTypeKey = "low" | "nice" | "average" | "big" | "mega" | "jolly";
+type JollyWaveTypeKey = Exclude<CapTypeKey, "average" | "jolly">;
 
 type DifficultyConfig = {
   label: string;
@@ -86,6 +87,13 @@ export const CAP_TYPES = [
 ] as const satisfies readonly { key: CapTypeKey; icon: string; label: string; mult: number; pct: number }[];
 
 const STANDARD_CAP_TYPES = CAP_TYPES.filter((item) => item.key !== "jolly");
+const JOLLY_WAVE_CAP_TYPES = CAP_TYPES.filter((item) => item.key === "low" || item.key === "nice" || item.key === "big" || item.key === "mega") as readonly {
+  key: JollyWaveTypeKey;
+  icon: string;
+  label: string;
+  mult: number;
+  pct: number;
+}[];
 
 const PRIZEFLY_DIFFICULTY_MULTIPLIER: Record<Difficulty, number> = {
   easy: 0.42,
@@ -129,7 +137,7 @@ export function pickCapMultiplier() {
 }
 
 export function pickJollyWaveMultipliers(totalWaves: number) {
-  return Array.from({ length: totalWaves }, () => pickStandardCapProfile().mult);
+  return Array.from({ length: totalWaves }, () => pickJollyWaveCapProfile().mult);
 }
 
 export function pickStandardCapProfile() {
@@ -140,6 +148,17 @@ export function pickStandardCapProfile() {
     if (roll <= acc) return item;
   }
   return STANDARD_CAP_TYPES[0];
+}
+
+export function pickJollyWaveCapProfile() {
+  const totalPct = JOLLY_WAVE_CAP_TYPES.reduce((sum, item) => sum + item.pct, 0);
+  const roll = Math.random() * totalPct;
+  let acc = 0;
+  for (const item of JOLLY_WAVE_CAP_TYPES) {
+    acc += item.pct;
+    if (roll <= acc) return item;
+  }
+  return JOLLY_WAVE_CAP_TYPES[0];
 }
 
 export function getCapTypeKeyForMultiplier(mult: number): CapTypeKey {
