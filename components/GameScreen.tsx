@@ -14,11 +14,11 @@ import {
   getFastLimit,
   getFuchsiaChance,
   getFullValueThreshold,
+  getLivePointValuesForType,
   getPrizeflyBonusUsdc,
   getQuickLimit,
   getRunTypeConfig,
   getWaveTimeoutMs,
-  LIVE_POINT_VALUES,
   type CapTypeKey,
   type Difficulty,
 } from "@/lib/gameRules";
@@ -201,7 +201,7 @@ export default function GameScreen({ user, difficulty, onGameEnd }: Props) {
     setTimeout(() => setBees((prev) => prev.filter((entry) => entry.id !== bee.id)), 150);
     setHitStats((prev) => ({ ...prev, [bee.type]: prev[bee.type] + 1 }));
 
-    const pointsTable = LIVE_POINT_VALUES[difficulty];
+    const pointsTable = getLivePointValuesForType(difficulty, session?.capType || "low");
     let points = 0;
     let text = "";
     if (bee.type === "normal") { points = pointsTable.normal; text = `+${points}`; }

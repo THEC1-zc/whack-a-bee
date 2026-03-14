@@ -715,3 +715,25 @@ Payout bands:
 - Validation completed:
   - `npm run sync:ltm3` passed
   - `npm run build` passed
+
+### 2026-03-14 20:18:00 +0100
+- Fixed `ltm3` SpreadsheetML export so Excel and the sync script agree on numeric cells:
+  - `scripts/sync-ltm3.mjs` now preserves the current `all medium` and `all hard` sheet values instead of regenerating them from `all easy`
+  - workbook export now writes numeric gameplay cells as `ss:Type="Number"` for `all easy`, `all medium`, `all hard`, and numeric rows in `jolly`
+- Regenerated `local-balance/ltm3.xml` and `lib/gameConfig.generated.ts` from the current workbook values without altering the saved tuning numbers.
+- Validation completed:
+  - `npm run sync:ltm3` passed
+  - `npm run build` passed
+
+### 2026-03-14 20:44:00 +0100
+- Synced the latest `ltm3` gameplay edits into runtime and closed the remaining score-validation mismatch:
+  - `lib/gameRules.ts` now exposes per-type point tables via `getLivePointValuesForType(...)`
+  - `components/GameScreen.tsx` now awards points using the active run type instead of the old difficulty-only low baseline
+  - `lib/gameSessions.ts` now validates finished scores with the current run type and preserves fractional `.5` scores by rounding to 2 decimals instead of flooring
+  - `components/RulesScreen.tsx` now describes type-sensitive point values with ranges instead of stale difficulty-only numbers
+- Re-ran workbook sync so `local-balance/ltm3.xml` remains authoritative and Excel-friendly.
+- Fresh Monte Carlo snapshot run from the regenerated config with Prizefly excluded and fresh BF rate (`1 USDC ≈ 4,716,981 BF`):
+  - `30000` runs at `100%` and `80%` skill across `easy`, `medium`, `hard`, including `jolly`
+- Validation completed:
+  - targeted lint passed with only the known `<img>` warning in `components/GameScreen.tsx`
+  - `npm run build` passed

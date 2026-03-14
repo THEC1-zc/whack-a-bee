@@ -7,7 +7,7 @@ export const DIFFICULTY_META = {
     "color": "#16a34a",
     "fee": 0.015,
     "baseWaves": 14,
-    "ppp": 0.00028025
+    "ppp": 0.000252225
   },
   "medium": {
     "label": "Medium",
@@ -15,7 +15,7 @@ export const DIFFICULTY_META = {
     "color": "#ca8a04",
     "fee": 0.025,
     "baseWaves": 13,
-    "ppp": 0.0004275
+    "ppp": 0.00038475
   },
   "hard": {
     "label": "Hard",
@@ -23,7 +23,7 @@ export const DIFFICULTY_META = {
     "color": "#dc2626",
     "fee": 0.035,
     "baseWaves": 8,
-    "ppp": 0.0006555
+    "ppp": 0.00058995
   }
 } as const;
 export const RUN_TYPE_META = {
@@ -86,7 +86,7 @@ export const GAME_TUNING = {
       "bombsSecondChance": 0.25,
       "bombPoints": -2,
       "bombDurationMs": 1300,
-      "pppInputUsdcPerPoint": 0.00028025,
+      "pppInputUsdcPerPoint": 0.000252225,
       "bfPerUsdcLiveSnapshot": 4775549.188156637
     },
     "nice": {
@@ -118,7 +118,7 @@ export const GAME_TUNING = {
       "bombsSecondChance": 0.25,
       "bombPoints": -2,
       "bombDurationMs": 1300,
-      "pppInputUsdcPerPoint": 0.00028025,
+      "pppInputUsdcPerPoint": 0.000252225,
       "bfPerUsdcLiveSnapshot": 4775549.188156637
     },
     "big": {
@@ -150,7 +150,7 @@ export const GAME_TUNING = {
       "bombsSecondChance": 0.35,
       "bombPoints": -2,
       "bombDurationMs": 1300,
-      "pppInputUsdcPerPoint": 0.00028025,
+      "pppInputUsdcPerPoint": 0.000252225,
       "bfPerUsdcLiveSnapshot": 4775549.188156637
     },
     "mega": {
@@ -182,7 +182,7 @@ export const GAME_TUNING = {
       "bombsSecondChance": 0.35,
       "bombPoints": -2,
       "bombDurationMs": 1300,
-      "pppInputUsdcPerPoint": 0.00028025,
+      "pppInputUsdcPerPoint": 0.000252225,
       "bfPerUsdcLiveSnapshot": 4775549.188156637
     }
   },
@@ -198,12 +198,12 @@ export const GAME_TUNING = {
       "tripleMaxPerGame": 8,
       "tripleMaxPerWave": 2,
       "tripleChancePerWave": 0.33,
-      "triplePoints": 4,
+      "triplePoints": 3.5,
       "tripleDurationMs": 945,
       "quickMaxPerGame": 4,
       "quickMaxPerWave": 1,
       "quickChancePerWave": 0.1725,
-      "quickPoints": 5,
+      "quickPoints": 4.5,
       "quickDurationMs": 630,
       "prizeMaxPerGame": 1,
       "prizeChance": 0.01,
@@ -214,9 +214,9 @@ export const GAME_TUNING = {
       "normalDurationMs": 1080,
       "bombsBasePerWave": 1,
       "bombsSecondChance": 0.35,
-      "bombPoints": -2,
+      "bombPoints": -3,
       "bombDurationMs": 1170,
-      "pppInputUsdcPerPoint": 0.0004275,
+      "pppInputUsdcPerPoint": 0.00038475,
       "bfPerUsdcLiveSnapshot": 4775549.188156637
     },
     "nice": {
@@ -230,12 +230,12 @@ export const GAME_TUNING = {
       "tripleMaxPerGame": 9,
       "tripleMaxPerWave": 2,
       "tripleChancePerWave": 0.33,
-      "triplePoints": 4,
+      "triplePoints": 3.5,
       "tripleDurationMs": 945,
       "quickMaxPerGame": 4,
       "quickMaxPerWave": 1,
       "quickChancePerWave": 0.1725,
-      "quickPoints": 5,
+      "quickPoints": 4.5,
       "quickDurationMs": 630,
       "prizeMaxPerGame": 1,
       "prizeChance": 0.01,
@@ -246,9 +246,9 @@ export const GAME_TUNING = {
       "normalDurationMs": 1080,
       "bombsBasePerWave": 1,
       "bombsSecondChance": 0.35,
-      "bombPoints": -2,
+      "bombPoints": -3,
       "bombDurationMs": 1170,
-      "pppInputUsdcPerPoint": 0.0004275,
+      "pppInputUsdcPerPoint": 0.00038475,
       "bfPerUsdcLiveSnapshot": 4775549.188156637
     },
     "big": {
@@ -262,12 +262,12 @@ export const GAME_TUNING = {
       "tripleMaxPerGame": 10,
       "tripleMaxPerWave": 2,
       "tripleChancePerWave": 0.33,
-      "triplePoints": 4,
+      "triplePoints": 3.5,
       "tripleDurationMs": 945,
       "quickMaxPerGame": 4,
       "quickMaxPerWave": 1,
       "quickChancePerWave": 0.1725,
-      "quickPoints": 5,
+      "quickPoints": 4.5,
       "quickDurationMs": 630,
       "prizeMaxPerGame": 1,
       "prizeChance": 0.01,
@@ -278,9 +278,9 @@ export const GAME_TUNING = {
       "normalDurationMs": 1080,
       "bombsBasePerWave": 1,
       "bombsSecondChance": 0.45,
-      "bombPoints": -2,
+      "bombPoints": -3,
       "bombDurationMs": 1170,
-      "pppInputUsdcPerPoint": 0.0004275,
+      "pppInputUsdcPerPoint": 0.00038475,
       "bfPerUsdcLiveSnapshot": 4775549.188156637
     },
     "mega": {
@@ -294,12 +294,12 @@ export const GAME_TUNING = {
       "tripleMaxPerGame": 12,
       "tripleMaxPerWave": 3,
       "tripleChancePerWave": 0.484,
-      "triplePoints": 4,
+      "triplePoints": 3.5,
       "tripleDurationMs": 945,
       "quickMaxPerGame": 5,
       "quickMaxPerWave": 2,
       "quickChancePerWave": 0.345,
-      "quickPoints": 5,
+      "quickPoints": 4.5,
       "quickDurationMs": 630,
       "prizeMaxPerGame": 1,
       "prizeChance": 0.01,
@@ -312,7 +312,7 @@ export const GAME_TUNING = {
       "bombsSecondChance": 0.45,
       "bombPoints": -2,
       "bombDurationMs": 1170,
-      "pppInputUsdcPerPoint": 0.0004275,
+      "pppInputUsdcPerPoint": 0.00038475,
       "bfPerUsdcLiveSnapshot": 4775549.188156637
     }
   },
@@ -328,7 +328,7 @@ export const GAME_TUNING = {
       "tripleMaxPerGame": 9,
       "tripleMaxPerWave": 2,
       "tripleChancePerWave": 0.36,
-      "triplePoints": 5,
+      "triplePoints": 4,
       "tripleDurationMs": 861,
       "quickMaxPerGame": 5,
       "quickMaxPerWave": 1,
@@ -344,9 +344,9 @@ export const GAME_TUNING = {
       "normalDurationMs": 936,
       "bombsBasePerWave": 1,
       "bombsSecondChance": 0.45,
-      "bombPoints": -3,
+      "bombPoints": -4,
       "bombDurationMs": 1014,
-      "pppInputUsdcPerPoint": 0.0006555,
+      "pppInputUsdcPerPoint": 0.00058995,
       "bfPerUsdcLiveSnapshot": 4775549.188156637
     },
     "nice": {
@@ -360,7 +360,7 @@ export const GAME_TUNING = {
       "tripleMaxPerGame": 10,
       "tripleMaxPerWave": 2,
       "tripleChancePerWave": 0.36,
-      "triplePoints": 5,
+      "triplePoints": 4,
       "tripleDurationMs": 861,
       "quickMaxPerGame": 5,
       "quickMaxPerWave": 1,
@@ -376,9 +376,9 @@ export const GAME_TUNING = {
       "normalDurationMs": 936,
       "bombsBasePerWave": 1,
       "bombsSecondChance": 0.45,
-      "bombPoints": -3,
+      "bombPoints": -4,
       "bombDurationMs": 1014,
-      "pppInputUsdcPerPoint": 0.0006555,
+      "pppInputUsdcPerPoint": 0.00058995,
       "bfPerUsdcLiveSnapshot": 4775549.188156637
     },
     "big": {
@@ -392,7 +392,7 @@ export const GAME_TUNING = {
       "tripleMaxPerGame": 11,
       "tripleMaxPerWave": 3,
       "tripleChancePerWave": 0.36,
-      "triplePoints": 5,
+      "triplePoints": 4,
       "tripleDurationMs": 861,
       "quickMaxPerGame": 5,
       "quickMaxPerWave": 2,
@@ -408,9 +408,9 @@ export const GAME_TUNING = {
       "normalDurationMs": 936,
       "bombsBasePerWave": 2,
       "bombsSecondChance": 0.55,
-      "bombPoints": -3,
+      "bombPoints": -4,
       "bombDurationMs": 1014,
-      "pppInputUsdcPerPoint": 0.0006555,
+      "pppInputUsdcPerPoint": 0.00058995,
       "bfPerUsdcLiveSnapshot": 4775549.188156637
     },
     "mega": {
@@ -442,7 +442,7 @@ export const GAME_TUNING = {
       "bombsSecondChance": 0.55,
       "bombPoints": -3,
       "bombDurationMs": 1014,
-      "pppInputUsdcPerPoint": 0.0006555,
+      "pppInputUsdcPerPoint": 0.00058995,
       "bfPerUsdcLiveSnapshot": 4775549.188156637
     }
   }

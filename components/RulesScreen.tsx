@@ -9,8 +9,8 @@ import {
   getFullValueThreshold,
   getMaxPrizeUsdc,
   getPrizeflyBonusUsdc,
-  LIVE_POINT_VALUES,
   PRIZE_PER_POINT,
+  getRunTypeConfig,
   getRunWaveCount,
 } from "@/lib/gameRules";
 import { BF_PER_USDC_FALLBACK } from "@/lib/pricing";
@@ -27,6 +27,15 @@ export default function RulesScreen({
   onBack: () => void;
   onLeaderboard: () => void;
 }) {
+  const pointRange = (key: "triplePoints" | "quickPoints" | "bombPoints") => {
+    const values = (["easy", "medium", "hard"] as const).map((difficulty) => {
+      const low = getRunTypeConfig(difficulty, "low")[key];
+      const mega = getRunTypeConfig(difficulty, "mega")[key];
+      return low === mega ? `${low}` : `${low}-${mega}`;
+    });
+    return values.join(" / ");
+  };
+
   return (
     <div className="user-page-bg user-page-overlay min-h-dvh flex flex-col">
       <div className="mx-4 mt-4">
@@ -51,13 +60,13 @@ export default function RulesScreen({
           </p>
           <div className="mt-3 space-y-2">
             <BeeRule emoji="🦋" label={BEE_LABELS.normal} desc="Core scorer in every wave" points="+1 point" color="#fbbf24" />
-            <BeeRule emoji="🔵" label={BEE_LABELS.fast} desc={`Triplefly burst scorer, worth +${LIVE_POINT_VALUES.medium.fast} in Medium`} points={`+${LIVE_POINT_VALUES.easy.fast} / +${LIVE_POINT_VALUES.medium.fast} / +${LIVE_POINT_VALUES.hard.fast}`} color="#3b82f6" fast />
-            <BeeRule emoji="💖" label={BEE_LABELS.fuchsia} desc="Quickfly burst scorer. Rarer than Triplefly and tuned per difficulty." points={`+${LIVE_POINT_VALUES.easy.fuchsia} / +${LIVE_POINT_VALUES.medium.fuchsia} / +${LIVE_POINT_VALUES.hard.fuchsia}`} color="#ec4899" fast />
+            <BeeRule emoji="🔵" label={BEE_LABELS.fast} desc="Triplefly burst scorer. Value can change with both difficulty and run type." points={`+${pointRange("triplePoints")}`} color="#3b82f6" fast />
+            <BeeRule emoji="💖" label={BEE_LABELS.fuchsia} desc="Quickfly burst scorer. Rarer than Triplefly and tuned per difficulty and run type." points={`+${pointRange("quickPoints")}`} color="#ec4899" fast />
             <BeeRule
               emoji="🔴"
               label={BEE_LABELS.bomb}
               desc="At least one Bombfly appears every wave, and some types can add a second one. Hit it and you lose points."
-              points={`${LIVE_POINT_VALUES.easy.bomb} / ${LIVE_POINT_VALUES.medium.bomb} / ${LIVE_POINT_VALUES.hard.bomb}`}
+              points={pointRange("bombPoints")}
               color="#dc2626"
             />
             <BeeRule
@@ -81,7 +90,7 @@ export default function RulesScreen({
                 <div className="mt-1 page-copy text-xs">
                   {item.key === "jolly"
                     ? "Each wave rerolls into Low, Nice, Big, or Mega using their current odds."
-                    : `${item.pct}% of runs. Type now changes wave structure and pacing, not point value.`}
+                    : `${item.pct}% of runs. Type changes wave count, pacing, and in harder difficulties can also change point pressure.`}
                 </div>
               </div>
             ))}

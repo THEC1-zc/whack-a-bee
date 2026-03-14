@@ -234,6 +234,36 @@ export function getRunTypeConfig(difficulty: Difficulty, capType: string) {
   return getRunTypeTuning(difficulty, normalizeCapType(capType));
 }
 
+export function getLivePointValuesForType(difficulty: Difficulty, capType: string): Record<HitType, number> {
+  const normalized = normalizeCapType(capType);
+  if (normalized === "jolly") {
+    const mix = JOLLY_TUNING.waveTypePct;
+    const total = mix.low + mix.nice + mix.big + mix.mega;
+    const weighted = (key: keyof RunTypeTuning) =>
+      (
+        GAME_TUNING[difficulty].low[key] * mix.low +
+        GAME_TUNING[difficulty].nice[key] * mix.nice +
+        GAME_TUNING[difficulty].big[key] * mix.big +
+        GAME_TUNING[difficulty].mega[key] * mix.mega
+      ) / total;
+    return {
+      normal: weighted("normalPoints"),
+      fast: weighted("triplePoints"),
+      fuchsia: weighted("quickPoints"),
+      bomb: weighted("bombPoints"),
+      super: weighted("prizePoints"),
+    };
+  }
+  const tuning = getRunTypeTuning(difficulty, normalized);
+  return {
+    normal: tuning.normalPoints,
+    fast: tuning.triplePoints,
+    fuchsia: tuning.quickPoints,
+    bomb: tuning.bombPoints,
+    super: tuning.prizePoints,
+  };
+}
+
 export function getWavePlan(difficulty: Difficulty, capType: string, rolls?: number[]): WavePlan {
   const tuning = getRunTypeTuning(difficulty, normalizeCapType(capType));
   const spawnCount = tuning.maxButterfliesPerWave;
@@ -377,9 +407,10 @@ export function clampLiveScore(score: number, difficulty: Difficulty, capTypeOrM
 
 export function deriveScoreFromHits(
   difficulty: Difficulty,
-  hitStats: { normal: number; fast: number; fuchsia: number; bomb: number; super: number }
+  hitStats: { normal: number; fast: number; fuchsia: number; bomb: number; super: number },
+  capType: string = "low"
 ) {
-  const points = LIVE_POINT_VALUES[difficulty];
+  const points = getLivePointValuesForType(difficulty, capType);
   return (
     hitStats.normal * points.normal +
     hitStats.fast * points.fast +

@@ -11,9 +11,9 @@ const DIFFICULTIES = ["easy", "medium", "hard"];
 const RUN_TYPES = ["low", "nice", "big", "mega"];
 
 const DIFFICULTY_META = {
-  easy: { label: "Easy", emoji: "🟢", color: "#16a34a", fee: 0.015, baseWaves: 14, ppp: 0.00028025 },
-  medium: { label: "Medium", emoji: "🟡", color: "#ca8a04", fee: 0.025, baseWaves: 13, ppp: 0.0004275 },
-  hard: { label: "Hard", emoji: "🔴", color: "#dc2626", fee: 0.035, baseWaves: 8, ppp: 0.0006555 },
+  easy: { label: "Easy", emoji: "🟢", color: "#16a34a", fee: 0.015, baseWaves: 14, ppp: 0.000252225 },
+  medium: { label: "Medium", emoji: "🟡", color: "#ca8a04", fee: 0.025, baseWaves: 13, ppp: 0.00038475 },
+  hard: { label: "Hard", emoji: "🔴", color: "#dc2626", fee: 0.035, baseWaves: 8, ppp: 0.00058995 },
 };
 
 const RUN_TYPE_META = {
@@ -274,22 +274,49 @@ function buildJollyRows(jollySheet) {
   ];
 }
 
+function isNumericCellValue(value) {
+  if (typeof value === "number") return Number.isFinite(value);
+  if (typeof value !== "string") return false;
+  const trimmed = value.trim();
+  if (!trimmed) return false;
+  return /^[-+]?(?:\d+\.?\d*|\.\d+)(?:[Ee][-+]?\d+)?$/.test(trimmed);
+}
+
+function shouldExportAsNumber(sheetName, rowIndex, cellIndex, row, cell) {
+  if (rowIndex === 0) return false;
+  if (sheetName === "jolly") {
+    const numericParams = new Set([
+      "run_roll_pct",
+      "easy_prize_bonus_usdc_gross",
+      "medium_prize_bonus_usdc_gross",
+      "hard_prize_bonus_usdc_gross",
+      "wave_type_low_pct",
+      "wave_type_nice_pct",
+      "wave_type_big_pct",
+      "wave_type_mega_pct",
+      "bf_per_usdc_live_snapshot",
+    ]);
+    return cellIndex === 1 && numericParams.has(row[0]) && isNumericCellValue(cell);
+  }
+  return cellIndex >= 1 && cellIndex <= 4 && isNumericCellValue(cell);
+}
+
 function renderWorkbook(sheets) {
-  const renderRows = (rows) =>
+  const renderRows = (sheetName, rows) =>
     rows
       .map(
-        (row) =>
+        (row, rowIndex) =>
           `    <Row>\n${row
-            .map(
-              (cell) =>
-                `      <Cell><Data ss:Type="${typeof cell === "number" ? "Number" : "String"}">${encodeEntities(cell)}</Data></Cell>`
-            )
+            .map((cell, cellIndex) => {
+              const type = shouldExportAsNumber(sheetName, rowIndex, cellIndex, row, cell) ? "Number" : "String";
+              return `      <Cell><Data ss:Type="${type}">${encodeEntities(cell)}</Data></Cell>`;
+            })
             .join("\n")}\n    </Row>`
       )
       .join("\n");
 
   const renderSheet = (name, rows) =>
-    `  <Worksheet ss:Name="${encodeEntities(name)}">\n   <Table ss:ExpandedColumnCount="${Math.max(...rows.map((row) => row.length))}" ss:ExpandedRowCount="${rows.length}" x:FullColumns="1" x:FullRows="1">\n${renderRows(rows)}\n   </Table>\n  </Worksheet>`;
+    `  <Worksheet ss:Name="${encodeEntities(name)}">\n   <Table ss:ExpandedColumnCount="${Math.max(...rows.map((row) => row.length))}" ss:ExpandedRowCount="${rows.length}" x:FullColumns="1" x:FullRows="1">\n${renderRows(name, rows)}\n   </Table>\n  </Worksheet>`;
 
   return `<?xml version="1.0"?>\n<?mso-application progid="Excel.Sheet"?>\n<Workbook xmlns="urn:schemas-microsoft-com:office:spreadsheet"\n xmlns:o="urn:schemas-microsoft-com:office:office"\n xmlns:x="urn:schemas-microsoft-com:office:excel"\n xmlns:ss="urn:schemas-microsoft-com:office:spreadsheet"\n xmlns:html="http://www.w3.org/TR/REC-html40">\n <WorksheetOptions xmlns="urn:schemas-microsoft-com:office:excel"></WorksheetOptions>\n${Object.entries(sheets)
     .map(([name, rows]) => renderSheet(name, rows))
@@ -373,17 +400,20 @@ function main() {
   const currentHard = parseMatrixSheet(workbook["all hard"]);
   const jollySheet = parseSingleSheet(workbook["jolly"]);
   const bfSnapshot = toNumber(easyMatrix.low.bf_per_usdc_live_snapshot || jollySheet.bf_per_usdc_live_snapshot || 0);
+  const mediumMatrix = applyTypeRows(cloneDeep(currentMedium));
+  const hardMatrix = applyTypeRows(cloneDeep(currentHard));
 
-  const mediumMatrix = applyTypeRows(buildDerivedDifficulty(easyMatrix, "medium", MEDIUM_RULES));
-  const hardMatrix = applyTypeRows(buildDerivedDifficulty(easyMatrix, "hard", HARD_RULES));
-
-  // Preserve explicit fee/base wave overrides from the workbook if present.
   for (const type of RUN_TYPES) {
-    if (currentMedium[type]?.fee_usdc) mediumMatrix[type].fee_usdc = currentMedium[type].fee_usdc;
-    if (currentMedium[type]?.base_waves) mediumMatrix[type].base_waves = currentMedium[type].base_waves;
+    mediumMatrix[type].fee_usdc = currentMedium[type]?.fee_usdc || String(DIFFICULTY_META.medium.fee);
+    mediumMatrix[type].base_waves = currentMedium[type]?.base_waves || String(DIFFICULTY_META.medium.baseWaves);
+    mediumMatrix[type].ppp_input_usdc_per_point = currentMedium[type]?.ppp_input_usdc_per_point || String(DIFFICULTY_META.medium.ppp);
+    mediumMatrix[type].bf_per_usdc_live_snapshot = currentMedium[type]?.bf_per_usdc_live_snapshot || String(bfSnapshot);
     mediumMatrix[type].total_waves = String(toNumber(mediumMatrix[type].base_waves) + toNumber(mediumMatrix[type].extra_waves));
-    if (currentHard[type]?.fee_usdc) hardMatrix[type].fee_usdc = currentHard[type].fee_usdc;
-    if (currentHard[type]?.base_waves) hardMatrix[type].base_waves = currentHard[type].base_waves;
+
+    hardMatrix[type].fee_usdc = currentHard[type]?.fee_usdc || String(DIFFICULTY_META.hard.fee);
+    hardMatrix[type].base_waves = currentHard[type]?.base_waves || String(DIFFICULTY_META.hard.baseWaves);
+    hardMatrix[type].ppp_input_usdc_per_point = currentHard[type]?.ppp_input_usdc_per_point || String(DIFFICULTY_META.hard.ppp);
+    hardMatrix[type].bf_per_usdc_live_snapshot = currentHard[type]?.bf_per_usdc_live_snapshot || String(bfSnapshot);
     hardMatrix[type].total_waves = String(toNumber(hardMatrix[type].base_waves) + toNumber(hardMatrix[type].extra_waves));
   }
 

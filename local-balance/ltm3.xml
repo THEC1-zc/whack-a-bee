@@ -19,271 +19,271 @@
     </Row>
     <Row>
       <Cell><Data ss:Type="String">run_roll_pct</Data></Cell>
-      <Cell><Data ss:Type="String">24.545455</Data></Cell>
-      <Cell><Data ss:Type="String">32.727273</Data></Cell>
-      <Cell><Data ss:Type="String">24.545455</Data></Cell>
-      <Cell><Data ss:Type="String">8.181818</Data></Cell>
+      <Cell><Data ss:Type="Number">24.545455</Data></Cell>
+      <Cell><Data ss:Type="Number">32.727273</Data></Cell>
+      <Cell><Data ss:Type="Number">24.545455</Data></Cell>
+      <Cell><Data ss:Type="Number">8.181818</Data></Cell>
       <Cell><Data ss:Type="String">pct</Data></Cell>
       <Cell><Data ss:Type="String">normalized standard run-roll odds</Data></Cell>
     </Row>
     <Row>
       <Cell><Data ss:Type="String">fee_usdc</Data></Cell>
-      <Cell><Data ss:Type="String">1.4999999999999999E-2</Data></Cell>
-      <Cell><Data ss:Type="String">1.4999999999999999E-2</Data></Cell>
-      <Cell><Data ss:Type="String">1.4999999999999999E-2</Data></Cell>
-      <Cell><Data ss:Type="String">1.4999999999999999E-2</Data></Cell>
+      <Cell><Data ss:Type="Number">1.4999999999999999E-2</Data></Cell>
+      <Cell><Data ss:Type="Number">1.4999999999999999E-2</Data></Cell>
+      <Cell><Data ss:Type="Number">1.4999999999999999E-2</Data></Cell>
+      <Cell><Data ss:Type="Number">1.4999999999999999E-2</Data></Cell>
       <Cell><Data ss:Type="String">usdc</Data></Cell>
       <Cell><Data ss:Type="String">primary edit surface for easy</Data></Cell>
     </Row>
     <Row>
       <Cell><Data ss:Type="String">base_waves</Data></Cell>
-      <Cell><Data ss:Type="String">14</Data></Cell>
-      <Cell><Data ss:Type="String">14</Data></Cell>
-      <Cell><Data ss:Type="String">14</Data></Cell>
-      <Cell><Data ss:Type="String">14</Data></Cell>
+      <Cell><Data ss:Type="Number">14</Data></Cell>
+      <Cell><Data ss:Type="Number">14</Data></Cell>
+      <Cell><Data ss:Type="Number">14</Data></Cell>
+      <Cell><Data ss:Type="Number">14</Data></Cell>
       <Cell><Data ss:Type="String">count</Data></Cell>
       <Cell><Data ss:Type="String">shared difficulty baseline</Data></Cell>
     </Row>
     <Row>
       <Cell><Data ss:Type="String">extra_waves</Data></Cell>
-      <Cell><Data ss:Type="String">0</Data></Cell>
-      <Cell><Data ss:Type="String">1</Data></Cell>
-      <Cell><Data ss:Type="String">2</Data></Cell>
-      <Cell><Data ss:Type="String">3</Data></Cell>
+      <Cell><Data ss:Type="Number">0</Data></Cell>
+      <Cell><Data ss:Type="Number">1</Data></Cell>
+      <Cell><Data ss:Type="Number">2</Data></Cell>
+      <Cell><Data ss:Type="Number">3</Data></Cell>
       <Cell><Data ss:Type="String">count</Data></Cell>
       <Cell><Data ss:Type="String">type-specific wave growth</Data></Cell>
     </Row>
     <Row>
       <Cell><Data ss:Type="String">total_waves</Data></Cell>
-      <Cell><Data ss:Type="String">14</Data></Cell>
-      <Cell><Data ss:Type="String">15</Data></Cell>
-      <Cell><Data ss:Type="String">16</Data></Cell>
-      <Cell><Data ss:Type="String">17</Data></Cell>
+      <Cell><Data ss:Type="Number">14</Data></Cell>
+      <Cell><Data ss:Type="Number">15</Data></Cell>
+      <Cell><Data ss:Type="Number">16</Data></Cell>
+      <Cell><Data ss:Type="Number">17</Data></Cell>
       <Cell><Data ss:Type="String">count</Data></Cell>
       <Cell><Data ss:Type="String">base + extra</Data></Cell>
     </Row>
     <Row>
       <Cell><Data ss:Type="String">wave_duration_ms</Data></Cell>
-      <Cell><Data ss:Type="String">1300</Data></Cell>
-      <Cell><Data ss:Type="String">1300</Data></Cell>
-      <Cell><Data ss:Type="String">1300</Data></Cell>
-      <Cell><Data ss:Type="String">1300</Data></Cell>
+      <Cell><Data ss:Type="Number">1300</Data></Cell>
+      <Cell><Data ss:Type="Number">1300</Data></Cell>
+      <Cell><Data ss:Type="Number">1300</Data></Cell>
+      <Cell><Data ss:Type="Number">1300</Data></Cell>
       <Cell><Data ss:Type="String">ms</Data></Cell>
       <Cell><Data ss:Type="String">authoritative wave timeout per type</Data></Cell>
     </Row>
     <Row>
       <Cell><Data ss:Type="String">max_butterflies_per_wave</Data></Cell>
-      <Cell><Data ss:Type="String">4</Data></Cell>
-      <Cell><Data ss:Type="String">4</Data></Cell>
-      <Cell><Data ss:Type="String">4</Data></Cell>
-      <Cell><Data ss:Type="String">4</Data></Cell>
+      <Cell><Data ss:Type="Number">4</Data></Cell>
+      <Cell><Data ss:Type="Number">4</Data></Cell>
+      <Cell><Data ss:Type="Number">4</Data></Cell>
+      <Cell><Data ss:Type="Number">4</Data></Cell>
       <Cell><Data ss:Type="String">count</Data></Cell>
       <Cell><Data ss:Type="String">authoritative spawn count per wave</Data></Cell>
     </Row>
     <Row>
       <Cell><Data ss:Type="String">triple_max_per_game</Data></Cell>
-      <Cell><Data ss:Type="String">7</Data></Cell>
-      <Cell><Data ss:Type="String">8</Data></Cell>
-      <Cell><Data ss:Type="String">9</Data></Cell>
-      <Cell><Data ss:Type="String">10</Data></Cell>
+      <Cell><Data ss:Type="Number">7</Data></Cell>
+      <Cell><Data ss:Type="Number">8</Data></Cell>
+      <Cell><Data ss:Type="Number">9</Data></Cell>
+      <Cell><Data ss:Type="Number">10</Data></Cell>
       <Cell><Data ss:Type="String">count</Data></Cell>
       <Cell><Data ss:Type="String">authoritative per-run cap</Data></Cell>
     </Row>
     <Row>
       <Cell><Data ss:Type="String">triple_max_per_wave</Data></Cell>
-      <Cell><Data ss:Type="String">2</Data></Cell>
-      <Cell><Data ss:Type="String">2</Data></Cell>
-      <Cell><Data ss:Type="String">2</Data></Cell>
-      <Cell><Data ss:Type="String">3</Data></Cell>
+      <Cell><Data ss:Type="Number">2</Data></Cell>
+      <Cell><Data ss:Type="Number">2</Data></Cell>
+      <Cell><Data ss:Type="Number">2</Data></Cell>
+      <Cell><Data ss:Type="Number">3</Data></Cell>
       <Cell><Data ss:Type="String">count</Data></Cell>
       <Cell><Data ss:Type="String">authoritative per-wave cap</Data></Cell>
     </Row>
     <Row>
       <Cell><Data ss:Type="String">triple_chance_per_wave</Data></Cell>
-      <Cell><Data ss:Type="String">0.3</Data></Cell>
-      <Cell><Data ss:Type="String">0.3</Data></Cell>
-      <Cell><Data ss:Type="String">0.3</Data></Cell>
-      <Cell><Data ss:Type="String">0.44</Data></Cell>
+      <Cell><Data ss:Type="Number">0.3</Data></Cell>
+      <Cell><Data ss:Type="Number">0.3</Data></Cell>
+      <Cell><Data ss:Type="Number">0.3</Data></Cell>
+      <Cell><Data ss:Type="Number">0.44</Data></Cell>
       <Cell><Data ss:Type="String">ratio</Data></Cell>
       <Cell><Data ss:Type="String">authoritative chance on each positive slot</Data></Cell>
     </Row>
     <Row>
       <Cell><Data ss:Type="String">triple_points</Data></Cell>
-      <Cell><Data ss:Type="String">3</Data></Cell>
-      <Cell><Data ss:Type="String">3</Data></Cell>
-      <Cell><Data ss:Type="String">3</Data></Cell>
-      <Cell><Data ss:Type="String">3</Data></Cell>
+      <Cell><Data ss:Type="Number">3</Data></Cell>
+      <Cell><Data ss:Type="Number">3</Data></Cell>
+      <Cell><Data ss:Type="Number">3</Data></Cell>
+      <Cell><Data ss:Type="Number">3</Data></Cell>
       <Cell><Data ss:Type="String">pts</Data></Cell>
       <Cell><Data ss:Type="String">authoritative score value</Data></Cell>
     </Row>
     <Row>
       <Cell><Data ss:Type="String">triple_duration_ms</Data></Cell>
-      <Cell><Data ss:Type="String">1050</Data></Cell>
-      <Cell><Data ss:Type="String">1050</Data></Cell>
-      <Cell><Data ss:Type="String">1050</Data></Cell>
-      <Cell><Data ss:Type="String">1050</Data></Cell>
+      <Cell><Data ss:Type="Number">1050</Data></Cell>
+      <Cell><Data ss:Type="Number">1050</Data></Cell>
+      <Cell><Data ss:Type="Number">1050</Data></Cell>
+      <Cell><Data ss:Type="Number">1050</Data></Cell>
       <Cell><Data ss:Type="String">ms</Data></Cell>
       <Cell><Data ss:Type="String">authoritative display time</Data></Cell>
     </Row>
     <Row>
       <Cell><Data ss:Type="String">quick_max_per_game</Data></Cell>
-      <Cell><Data ss:Type="String">3</Data></Cell>
-      <Cell><Data ss:Type="String">3</Data></Cell>
-      <Cell><Data ss:Type="String">3</Data></Cell>
-      <Cell><Data ss:Type="String">3</Data></Cell>
+      <Cell><Data ss:Type="Number">3</Data></Cell>
+      <Cell><Data ss:Type="Number">3</Data></Cell>
+      <Cell><Data ss:Type="Number">3</Data></Cell>
+      <Cell><Data ss:Type="Number">3</Data></Cell>
       <Cell><Data ss:Type="String">count</Data></Cell>
       <Cell><Data ss:Type="String">authoritative per-run cap</Data></Cell>
     </Row>
     <Row>
       <Cell><Data ss:Type="String">quick_max_per_wave</Data></Cell>
-      <Cell><Data ss:Type="String">1</Data></Cell>
-      <Cell><Data ss:Type="String">1</Data></Cell>
-      <Cell><Data ss:Type="String">1</Data></Cell>
-      <Cell><Data ss:Type="String">1</Data></Cell>
+      <Cell><Data ss:Type="Number">1</Data></Cell>
+      <Cell><Data ss:Type="Number">1</Data></Cell>
+      <Cell><Data ss:Type="Number">1</Data></Cell>
+      <Cell><Data ss:Type="Number">1</Data></Cell>
       <Cell><Data ss:Type="String">count</Data></Cell>
       <Cell><Data ss:Type="String">authoritative per-wave cap</Data></Cell>
     </Row>
     <Row>
       <Cell><Data ss:Type="String">quick_chance_per_wave</Data></Cell>
-      <Cell><Data ss:Type="String">0.15</Data></Cell>
-      <Cell><Data ss:Type="String">0.15</Data></Cell>
-      <Cell><Data ss:Type="String">0.15</Data></Cell>
-      <Cell><Data ss:Type="String">0.3</Data></Cell>
+      <Cell><Data ss:Type="Number">0.15</Data></Cell>
+      <Cell><Data ss:Type="Number">0.15</Data></Cell>
+      <Cell><Data ss:Type="Number">0.15</Data></Cell>
+      <Cell><Data ss:Type="Number">0.3</Data></Cell>
       <Cell><Data ss:Type="String">ratio</Data></Cell>
       <Cell><Data ss:Type="String">authoritative chance on each positive slot</Data></Cell>
     </Row>
     <Row>
       <Cell><Data ss:Type="String">quick_points</Data></Cell>
-      <Cell><Data ss:Type="String">3.5</Data></Cell>
-      <Cell><Data ss:Type="String">3.5</Data></Cell>
-      <Cell><Data ss:Type="String">3.5</Data></Cell>
-      <Cell><Data ss:Type="String">3.5</Data></Cell>
+      <Cell><Data ss:Type="Number">3.5</Data></Cell>
+      <Cell><Data ss:Type="Number">3.5</Data></Cell>
+      <Cell><Data ss:Type="Number">3.5</Data></Cell>
+      <Cell><Data ss:Type="Number">3.5</Data></Cell>
       <Cell><Data ss:Type="String">pts</Data></Cell>
       <Cell><Data ss:Type="String">authoritative score value</Data></Cell>
     </Row>
     <Row>
       <Cell><Data ss:Type="String">quick_duration_ms</Data></Cell>
-      <Cell><Data ss:Type="String">700</Data></Cell>
-      <Cell><Data ss:Type="String">700</Data></Cell>
-      <Cell><Data ss:Type="String">700</Data></Cell>
-      <Cell><Data ss:Type="String">700</Data></Cell>
+      <Cell><Data ss:Type="Number">700</Data></Cell>
+      <Cell><Data ss:Type="Number">700</Data></Cell>
+      <Cell><Data ss:Type="Number">700</Data></Cell>
+      <Cell><Data ss:Type="Number">700</Data></Cell>
       <Cell><Data ss:Type="String">ms</Data></Cell>
       <Cell><Data ss:Type="String">authoritative display time</Data></Cell>
     </Row>
     <Row>
       <Cell><Data ss:Type="String">prize_max_per_game</Data></Cell>
-      <Cell><Data ss:Type="String">1</Data></Cell>
-      <Cell><Data ss:Type="String">1</Data></Cell>
-      <Cell><Data ss:Type="String">1</Data></Cell>
-      <Cell><Data ss:Type="String">1</Data></Cell>
+      <Cell><Data ss:Type="Number">1</Data></Cell>
+      <Cell><Data ss:Type="Number">1</Data></Cell>
+      <Cell><Data ss:Type="Number">1</Data></Cell>
+      <Cell><Data ss:Type="Number">1</Data></Cell>
       <Cell><Data ss:Type="String">count</Data></Cell>
       <Cell><Data ss:Type="String">authoritative prize cap</Data></Cell>
     </Row>
     <Row>
       <Cell><Data ss:Type="String">prize_chance</Data></Cell>
-      <Cell><Data ss:Type="String">1.0000000000000000E-2</Data></Cell>
-      <Cell><Data ss:Type="String">1.0000000000000000E-2</Data></Cell>
-      <Cell><Data ss:Type="String">1.0000000000000000E-2</Data></Cell>
-      <Cell><Data ss:Type="String">1.0000000000000000E-2</Data></Cell>
+      <Cell><Data ss:Type="Number">0.01</Data></Cell>
+      <Cell><Data ss:Type="Number">0.01</Data></Cell>
+      <Cell><Data ss:Type="Number">0.01</Data></Cell>
+      <Cell><Data ss:Type="Number">0.01</Data></Cell>
       <Cell><Data ss:Type="String">ratio</Data></Cell>
       <Cell><Data ss:Type="String">authoritative per-run chance</Data></Cell>
     </Row>
     <Row>
       <Cell><Data ss:Type="String">prize_points</Data></Cell>
-      <Cell><Data ss:Type="String">1</Data></Cell>
-      <Cell><Data ss:Type="String">1</Data></Cell>
-      <Cell><Data ss:Type="String">1</Data></Cell>
-      <Cell><Data ss:Type="String">1</Data></Cell>
+      <Cell><Data ss:Type="Number">1</Data></Cell>
+      <Cell><Data ss:Type="Number">1</Data></Cell>
+      <Cell><Data ss:Type="Number">1</Data></Cell>
+      <Cell><Data ss:Type="Number">1</Data></Cell>
       <Cell><Data ss:Type="String">pts</Data></Cell>
       <Cell><Data ss:Type="String">authoritative score value</Data></Cell>
     </Row>
     <Row>
       <Cell><Data ss:Type="String">prize_bonus_usdc_gross</Data></Cell>
-      <Cell><Data ss:Type="String">0.016538</Data></Cell>
-      <Cell><Data ss:Type="String">0.025725</Data></Cell>
-      <Cell><Data ss:Type="String">0.03675</Data></Cell>
-      <Cell><Data ss:Type="String">0.055125</Data></Cell>
+      <Cell><Data ss:Type="Number">0.016538</Data></Cell>
+      <Cell><Data ss:Type="Number">0.025725</Data></Cell>
+      <Cell><Data ss:Type="Number">0.03675</Data></Cell>
+      <Cell><Data ss:Type="Number">0.055125</Data></Cell>
       <Cell><Data ss:Type="String">usdc</Data></Cell>
       <Cell><Data ss:Type="String">authoritative gross Prizefly bonus</Data></Cell>
     </Row>
     <Row>
       <Cell><Data ss:Type="String">prize_duration_ms</Data></Cell>
-      <Cell><Data ss:Type="String">1300</Data></Cell>
-      <Cell><Data ss:Type="String">1300</Data></Cell>
-      <Cell><Data ss:Type="String">1300</Data></Cell>
-      <Cell><Data ss:Type="String">1300</Data></Cell>
+      <Cell><Data ss:Type="Number">1300</Data></Cell>
+      <Cell><Data ss:Type="Number">1300</Data></Cell>
+      <Cell><Data ss:Type="Number">1300</Data></Cell>
+      <Cell><Data ss:Type="Number">1300</Data></Cell>
       <Cell><Data ss:Type="String">ms</Data></Cell>
       <Cell><Data ss:Type="String">authoritative display time</Data></Cell>
     </Row>
     <Row>
       <Cell><Data ss:Type="String">normal_points</Data></Cell>
-      <Cell><Data ss:Type="String">1</Data></Cell>
-      <Cell><Data ss:Type="String">1</Data></Cell>
-      <Cell><Data ss:Type="String">1</Data></Cell>
-      <Cell><Data ss:Type="String">1</Data></Cell>
+      <Cell><Data ss:Type="Number">1</Data></Cell>
+      <Cell><Data ss:Type="Number">1</Data></Cell>
+      <Cell><Data ss:Type="Number">1</Data></Cell>
+      <Cell><Data ss:Type="Number">1</Data></Cell>
       <Cell><Data ss:Type="String">pts</Data></Cell>
       <Cell><Data ss:Type="String">authoritative score value</Data></Cell>
     </Row>
     <Row>
       <Cell><Data ss:Type="String">normal_duration_ms</Data></Cell>
-      <Cell><Data ss:Type="String">1200</Data></Cell>
-      <Cell><Data ss:Type="String">1200</Data></Cell>
-      <Cell><Data ss:Type="String">1200</Data></Cell>
-      <Cell><Data ss:Type="String">1200</Data></Cell>
+      <Cell><Data ss:Type="Number">1200</Data></Cell>
+      <Cell><Data ss:Type="Number">1200</Data></Cell>
+      <Cell><Data ss:Type="Number">1200</Data></Cell>
+      <Cell><Data ss:Type="Number">1200</Data></Cell>
       <Cell><Data ss:Type="String">ms</Data></Cell>
       <Cell><Data ss:Type="String">authoritative display time</Data></Cell>
     </Row>
     <Row>
       <Cell><Data ss:Type="String">bombs_base_per_wave</Data></Cell>
-      <Cell><Data ss:Type="String">1</Data></Cell>
-      <Cell><Data ss:Type="String">1</Data></Cell>
-      <Cell><Data ss:Type="String">1</Data></Cell>
-      <Cell><Data ss:Type="String">1</Data></Cell>
+      <Cell><Data ss:Type="Number">1</Data></Cell>
+      <Cell><Data ss:Type="Number">1</Data></Cell>
+      <Cell><Data ss:Type="Number">1</Data></Cell>
+      <Cell><Data ss:Type="Number">1</Data></Cell>
       <Cell><Data ss:Type="String">count</Data></Cell>
       <Cell><Data ss:Type="String">authoritative guaranteed bombs per wave</Data></Cell>
     </Row>
     <Row>
       <Cell><Data ss:Type="String">bombs_second_chance</Data></Cell>
-      <Cell><Data ss:Type="String">0.25</Data></Cell>
-      <Cell><Data ss:Type="String">0.25</Data></Cell>
-      <Cell><Data ss:Type="String">0.35</Data></Cell>
-      <Cell><Data ss:Type="String">0.35</Data></Cell>
+      <Cell><Data ss:Type="Number">0.25</Data></Cell>
+      <Cell><Data ss:Type="Number">0.25</Data></Cell>
+      <Cell><Data ss:Type="Number">0.35</Data></Cell>
+      <Cell><Data ss:Type="Number">0.35</Data></Cell>
       <Cell><Data ss:Type="String">ratio</Data></Cell>
       <Cell><Data ss:Type="String">authoritative chance for one extra bomb</Data></Cell>
     </Row>
     <Row>
       <Cell><Data ss:Type="String">bomb_points</Data></Cell>
-      <Cell><Data ss:Type="String">-2</Data></Cell>
-      <Cell><Data ss:Type="String">-2</Data></Cell>
-      <Cell><Data ss:Type="String">-2</Data></Cell>
-      <Cell><Data ss:Type="String">-2</Data></Cell>
+      <Cell><Data ss:Type="Number">-2</Data></Cell>
+      <Cell><Data ss:Type="Number">-2</Data></Cell>
+      <Cell><Data ss:Type="Number">-2</Data></Cell>
+      <Cell><Data ss:Type="Number">-2</Data></Cell>
       <Cell><Data ss:Type="String">pts</Data></Cell>
       <Cell><Data ss:Type="String">authoritative score penalty</Data></Cell>
     </Row>
     <Row>
       <Cell><Data ss:Type="String">bomb_duration_ms</Data></Cell>
-      <Cell><Data ss:Type="String">1300</Data></Cell>
-      <Cell><Data ss:Type="String">1300</Data></Cell>
-      <Cell><Data ss:Type="String">1300</Data></Cell>
-      <Cell><Data ss:Type="String">1300</Data></Cell>
+      <Cell><Data ss:Type="Number">1300</Data></Cell>
+      <Cell><Data ss:Type="Number">1300</Data></Cell>
+      <Cell><Data ss:Type="Number">1300</Data></Cell>
+      <Cell><Data ss:Type="Number">1300</Data></Cell>
       <Cell><Data ss:Type="String">ms</Data></Cell>
       <Cell><Data ss:Type="String">authoritative display time</Data></Cell>
     </Row>
     <Row>
       <Cell><Data ss:Type="String">ppp_input_usdc_per_point</Data></Cell>
-      <Cell><Data ss:Type="String">2.8025E-4</Data></Cell>
-      <Cell><Data ss:Type="String">2.8025E-4</Data></Cell>
-      <Cell><Data ss:Type="String">2.8025E-4</Data></Cell>
-      <Cell><Data ss:Type="String">2.8025E-4</Data></Cell>
+      <Cell><Data ss:Type="Number">2.5222500000000002E-4</Data></Cell>
+      <Cell><Data ss:Type="Number">2.5222500000000002E-4</Data></Cell>
+      <Cell><Data ss:Type="Number">2.5222500000000002E-4</Data></Cell>
+      <Cell><Data ss:Type="Number">2.5222500000000002E-4</Data></Cell>
       <Cell><Data ss:Type="String">usdc/pt</Data></Cell>
       <Cell><Data ss:Type="String">authoritative point-to-USDC conversion</Data></Cell>
     </Row>
     <Row>
       <Cell><Data ss:Type="String">bf_per_usdc_live_snapshot</Data></Cell>
-      <Cell><Data ss:Type="String">4775549.188156637</Data></Cell>
-      <Cell><Data ss:Type="String">4775549.188156637</Data></Cell>
-      <Cell><Data ss:Type="String">4775549.188156637</Data></Cell>
-      <Cell><Data ss:Type="String">4775549.188156637</Data></Cell>
+      <Cell><Data ss:Type="Number">4775549.188156637</Data></Cell>
+      <Cell><Data ss:Type="Number">4775549.188156637</Data></Cell>
+      <Cell><Data ss:Type="Number">4775549.188156637</Data></Cell>
+      <Cell><Data ss:Type="Number">4775549.188156637</Data></Cell>
       <Cell><Data ss:Type="String">bf/usdc</Data></Cell>
       <Cell><Data ss:Type="String">reference snapshot only, live pricing still refreshes at payout time</Data></Cell>
     </Row>
@@ -302,271 +302,271 @@
     </Row>
     <Row>
       <Cell><Data ss:Type="String">run_roll_pct</Data></Cell>
-      <Cell><Data ss:Type="String">24.545455</Data></Cell>
-      <Cell><Data ss:Type="String">32.727273</Data></Cell>
-      <Cell><Data ss:Type="String">24.545455</Data></Cell>
-      <Cell><Data ss:Type="String">8.181818</Data></Cell>
+      <Cell><Data ss:Type="Number">24.545455</Data></Cell>
+      <Cell><Data ss:Type="Number">32.727273</Data></Cell>
+      <Cell><Data ss:Type="Number">24.545455</Data></Cell>
+      <Cell><Data ss:Type="Number">8.181818</Data></Cell>
       <Cell><Data ss:Type="String">pct</Data></Cell>
       <Cell><Data ss:Type="String">normalized standard run-roll odds</Data></Cell>
     </Row>
     <Row>
       <Cell><Data ss:Type="String">fee_usdc</Data></Cell>
-      <Cell><Data ss:Type="String">2.5000000000000001E-2</Data></Cell>
-      <Cell><Data ss:Type="String">2.5000000000000001E-2</Data></Cell>
-      <Cell><Data ss:Type="String">2.5000000000000001E-2</Data></Cell>
-      <Cell><Data ss:Type="String">2.5000000000000001E-2</Data></Cell>
+      <Cell><Data ss:Type="Number">2.5000000000000001E-2</Data></Cell>
+      <Cell><Data ss:Type="Number">2.5000000000000001E-2</Data></Cell>
+      <Cell><Data ss:Type="Number">2.5000000000000001E-2</Data></Cell>
+      <Cell><Data ss:Type="Number">2.5000000000000001E-2</Data></Cell>
       <Cell><Data ss:Type="String">usdc</Data></Cell>
       <Cell><Data ss:Type="String">primary edit surface for medium</Data></Cell>
     </Row>
     <Row>
       <Cell><Data ss:Type="String">base_waves</Data></Cell>
-      <Cell><Data ss:Type="String">13</Data></Cell>
-      <Cell><Data ss:Type="String">13</Data></Cell>
-      <Cell><Data ss:Type="String">13</Data></Cell>
-      <Cell><Data ss:Type="String">13</Data></Cell>
+      <Cell><Data ss:Type="Number">13</Data></Cell>
+      <Cell><Data ss:Type="Number">13</Data></Cell>
+      <Cell><Data ss:Type="Number">13</Data></Cell>
+      <Cell><Data ss:Type="Number">13</Data></Cell>
       <Cell><Data ss:Type="String">count</Data></Cell>
       <Cell><Data ss:Type="String">shared difficulty baseline</Data></Cell>
     </Row>
     <Row>
       <Cell><Data ss:Type="String">extra_waves</Data></Cell>
-      <Cell><Data ss:Type="String">0</Data></Cell>
-      <Cell><Data ss:Type="String">1</Data></Cell>
-      <Cell><Data ss:Type="String">2</Data></Cell>
-      <Cell><Data ss:Type="String">3</Data></Cell>
+      <Cell><Data ss:Type="Number">0</Data></Cell>
+      <Cell><Data ss:Type="Number">1</Data></Cell>
+      <Cell><Data ss:Type="Number">2</Data></Cell>
+      <Cell><Data ss:Type="Number">3</Data></Cell>
       <Cell><Data ss:Type="String">count</Data></Cell>
       <Cell><Data ss:Type="String">type-specific wave growth</Data></Cell>
     </Row>
     <Row>
       <Cell><Data ss:Type="String">total_waves</Data></Cell>
-      <Cell><Data ss:Type="String">13</Data></Cell>
-      <Cell><Data ss:Type="String">14</Data></Cell>
-      <Cell><Data ss:Type="String">15</Data></Cell>
-      <Cell><Data ss:Type="String">16</Data></Cell>
+      <Cell><Data ss:Type="Number">13</Data></Cell>
+      <Cell><Data ss:Type="Number">14</Data></Cell>
+      <Cell><Data ss:Type="Number">15</Data></Cell>
+      <Cell><Data ss:Type="Number">16</Data></Cell>
       <Cell><Data ss:Type="String">count</Data></Cell>
       <Cell><Data ss:Type="String">base + extra</Data></Cell>
     </Row>
     <Row>
       <Cell><Data ss:Type="String">wave_duration_ms</Data></Cell>
-      <Cell><Data ss:Type="String">1105</Data></Cell>
-      <Cell><Data ss:Type="String">1105</Data></Cell>
-      <Cell><Data ss:Type="String">1105</Data></Cell>
-      <Cell><Data ss:Type="String">1105</Data></Cell>
+      <Cell><Data ss:Type="Number">1105</Data></Cell>
+      <Cell><Data ss:Type="Number">1105</Data></Cell>
+      <Cell><Data ss:Type="Number">1105</Data></Cell>
+      <Cell><Data ss:Type="Number">1105</Data></Cell>
       <Cell><Data ss:Type="String">ms</Data></Cell>
       <Cell><Data ss:Type="String">authoritative wave timeout per type</Data></Cell>
     </Row>
     <Row>
       <Cell><Data ss:Type="String">max_butterflies_per_wave</Data></Cell>
-      <Cell><Data ss:Type="String">4</Data></Cell>
-      <Cell><Data ss:Type="String">4</Data></Cell>
-      <Cell><Data ss:Type="String">5</Data></Cell>
-      <Cell><Data ss:Type="String">5</Data></Cell>
+      <Cell><Data ss:Type="Number">4</Data></Cell>
+      <Cell><Data ss:Type="Number">4</Data></Cell>
+      <Cell><Data ss:Type="Number">5</Data></Cell>
+      <Cell><Data ss:Type="Number">5</Data></Cell>
       <Cell><Data ss:Type="String">count</Data></Cell>
       <Cell><Data ss:Type="String">authoritative spawn count per wave</Data></Cell>
     </Row>
     <Row>
       <Cell><Data ss:Type="String">triple_max_per_game</Data></Cell>
-      <Cell><Data ss:Type="String">8</Data></Cell>
-      <Cell><Data ss:Type="String">9</Data></Cell>
-      <Cell><Data ss:Type="String">10</Data></Cell>
-      <Cell><Data ss:Type="String">12</Data></Cell>
+      <Cell><Data ss:Type="Number">8</Data></Cell>
+      <Cell><Data ss:Type="Number">9</Data></Cell>
+      <Cell><Data ss:Type="Number">10</Data></Cell>
+      <Cell><Data ss:Type="Number">12</Data></Cell>
       <Cell><Data ss:Type="String">count</Data></Cell>
       <Cell><Data ss:Type="String">authoritative per-run cap</Data></Cell>
     </Row>
     <Row>
       <Cell><Data ss:Type="String">triple_max_per_wave</Data></Cell>
-      <Cell><Data ss:Type="String">2</Data></Cell>
-      <Cell><Data ss:Type="String">2</Data></Cell>
-      <Cell><Data ss:Type="String">2</Data></Cell>
-      <Cell><Data ss:Type="String">3</Data></Cell>
+      <Cell><Data ss:Type="Number">2</Data></Cell>
+      <Cell><Data ss:Type="Number">2</Data></Cell>
+      <Cell><Data ss:Type="Number">2</Data></Cell>
+      <Cell><Data ss:Type="Number">3</Data></Cell>
       <Cell><Data ss:Type="String">count</Data></Cell>
       <Cell><Data ss:Type="String">authoritative per-wave cap</Data></Cell>
     </Row>
     <Row>
       <Cell><Data ss:Type="String">triple_chance_per_wave</Data></Cell>
-      <Cell><Data ss:Type="String">0.33</Data></Cell>
-      <Cell><Data ss:Type="String">0.33</Data></Cell>
-      <Cell><Data ss:Type="String">0.33</Data></Cell>
-      <Cell><Data ss:Type="String">0.484</Data></Cell>
+      <Cell><Data ss:Type="Number">0.33</Data></Cell>
+      <Cell><Data ss:Type="Number">0.33</Data></Cell>
+      <Cell><Data ss:Type="Number">0.33</Data></Cell>
+      <Cell><Data ss:Type="Number">0.48399999999999999</Data></Cell>
       <Cell><Data ss:Type="String">ratio</Data></Cell>
       <Cell><Data ss:Type="String">authoritative chance on each positive slot</Data></Cell>
     </Row>
     <Row>
       <Cell><Data ss:Type="String">triple_points</Data></Cell>
-      <Cell><Data ss:Type="String">4</Data></Cell>
-      <Cell><Data ss:Type="String">4</Data></Cell>
-      <Cell><Data ss:Type="String">4</Data></Cell>
-      <Cell><Data ss:Type="String">4</Data></Cell>
+      <Cell><Data ss:Type="Number">3.5</Data></Cell>
+      <Cell><Data ss:Type="Number">3.5</Data></Cell>
+      <Cell><Data ss:Type="Number">3.5</Data></Cell>
+      <Cell><Data ss:Type="Number">3.5</Data></Cell>
       <Cell><Data ss:Type="String">pts</Data></Cell>
       <Cell><Data ss:Type="String">authoritative score value</Data></Cell>
     </Row>
     <Row>
       <Cell><Data ss:Type="String">triple_duration_ms</Data></Cell>
-      <Cell><Data ss:Type="String">945</Data></Cell>
-      <Cell><Data ss:Type="String">945</Data></Cell>
-      <Cell><Data ss:Type="String">945</Data></Cell>
-      <Cell><Data ss:Type="String">945</Data></Cell>
+      <Cell><Data ss:Type="Number">945</Data></Cell>
+      <Cell><Data ss:Type="Number">945</Data></Cell>
+      <Cell><Data ss:Type="Number">945</Data></Cell>
+      <Cell><Data ss:Type="Number">945</Data></Cell>
       <Cell><Data ss:Type="String">ms</Data></Cell>
       <Cell><Data ss:Type="String">authoritative display time</Data></Cell>
     </Row>
     <Row>
       <Cell><Data ss:Type="String">quick_max_per_game</Data></Cell>
-      <Cell><Data ss:Type="String">4</Data></Cell>
-      <Cell><Data ss:Type="String">4</Data></Cell>
-      <Cell><Data ss:Type="String">4</Data></Cell>
-      <Cell><Data ss:Type="String">5</Data></Cell>
+      <Cell><Data ss:Type="Number">4</Data></Cell>
+      <Cell><Data ss:Type="Number">4</Data></Cell>
+      <Cell><Data ss:Type="Number">4</Data></Cell>
+      <Cell><Data ss:Type="Number">5</Data></Cell>
       <Cell><Data ss:Type="String">count</Data></Cell>
       <Cell><Data ss:Type="String">authoritative per-run cap</Data></Cell>
     </Row>
     <Row>
       <Cell><Data ss:Type="String">quick_max_per_wave</Data></Cell>
-      <Cell><Data ss:Type="String">1</Data></Cell>
-      <Cell><Data ss:Type="String">1</Data></Cell>
-      <Cell><Data ss:Type="String">1</Data></Cell>
-      <Cell><Data ss:Type="String">2</Data></Cell>
+      <Cell><Data ss:Type="Number">1</Data></Cell>
+      <Cell><Data ss:Type="Number">1</Data></Cell>
+      <Cell><Data ss:Type="Number">1</Data></Cell>
+      <Cell><Data ss:Type="Number">2</Data></Cell>
       <Cell><Data ss:Type="String">count</Data></Cell>
       <Cell><Data ss:Type="String">authoritative per-wave cap</Data></Cell>
     </Row>
     <Row>
       <Cell><Data ss:Type="String">quick_chance_per_wave</Data></Cell>
-      <Cell><Data ss:Type="String">0.1725</Data></Cell>
-      <Cell><Data ss:Type="String">0.1725</Data></Cell>
-      <Cell><Data ss:Type="String">0.1725</Data></Cell>
-      <Cell><Data ss:Type="String">0.345</Data></Cell>
+      <Cell><Data ss:Type="Number">0.17249999999999999</Data></Cell>
+      <Cell><Data ss:Type="Number">0.17249999999999999</Data></Cell>
+      <Cell><Data ss:Type="Number">0.17249999999999999</Data></Cell>
+      <Cell><Data ss:Type="Number">0.34499999999999997</Data></Cell>
       <Cell><Data ss:Type="String">ratio</Data></Cell>
       <Cell><Data ss:Type="String">authoritative chance on each positive slot</Data></Cell>
     </Row>
     <Row>
       <Cell><Data ss:Type="String">quick_points</Data></Cell>
-      <Cell><Data ss:Type="String">5</Data></Cell>
-      <Cell><Data ss:Type="String">5</Data></Cell>
-      <Cell><Data ss:Type="String">5</Data></Cell>
-      <Cell><Data ss:Type="String">5</Data></Cell>
+      <Cell><Data ss:Type="Number">4.5</Data></Cell>
+      <Cell><Data ss:Type="Number">4.5</Data></Cell>
+      <Cell><Data ss:Type="Number">4.5</Data></Cell>
+      <Cell><Data ss:Type="Number">4.5</Data></Cell>
       <Cell><Data ss:Type="String">pts</Data></Cell>
       <Cell><Data ss:Type="String">authoritative score value</Data></Cell>
     </Row>
     <Row>
       <Cell><Data ss:Type="String">quick_duration_ms</Data></Cell>
-      <Cell><Data ss:Type="String">630</Data></Cell>
-      <Cell><Data ss:Type="String">630</Data></Cell>
-      <Cell><Data ss:Type="String">630</Data></Cell>
-      <Cell><Data ss:Type="String">630</Data></Cell>
+      <Cell><Data ss:Type="Number">630</Data></Cell>
+      <Cell><Data ss:Type="Number">630</Data></Cell>
+      <Cell><Data ss:Type="Number">630</Data></Cell>
+      <Cell><Data ss:Type="Number">630</Data></Cell>
       <Cell><Data ss:Type="String">ms</Data></Cell>
       <Cell><Data ss:Type="String">authoritative display time</Data></Cell>
     </Row>
     <Row>
       <Cell><Data ss:Type="String">prize_max_per_game</Data></Cell>
-      <Cell><Data ss:Type="String">1</Data></Cell>
-      <Cell><Data ss:Type="String">1</Data></Cell>
-      <Cell><Data ss:Type="String">1</Data></Cell>
-      <Cell><Data ss:Type="String">1</Data></Cell>
+      <Cell><Data ss:Type="Number">1</Data></Cell>
+      <Cell><Data ss:Type="Number">1</Data></Cell>
+      <Cell><Data ss:Type="Number">1</Data></Cell>
+      <Cell><Data ss:Type="Number">1</Data></Cell>
       <Cell><Data ss:Type="String">count</Data></Cell>
       <Cell><Data ss:Type="String">authoritative prize cap</Data></Cell>
     </Row>
     <Row>
       <Cell><Data ss:Type="String">prize_chance</Data></Cell>
-      <Cell><Data ss:Type="String">0.01</Data></Cell>
-      <Cell><Data ss:Type="String">0.01</Data></Cell>
-      <Cell><Data ss:Type="String">0.01</Data></Cell>
-      <Cell><Data ss:Type="String">0.01</Data></Cell>
+      <Cell><Data ss:Type="Number">0.01</Data></Cell>
+      <Cell><Data ss:Type="Number">0.01</Data></Cell>
+      <Cell><Data ss:Type="Number">0.01</Data></Cell>
+      <Cell><Data ss:Type="Number">0.01</Data></Cell>
       <Cell><Data ss:Type="String">ratio</Data></Cell>
       <Cell><Data ss:Type="String">authoritative per-run chance</Data></Cell>
     </Row>
     <Row>
       <Cell><Data ss:Type="String">prize_points</Data></Cell>
-      <Cell><Data ss:Type="String">1</Data></Cell>
-      <Cell><Data ss:Type="String">1</Data></Cell>
-      <Cell><Data ss:Type="String">1</Data></Cell>
-      <Cell><Data ss:Type="String">1</Data></Cell>
+      <Cell><Data ss:Type="Number">1</Data></Cell>
+      <Cell><Data ss:Type="Number">1</Data></Cell>
+      <Cell><Data ss:Type="Number">1</Data></Cell>
+      <Cell><Data ss:Type="Number">1</Data></Cell>
       <Cell><Data ss:Type="String">pts</Data></Cell>
       <Cell><Data ss:Type="String">authoritative score value</Data></Cell>
     </Row>
     <Row>
       <Cell><Data ss:Type="String">prize_bonus_usdc_gross</Data></Cell>
-      <Cell><Data ss:Type="String">0.026775</Data></Cell>
-      <Cell><Data ss:Type="String">0.04165</Data></Cell>
-      <Cell><Data ss:Type="String">0.0595</Data></Cell>
-      <Cell><Data ss:Type="String">0.08925</Data></Cell>
+      <Cell><Data ss:Type="Number">0.026775</Data></Cell>
+      <Cell><Data ss:Type="Number">0.04165</Data></Cell>
+      <Cell><Data ss:Type="Number">0.0595</Data></Cell>
+      <Cell><Data ss:Type="Number">0.08925</Data></Cell>
       <Cell><Data ss:Type="String">usdc</Data></Cell>
       <Cell><Data ss:Type="String">authoritative gross Prizefly bonus</Data></Cell>
     </Row>
     <Row>
       <Cell><Data ss:Type="String">prize_duration_ms</Data></Cell>
-      <Cell><Data ss:Type="String">1170</Data></Cell>
-      <Cell><Data ss:Type="String">1170</Data></Cell>
-      <Cell><Data ss:Type="String">1170</Data></Cell>
-      <Cell><Data ss:Type="String">1170</Data></Cell>
+      <Cell><Data ss:Type="Number">1170</Data></Cell>
+      <Cell><Data ss:Type="Number">1170</Data></Cell>
+      <Cell><Data ss:Type="Number">1170</Data></Cell>
+      <Cell><Data ss:Type="Number">1170</Data></Cell>
       <Cell><Data ss:Type="String">ms</Data></Cell>
       <Cell><Data ss:Type="String">authoritative display time</Data></Cell>
     </Row>
     <Row>
       <Cell><Data ss:Type="String">normal_points</Data></Cell>
-      <Cell><Data ss:Type="String">1</Data></Cell>
-      <Cell><Data ss:Type="String">1</Data></Cell>
-      <Cell><Data ss:Type="String">1</Data></Cell>
-      <Cell><Data ss:Type="String">1</Data></Cell>
+      <Cell><Data ss:Type="Number">1</Data></Cell>
+      <Cell><Data ss:Type="Number">1</Data></Cell>
+      <Cell><Data ss:Type="Number">1</Data></Cell>
+      <Cell><Data ss:Type="Number">1</Data></Cell>
       <Cell><Data ss:Type="String">pts</Data></Cell>
       <Cell><Data ss:Type="String">authoritative score value</Data></Cell>
     </Row>
     <Row>
       <Cell><Data ss:Type="String">normal_duration_ms</Data></Cell>
-      <Cell><Data ss:Type="String">1080</Data></Cell>
-      <Cell><Data ss:Type="String">1080</Data></Cell>
-      <Cell><Data ss:Type="String">1080</Data></Cell>
-      <Cell><Data ss:Type="String">1080</Data></Cell>
+      <Cell><Data ss:Type="Number">1080</Data></Cell>
+      <Cell><Data ss:Type="Number">1080</Data></Cell>
+      <Cell><Data ss:Type="Number">1080</Data></Cell>
+      <Cell><Data ss:Type="Number">1080</Data></Cell>
       <Cell><Data ss:Type="String">ms</Data></Cell>
       <Cell><Data ss:Type="String">authoritative display time</Data></Cell>
     </Row>
     <Row>
       <Cell><Data ss:Type="String">bombs_base_per_wave</Data></Cell>
-      <Cell><Data ss:Type="String">1</Data></Cell>
-      <Cell><Data ss:Type="String">1</Data></Cell>
-      <Cell><Data ss:Type="String">1</Data></Cell>
-      <Cell><Data ss:Type="String">2</Data></Cell>
+      <Cell><Data ss:Type="Number">1</Data></Cell>
+      <Cell><Data ss:Type="Number">1</Data></Cell>
+      <Cell><Data ss:Type="Number">1</Data></Cell>
+      <Cell><Data ss:Type="Number">2</Data></Cell>
       <Cell><Data ss:Type="String">count</Data></Cell>
       <Cell><Data ss:Type="String">authoritative guaranteed bombs per wave</Data></Cell>
     </Row>
     <Row>
       <Cell><Data ss:Type="String">bombs_second_chance</Data></Cell>
-      <Cell><Data ss:Type="String">0.35</Data></Cell>
-      <Cell><Data ss:Type="String">0.35</Data></Cell>
-      <Cell><Data ss:Type="String">0.45</Data></Cell>
-      <Cell><Data ss:Type="String">0.45</Data></Cell>
+      <Cell><Data ss:Type="Number">0.35</Data></Cell>
+      <Cell><Data ss:Type="Number">0.35</Data></Cell>
+      <Cell><Data ss:Type="Number">0.45</Data></Cell>
+      <Cell><Data ss:Type="Number">0.45</Data></Cell>
       <Cell><Data ss:Type="String">ratio</Data></Cell>
       <Cell><Data ss:Type="String">authoritative chance for one extra bomb</Data></Cell>
     </Row>
     <Row>
       <Cell><Data ss:Type="String">bomb_points</Data></Cell>
-      <Cell><Data ss:Type="String">-2</Data></Cell>
-      <Cell><Data ss:Type="String">-2</Data></Cell>
-      <Cell><Data ss:Type="String">-2</Data></Cell>
-      <Cell><Data ss:Type="String">-2</Data></Cell>
+      <Cell><Data ss:Type="Number">-3</Data></Cell>
+      <Cell><Data ss:Type="Number">-3</Data></Cell>
+      <Cell><Data ss:Type="Number">-3</Data></Cell>
+      <Cell><Data ss:Type="Number">-2</Data></Cell>
       <Cell><Data ss:Type="String">pts</Data></Cell>
       <Cell><Data ss:Type="String">authoritative score penalty</Data></Cell>
     </Row>
     <Row>
       <Cell><Data ss:Type="String">bomb_duration_ms</Data></Cell>
-      <Cell><Data ss:Type="String">1170</Data></Cell>
-      <Cell><Data ss:Type="String">1170</Data></Cell>
-      <Cell><Data ss:Type="String">1170</Data></Cell>
-      <Cell><Data ss:Type="String">1170</Data></Cell>
+      <Cell><Data ss:Type="Number">1170</Data></Cell>
+      <Cell><Data ss:Type="Number">1170</Data></Cell>
+      <Cell><Data ss:Type="Number">1170</Data></Cell>
+      <Cell><Data ss:Type="Number">1170</Data></Cell>
       <Cell><Data ss:Type="String">ms</Data></Cell>
       <Cell><Data ss:Type="String">authoritative display time</Data></Cell>
     </Row>
     <Row>
       <Cell><Data ss:Type="String">ppp_input_usdc_per_point</Data></Cell>
-      <Cell><Data ss:Type="String">0.0004275</Data></Cell>
-      <Cell><Data ss:Type="String">0.0004275</Data></Cell>
-      <Cell><Data ss:Type="String">0.0004275</Data></Cell>
-      <Cell><Data ss:Type="String">0.0004275</Data></Cell>
+      <Cell><Data ss:Type="Number">3.8475E-4</Data></Cell>
+      <Cell><Data ss:Type="Number">3.8475E-4</Data></Cell>
+      <Cell><Data ss:Type="Number">3.8475E-4</Data></Cell>
+      <Cell><Data ss:Type="Number">3.8475E-4</Data></Cell>
       <Cell><Data ss:Type="String">usdc/pt</Data></Cell>
       <Cell><Data ss:Type="String">authoritative point-to-USDC conversion</Data></Cell>
     </Row>
     <Row>
       <Cell><Data ss:Type="String">bf_per_usdc_live_snapshot</Data></Cell>
-      <Cell><Data ss:Type="String">4775549.188156637</Data></Cell>
-      <Cell><Data ss:Type="String">4775549.188156637</Data></Cell>
-      <Cell><Data ss:Type="String">4775549.188156637</Data></Cell>
-      <Cell><Data ss:Type="String">4775549.188156637</Data></Cell>
+      <Cell><Data ss:Type="Number">4775549.188156637</Data></Cell>
+      <Cell><Data ss:Type="Number">4775549.188156637</Data></Cell>
+      <Cell><Data ss:Type="Number">4775549.188156637</Data></Cell>
+      <Cell><Data ss:Type="Number">4775549.188156637</Data></Cell>
       <Cell><Data ss:Type="String">bf/usdc</Data></Cell>
       <Cell><Data ss:Type="String">reference snapshot only, live pricing still refreshes at payout time</Data></Cell>
     </Row>
@@ -585,271 +585,271 @@
     </Row>
     <Row>
       <Cell><Data ss:Type="String">run_roll_pct</Data></Cell>
-      <Cell><Data ss:Type="String">24.545455</Data></Cell>
-      <Cell><Data ss:Type="String">32.727273</Data></Cell>
-      <Cell><Data ss:Type="String">24.545455</Data></Cell>
-      <Cell><Data ss:Type="String">8.181818</Data></Cell>
+      <Cell><Data ss:Type="Number">24.545455</Data></Cell>
+      <Cell><Data ss:Type="Number">32.727273</Data></Cell>
+      <Cell><Data ss:Type="Number">24.545455</Data></Cell>
+      <Cell><Data ss:Type="Number">8.181818</Data></Cell>
       <Cell><Data ss:Type="String">pct</Data></Cell>
       <Cell><Data ss:Type="String">normalized standard run-roll odds</Data></Cell>
     </Row>
     <Row>
       <Cell><Data ss:Type="String">fee_usdc</Data></Cell>
-      <Cell><Data ss:Type="String">3.5000000000000003E-2</Data></Cell>
-      <Cell><Data ss:Type="String">3.5000000000000003E-2</Data></Cell>
-      <Cell><Data ss:Type="String">3.5000000000000003E-2</Data></Cell>
-      <Cell><Data ss:Type="String">3.5000000000000003E-2</Data></Cell>
+      <Cell><Data ss:Type="Number">3.5000000000000003E-2</Data></Cell>
+      <Cell><Data ss:Type="Number">3.5000000000000003E-2</Data></Cell>
+      <Cell><Data ss:Type="Number">3.5000000000000003E-2</Data></Cell>
+      <Cell><Data ss:Type="Number">3.5000000000000003E-2</Data></Cell>
       <Cell><Data ss:Type="String">usdc</Data></Cell>
       <Cell><Data ss:Type="String">primary edit surface for hard</Data></Cell>
     </Row>
     <Row>
       <Cell><Data ss:Type="String">base_waves</Data></Cell>
-      <Cell><Data ss:Type="String">8</Data></Cell>
-      <Cell><Data ss:Type="String">8</Data></Cell>
-      <Cell><Data ss:Type="String">8</Data></Cell>
-      <Cell><Data ss:Type="String">8</Data></Cell>
+      <Cell><Data ss:Type="Number">8</Data></Cell>
+      <Cell><Data ss:Type="Number">8</Data></Cell>
+      <Cell><Data ss:Type="Number">8</Data></Cell>
+      <Cell><Data ss:Type="Number">8</Data></Cell>
       <Cell><Data ss:Type="String">count</Data></Cell>
       <Cell><Data ss:Type="String">shared difficulty baseline</Data></Cell>
     </Row>
     <Row>
       <Cell><Data ss:Type="String">extra_waves</Data></Cell>
-      <Cell><Data ss:Type="String">0</Data></Cell>
-      <Cell><Data ss:Type="String">1</Data></Cell>
-      <Cell><Data ss:Type="String">2</Data></Cell>
-      <Cell><Data ss:Type="String">3</Data></Cell>
+      <Cell><Data ss:Type="Number">0</Data></Cell>
+      <Cell><Data ss:Type="Number">1</Data></Cell>
+      <Cell><Data ss:Type="Number">2</Data></Cell>
+      <Cell><Data ss:Type="Number">3</Data></Cell>
       <Cell><Data ss:Type="String">count</Data></Cell>
       <Cell><Data ss:Type="String">type-specific wave growth</Data></Cell>
     </Row>
     <Row>
       <Cell><Data ss:Type="String">total_waves</Data></Cell>
-      <Cell><Data ss:Type="String">8</Data></Cell>
-      <Cell><Data ss:Type="String">9</Data></Cell>
-      <Cell><Data ss:Type="String">10</Data></Cell>
-      <Cell><Data ss:Type="String">11</Data></Cell>
+      <Cell><Data ss:Type="Number">8</Data></Cell>
+      <Cell><Data ss:Type="Number">9</Data></Cell>
+      <Cell><Data ss:Type="Number">10</Data></Cell>
+      <Cell><Data ss:Type="Number">11</Data></Cell>
       <Cell><Data ss:Type="String">count</Data></Cell>
       <Cell><Data ss:Type="String">base + extra</Data></Cell>
     </Row>
     <Row>
       <Cell><Data ss:Type="String">wave_duration_ms</Data></Cell>
-      <Cell><Data ss:Type="String">936</Data></Cell>
-      <Cell><Data ss:Type="String">936</Data></Cell>
-      <Cell><Data ss:Type="String">936</Data></Cell>
-      <Cell><Data ss:Type="String">936</Data></Cell>
+      <Cell><Data ss:Type="Number">936</Data></Cell>
+      <Cell><Data ss:Type="Number">936</Data></Cell>
+      <Cell><Data ss:Type="Number">936</Data></Cell>
+      <Cell><Data ss:Type="Number">936</Data></Cell>
       <Cell><Data ss:Type="String">ms</Data></Cell>
       <Cell><Data ss:Type="String">authoritative wave timeout per type</Data></Cell>
     </Row>
     <Row>
       <Cell><Data ss:Type="String">max_butterflies_per_wave</Data></Cell>
-      <Cell><Data ss:Type="String">5</Data></Cell>
-      <Cell><Data ss:Type="String">5</Data></Cell>
-      <Cell><Data ss:Type="String">6</Data></Cell>
-      <Cell><Data ss:Type="String">6</Data></Cell>
+      <Cell><Data ss:Type="Number">5</Data></Cell>
+      <Cell><Data ss:Type="Number">5</Data></Cell>
+      <Cell><Data ss:Type="Number">6</Data></Cell>
+      <Cell><Data ss:Type="Number">6</Data></Cell>
       <Cell><Data ss:Type="String">count</Data></Cell>
       <Cell><Data ss:Type="String">authoritative spawn count per wave</Data></Cell>
     </Row>
     <Row>
       <Cell><Data ss:Type="String">triple_max_per_game</Data></Cell>
-      <Cell><Data ss:Type="String">9</Data></Cell>
-      <Cell><Data ss:Type="String">10</Data></Cell>
-      <Cell><Data ss:Type="String">11</Data></Cell>
-      <Cell><Data ss:Type="String">13</Data></Cell>
+      <Cell><Data ss:Type="Number">9</Data></Cell>
+      <Cell><Data ss:Type="Number">10</Data></Cell>
+      <Cell><Data ss:Type="Number">11</Data></Cell>
+      <Cell><Data ss:Type="Number">13</Data></Cell>
       <Cell><Data ss:Type="String">count</Data></Cell>
       <Cell><Data ss:Type="String">authoritative per-run cap</Data></Cell>
     </Row>
     <Row>
       <Cell><Data ss:Type="String">triple_max_per_wave</Data></Cell>
-      <Cell><Data ss:Type="String">2</Data></Cell>
-      <Cell><Data ss:Type="String">2</Data></Cell>
-      <Cell><Data ss:Type="String">3</Data></Cell>
-      <Cell><Data ss:Type="String">3</Data></Cell>
+      <Cell><Data ss:Type="Number">2</Data></Cell>
+      <Cell><Data ss:Type="Number">2</Data></Cell>
+      <Cell><Data ss:Type="Number">3</Data></Cell>
+      <Cell><Data ss:Type="Number">3</Data></Cell>
       <Cell><Data ss:Type="String">count</Data></Cell>
       <Cell><Data ss:Type="String">authoritative per-wave cap</Data></Cell>
     </Row>
     <Row>
       <Cell><Data ss:Type="String">triple_chance_per_wave</Data></Cell>
-      <Cell><Data ss:Type="String">0.36</Data></Cell>
-      <Cell><Data ss:Type="String">0.36</Data></Cell>
-      <Cell><Data ss:Type="String">0.36</Data></Cell>
-      <Cell><Data ss:Type="String">0.528</Data></Cell>
+      <Cell><Data ss:Type="Number">0.36</Data></Cell>
+      <Cell><Data ss:Type="Number">0.36</Data></Cell>
+      <Cell><Data ss:Type="Number">0.36</Data></Cell>
+      <Cell><Data ss:Type="Number">0.52800000000000002</Data></Cell>
       <Cell><Data ss:Type="String">ratio</Data></Cell>
       <Cell><Data ss:Type="String">authoritative chance on each positive slot</Data></Cell>
     </Row>
     <Row>
       <Cell><Data ss:Type="String">triple_points</Data></Cell>
-      <Cell><Data ss:Type="String">5</Data></Cell>
-      <Cell><Data ss:Type="String">5</Data></Cell>
-      <Cell><Data ss:Type="String">5</Data></Cell>
-      <Cell><Data ss:Type="String">5</Data></Cell>
+      <Cell><Data ss:Type="Number">4</Data></Cell>
+      <Cell><Data ss:Type="Number">4</Data></Cell>
+      <Cell><Data ss:Type="Number">4</Data></Cell>
+      <Cell><Data ss:Type="Number">5</Data></Cell>
       <Cell><Data ss:Type="String">pts</Data></Cell>
       <Cell><Data ss:Type="String">authoritative score value</Data></Cell>
     </Row>
     <Row>
       <Cell><Data ss:Type="String">triple_duration_ms</Data></Cell>
-      <Cell><Data ss:Type="String">861</Data></Cell>
-      <Cell><Data ss:Type="String">861</Data></Cell>
-      <Cell><Data ss:Type="String">861</Data></Cell>
-      <Cell><Data ss:Type="String">861</Data></Cell>
+      <Cell><Data ss:Type="Number">861</Data></Cell>
+      <Cell><Data ss:Type="Number">861</Data></Cell>
+      <Cell><Data ss:Type="Number">861</Data></Cell>
+      <Cell><Data ss:Type="Number">861</Data></Cell>
       <Cell><Data ss:Type="String">ms</Data></Cell>
       <Cell><Data ss:Type="String">authoritative display time</Data></Cell>
     </Row>
     <Row>
       <Cell><Data ss:Type="String">quick_max_per_game</Data></Cell>
-      <Cell><Data ss:Type="String">5</Data></Cell>
-      <Cell><Data ss:Type="String">5</Data></Cell>
-      <Cell><Data ss:Type="String">5</Data></Cell>
-      <Cell><Data ss:Type="String">6</Data></Cell>
+      <Cell><Data ss:Type="Number">5</Data></Cell>
+      <Cell><Data ss:Type="Number">5</Data></Cell>
+      <Cell><Data ss:Type="Number">5</Data></Cell>
+      <Cell><Data ss:Type="Number">6</Data></Cell>
       <Cell><Data ss:Type="String">count</Data></Cell>
       <Cell><Data ss:Type="String">authoritative per-run cap</Data></Cell>
     </Row>
     <Row>
       <Cell><Data ss:Type="String">quick_max_per_wave</Data></Cell>
-      <Cell><Data ss:Type="String">1</Data></Cell>
-      <Cell><Data ss:Type="String">1</Data></Cell>
-      <Cell><Data ss:Type="String">2</Data></Cell>
-      <Cell><Data ss:Type="String">2</Data></Cell>
+      <Cell><Data ss:Type="Number">1</Data></Cell>
+      <Cell><Data ss:Type="Number">1</Data></Cell>
+      <Cell><Data ss:Type="Number">2</Data></Cell>
+      <Cell><Data ss:Type="Number">2</Data></Cell>
       <Cell><Data ss:Type="String">count</Data></Cell>
       <Cell><Data ss:Type="String">authoritative per-wave cap</Data></Cell>
     </Row>
     <Row>
       <Cell><Data ss:Type="String">quick_chance_per_wave</Data></Cell>
-      <Cell><Data ss:Type="String">0.195</Data></Cell>
-      <Cell><Data ss:Type="String">0.195</Data></Cell>
-      <Cell><Data ss:Type="String">0.195</Data></Cell>
-      <Cell><Data ss:Type="String">0.39</Data></Cell>
+      <Cell><Data ss:Type="Number">0.19500000000000001</Data></Cell>
+      <Cell><Data ss:Type="Number">0.19500000000000001</Data></Cell>
+      <Cell><Data ss:Type="Number">0.19500000000000001</Data></Cell>
+      <Cell><Data ss:Type="Number">0.39</Data></Cell>
       <Cell><Data ss:Type="String">ratio</Data></Cell>
       <Cell><Data ss:Type="String">authoritative chance on each positive slot</Data></Cell>
     </Row>
     <Row>
       <Cell><Data ss:Type="String">quick_points</Data></Cell>
-      <Cell><Data ss:Type="String">6</Data></Cell>
-      <Cell><Data ss:Type="String">6</Data></Cell>
-      <Cell><Data ss:Type="String">6</Data></Cell>
-      <Cell><Data ss:Type="String">6</Data></Cell>
+      <Cell><Data ss:Type="Number">6</Data></Cell>
+      <Cell><Data ss:Type="Number">6</Data></Cell>
+      <Cell><Data ss:Type="Number">6</Data></Cell>
+      <Cell><Data ss:Type="Number">6</Data></Cell>
       <Cell><Data ss:Type="String">pts</Data></Cell>
       <Cell><Data ss:Type="String">authoritative score value</Data></Cell>
     </Row>
     <Row>
       <Cell><Data ss:Type="String">quick_duration_ms</Data></Cell>
-      <Cell><Data ss:Type="String">546</Data></Cell>
-      <Cell><Data ss:Type="String">546</Data></Cell>
-      <Cell><Data ss:Type="String">546</Data></Cell>
-      <Cell><Data ss:Type="String">546</Data></Cell>
+      <Cell><Data ss:Type="Number">546</Data></Cell>
+      <Cell><Data ss:Type="Number">546</Data></Cell>
+      <Cell><Data ss:Type="Number">546</Data></Cell>
+      <Cell><Data ss:Type="Number">546</Data></Cell>
       <Cell><Data ss:Type="String">ms</Data></Cell>
       <Cell><Data ss:Type="String">authoritative display time</Data></Cell>
     </Row>
     <Row>
       <Cell><Data ss:Type="String">prize_max_per_game</Data></Cell>
-      <Cell><Data ss:Type="String">1</Data></Cell>
-      <Cell><Data ss:Type="String">1</Data></Cell>
-      <Cell><Data ss:Type="String">1</Data></Cell>
-      <Cell><Data ss:Type="String">1</Data></Cell>
+      <Cell><Data ss:Type="Number">1</Data></Cell>
+      <Cell><Data ss:Type="Number">1</Data></Cell>
+      <Cell><Data ss:Type="Number">1</Data></Cell>
+      <Cell><Data ss:Type="Number">1</Data></Cell>
       <Cell><Data ss:Type="String">count</Data></Cell>
       <Cell><Data ss:Type="String">authoritative prize cap</Data></Cell>
     </Row>
     <Row>
       <Cell><Data ss:Type="String">prize_chance</Data></Cell>
-      <Cell><Data ss:Type="String">0.01</Data></Cell>
-      <Cell><Data ss:Type="String">0.01</Data></Cell>
-      <Cell><Data ss:Type="String">0.01</Data></Cell>
-      <Cell><Data ss:Type="String">0.01</Data></Cell>
+      <Cell><Data ss:Type="Number">0.01</Data></Cell>
+      <Cell><Data ss:Type="Number">0.01</Data></Cell>
+      <Cell><Data ss:Type="Number">0.01</Data></Cell>
+      <Cell><Data ss:Type="Number">0.01</Data></Cell>
       <Cell><Data ss:Type="String">ratio</Data></Cell>
       <Cell><Data ss:Type="String">authoritative per-run chance</Data></Cell>
     </Row>
     <Row>
       <Cell><Data ss:Type="String">prize_points</Data></Cell>
-      <Cell><Data ss:Type="String">1</Data></Cell>
-      <Cell><Data ss:Type="String">1</Data></Cell>
-      <Cell><Data ss:Type="String">1</Data></Cell>
-      <Cell><Data ss:Type="String">1</Data></Cell>
+      <Cell><Data ss:Type="Number">1</Data></Cell>
+      <Cell><Data ss:Type="Number">1</Data></Cell>
+      <Cell><Data ss:Type="Number">1</Data></Cell>
+      <Cell><Data ss:Type="Number">1</Data></Cell>
       <Cell><Data ss:Type="String">pts</Data></Cell>
       <Cell><Data ss:Type="String">authoritative score value</Data></Cell>
     </Row>
     <Row>
       <Cell><Data ss:Type="String">prize_bonus_usdc_gross</Data></Cell>
-      <Cell><Data ss:Type="String">0.039375</Data></Cell>
-      <Cell><Data ss:Type="String">0.06125</Data></Cell>
-      <Cell><Data ss:Type="String">0.0875</Data></Cell>
-      <Cell><Data ss:Type="String">0.13125</Data></Cell>
+      <Cell><Data ss:Type="Number">0.039375</Data></Cell>
+      <Cell><Data ss:Type="Number">0.06125</Data></Cell>
+      <Cell><Data ss:Type="Number">0.0875</Data></Cell>
+      <Cell><Data ss:Type="Number">0.13125</Data></Cell>
       <Cell><Data ss:Type="String">usdc</Data></Cell>
       <Cell><Data ss:Type="String">authoritative gross Prizefly bonus</Data></Cell>
     </Row>
     <Row>
       <Cell><Data ss:Type="String">prize_duration_ms</Data></Cell>
-      <Cell><Data ss:Type="String">1014</Data></Cell>
-      <Cell><Data ss:Type="String">1014</Data></Cell>
-      <Cell><Data ss:Type="String">1014</Data></Cell>
-      <Cell><Data ss:Type="String">1014</Data></Cell>
+      <Cell><Data ss:Type="Number">1014</Data></Cell>
+      <Cell><Data ss:Type="Number">1014</Data></Cell>
+      <Cell><Data ss:Type="Number">1014</Data></Cell>
+      <Cell><Data ss:Type="Number">1014</Data></Cell>
       <Cell><Data ss:Type="String">ms</Data></Cell>
       <Cell><Data ss:Type="String">authoritative display time</Data></Cell>
     </Row>
     <Row>
       <Cell><Data ss:Type="String">normal_points</Data></Cell>
-      <Cell><Data ss:Type="String">1</Data></Cell>
-      <Cell><Data ss:Type="String">1</Data></Cell>
-      <Cell><Data ss:Type="String">1</Data></Cell>
-      <Cell><Data ss:Type="String">1</Data></Cell>
+      <Cell><Data ss:Type="Number">1</Data></Cell>
+      <Cell><Data ss:Type="Number">1</Data></Cell>
+      <Cell><Data ss:Type="Number">1</Data></Cell>
+      <Cell><Data ss:Type="Number">1</Data></Cell>
       <Cell><Data ss:Type="String">pts</Data></Cell>
       <Cell><Data ss:Type="String">authoritative score value</Data></Cell>
     </Row>
     <Row>
       <Cell><Data ss:Type="String">normal_duration_ms</Data></Cell>
-      <Cell><Data ss:Type="String">936</Data></Cell>
-      <Cell><Data ss:Type="String">936</Data></Cell>
-      <Cell><Data ss:Type="String">936</Data></Cell>
-      <Cell><Data ss:Type="String">936</Data></Cell>
+      <Cell><Data ss:Type="Number">936</Data></Cell>
+      <Cell><Data ss:Type="Number">936</Data></Cell>
+      <Cell><Data ss:Type="Number">936</Data></Cell>
+      <Cell><Data ss:Type="Number">936</Data></Cell>
       <Cell><Data ss:Type="String">ms</Data></Cell>
       <Cell><Data ss:Type="String">authoritative display time</Data></Cell>
     </Row>
     <Row>
       <Cell><Data ss:Type="String">bombs_base_per_wave</Data></Cell>
-      <Cell><Data ss:Type="String">1</Data></Cell>
-      <Cell><Data ss:Type="String">1</Data></Cell>
-      <Cell><Data ss:Type="String">2</Data></Cell>
-      <Cell><Data ss:Type="String">2</Data></Cell>
+      <Cell><Data ss:Type="Number">1</Data></Cell>
+      <Cell><Data ss:Type="Number">1</Data></Cell>
+      <Cell><Data ss:Type="Number">2</Data></Cell>
+      <Cell><Data ss:Type="Number">2</Data></Cell>
       <Cell><Data ss:Type="String">count</Data></Cell>
       <Cell><Data ss:Type="String">authoritative guaranteed bombs per wave</Data></Cell>
     </Row>
     <Row>
       <Cell><Data ss:Type="String">bombs_second_chance</Data></Cell>
-      <Cell><Data ss:Type="String">0.45</Data></Cell>
-      <Cell><Data ss:Type="String">0.45</Data></Cell>
-      <Cell><Data ss:Type="String">0.55</Data></Cell>
-      <Cell><Data ss:Type="String">0.55</Data></Cell>
+      <Cell><Data ss:Type="Number">0.45</Data></Cell>
+      <Cell><Data ss:Type="Number">0.45</Data></Cell>
+      <Cell><Data ss:Type="Number">0.55000000000000004</Data></Cell>
+      <Cell><Data ss:Type="Number">0.55000000000000004</Data></Cell>
       <Cell><Data ss:Type="String">ratio</Data></Cell>
       <Cell><Data ss:Type="String">authoritative chance for one extra bomb</Data></Cell>
     </Row>
     <Row>
       <Cell><Data ss:Type="String">bomb_points</Data></Cell>
-      <Cell><Data ss:Type="String">-3</Data></Cell>
-      <Cell><Data ss:Type="String">-3</Data></Cell>
-      <Cell><Data ss:Type="String">-3</Data></Cell>
-      <Cell><Data ss:Type="String">-3</Data></Cell>
+      <Cell><Data ss:Type="Number">-4</Data></Cell>
+      <Cell><Data ss:Type="Number">-4</Data></Cell>
+      <Cell><Data ss:Type="Number">-4</Data></Cell>
+      <Cell><Data ss:Type="Number">-3</Data></Cell>
       <Cell><Data ss:Type="String">pts</Data></Cell>
       <Cell><Data ss:Type="String">authoritative score penalty</Data></Cell>
     </Row>
     <Row>
       <Cell><Data ss:Type="String">bomb_duration_ms</Data></Cell>
-      <Cell><Data ss:Type="String">1014</Data></Cell>
-      <Cell><Data ss:Type="String">1014</Data></Cell>
-      <Cell><Data ss:Type="String">1014</Data></Cell>
-      <Cell><Data ss:Type="String">1014</Data></Cell>
+      <Cell><Data ss:Type="Number">1014</Data></Cell>
+      <Cell><Data ss:Type="Number">1014</Data></Cell>
+      <Cell><Data ss:Type="Number">1014</Data></Cell>
+      <Cell><Data ss:Type="Number">1014</Data></Cell>
       <Cell><Data ss:Type="String">ms</Data></Cell>
       <Cell><Data ss:Type="String">authoritative display time</Data></Cell>
     </Row>
     <Row>
       <Cell><Data ss:Type="String">ppp_input_usdc_per_point</Data></Cell>
-      <Cell><Data ss:Type="String">0.0006555</Data></Cell>
-      <Cell><Data ss:Type="String">0.0006555</Data></Cell>
-      <Cell><Data ss:Type="String">0.0006555</Data></Cell>
-      <Cell><Data ss:Type="String">0.0006555</Data></Cell>
+      <Cell><Data ss:Type="Number">5.8995E-4</Data></Cell>
+      <Cell><Data ss:Type="Number">5.8995E-4</Data></Cell>
+      <Cell><Data ss:Type="Number">5.8995E-4</Data></Cell>
+      <Cell><Data ss:Type="Number">5.8995E-4</Data></Cell>
       <Cell><Data ss:Type="String">usdc/pt</Data></Cell>
       <Cell><Data ss:Type="String">authoritative point-to-USDC conversion</Data></Cell>
     </Row>
     <Row>
       <Cell><Data ss:Type="String">bf_per_usdc_live_snapshot</Data></Cell>
-      <Cell><Data ss:Type="String">4775549.188156637</Data></Cell>
-      <Cell><Data ss:Type="String">4775549.188156637</Data></Cell>
-      <Cell><Data ss:Type="String">4775549.188156637</Data></Cell>
-      <Cell><Data ss:Type="String">4775549.188156637</Data></Cell>
+      <Cell><Data ss:Type="Number">4775549.188156637</Data></Cell>
+      <Cell><Data ss:Type="Number">4775549.188156637</Data></Cell>
+      <Cell><Data ss:Type="Number">4775549.188156637</Data></Cell>
+      <Cell><Data ss:Type="Number">4775549.188156637</Data></Cell>
       <Cell><Data ss:Type="String">bf/usdc</Data></Cell>
       <Cell><Data ss:Type="String">reference snapshot only, live pricing still refreshes at payout time</Data></Cell>
     </Row>
@@ -865,7 +865,7 @@
     </Row>
     <Row>
       <Cell><Data ss:Type="String">run_roll_pct</Data></Cell>
-      <Cell><Data ss:Type="String">10</Data></Cell>
+      <Cell><Data ss:Type="Number">10</Data></Cell>
       <Cell><Data ss:Type="String">pct</Data></Cell>
       <Cell><Data ss:Type="String">standard run-roll chance for Jolly</Data></Cell>
     </Row>
@@ -883,49 +883,49 @@
     </Row>
     <Row>
       <Cell><Data ss:Type="String">easy_prize_bonus_usdc_gross</Data></Cell>
-      <Cell><Data ss:Type="String">0.033075</Data></Cell>
+      <Cell><Data ss:Type="Number">0.033075</Data></Cell>
       <Cell><Data ss:Type="String">usdc</Data></Cell>
       <Cell><Data ss:Type="String">authoritative easy Jolly Prizefly bonus</Data></Cell>
     </Row>
     <Row>
       <Cell><Data ss:Type="String">medium_prize_bonus_usdc_gross</Data></Cell>
-      <Cell><Data ss:Type="String">0.05355</Data></Cell>
+      <Cell><Data ss:Type="Number">0.05355</Data></Cell>
       <Cell><Data ss:Type="String">usdc</Data></Cell>
       <Cell><Data ss:Type="String">authoritative medium Jolly Prizefly bonus</Data></Cell>
     </Row>
     <Row>
       <Cell><Data ss:Type="String">hard_prize_bonus_usdc_gross</Data></Cell>
-      <Cell><Data ss:Type="String">0.07875</Data></Cell>
+      <Cell><Data ss:Type="Number">0.07875</Data></Cell>
       <Cell><Data ss:Type="String">usdc</Data></Cell>
       <Cell><Data ss:Type="String">authoritative hard Jolly Prizefly bonus</Data></Cell>
     </Row>
     <Row>
       <Cell><Data ss:Type="String">wave_type_low_pct</Data></Cell>
-      <Cell><Data ss:Type="String">27.272727</Data></Cell>
+      <Cell><Data ss:Type="Number">27.272727</Data></Cell>
       <Cell><Data ss:Type="String">pct</Data></Cell>
       <Cell><Data ss:Type="String">authoritative Jolly wave mix</Data></Cell>
     </Row>
     <Row>
       <Cell><Data ss:Type="String">wave_type_nice_pct</Data></Cell>
-      <Cell><Data ss:Type="String">36.363636</Data></Cell>
+      <Cell><Data ss:Type="Number">36.363636</Data></Cell>
       <Cell><Data ss:Type="String">pct</Data></Cell>
       <Cell><Data ss:Type="String">authoritative Jolly wave mix</Data></Cell>
     </Row>
     <Row>
       <Cell><Data ss:Type="String">wave_type_big_pct</Data></Cell>
-      <Cell><Data ss:Type="String">27.272727</Data></Cell>
+      <Cell><Data ss:Type="Number">27.272727</Data></Cell>
       <Cell><Data ss:Type="String">pct</Data></Cell>
       <Cell><Data ss:Type="String">authoritative Jolly wave mix</Data></Cell>
     </Row>
     <Row>
       <Cell><Data ss:Type="String">wave_type_mega_pct</Data></Cell>
-      <Cell><Data ss:Type="String">9.0909089999999999</Data></Cell>
+      <Cell><Data ss:Type="Number">9.0909089999999999</Data></Cell>
       <Cell><Data ss:Type="String">pct</Data></Cell>
       <Cell><Data ss:Type="String">authoritative Jolly wave mix</Data></Cell>
     </Row>
     <Row>
       <Cell><Data ss:Type="String">bf_per_usdc_live_snapshot</Data></Cell>
-      <Cell><Data ss:Type="String">4775549.188156637</Data></Cell>
+      <Cell><Data ss:Type="Number">4775549.188156637</Data></Cell>
       <Cell><Data ss:Type="String">bf/usdc</Data></Cell>
       <Cell><Data ss:Type="String">reference snapshot only, live pricing still refreshes at payout time</Data></Cell>
     </Row>

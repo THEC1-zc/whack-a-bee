@@ -661,9 +661,9 @@ export async function finishGameSession(params: {
   // Validate hitStats per-type bounds (B-2 fix: score injection prevention)
   const hitStats = normalizeHitStats(params.hitStats, game.difficulty, game.capMultiplier, game.waveMultipliers);
 
-  const rawScore = deriveScoreFromHits(game.difficulty, hitStats);
+  const rawScore = deriveScoreFromHits(game.difficulty, hitStats, game.capType);
   const realizedScore = clampLiveScore(rawScore, game.difficulty, game.capType, game.waveTypes);
-  const reportedScore = Math.max(0, Math.floor(Number(params.score || 0)));
+  const reportedScore = Number(Math.max(0, Number(params.score || 0)).toFixed(2));
   if (reportedScore !== realizedScore) {
     throw new Error("Reported score does not match validated score");
   }
