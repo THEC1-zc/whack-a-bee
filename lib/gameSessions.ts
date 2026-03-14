@@ -288,6 +288,20 @@ async function waitForIndexedClaimTx(publicClient: ReturnType<typeof getPublicCl
   throw lastError instanceof Error ? lastError : new Error("Claim transaction could not be found");
 }
 
+async function waitForIndexedReceipt(publicClient: ReturnType<typeof getPublicClient>, hash: `0x${string}`, label: string) {
+  let lastError: unknown = null;
+  for (let attempt = 0; attempt < 8; attempt += 1) {
+    try {
+      return await publicClient.getTransactionReceipt({ hash });
+    } catch (error) {
+      lastError = error;
+      if (!isRetryableMissingTxError(error) || attempt === 7) break;
+      await new Promise((resolve) => setTimeout(resolve, 1200 * (attempt + 1)));
+    }
+  }
+  throw lastError instanceof Error ? lastError : new Error(`${label} transaction could not be found`);
+}
+
 async function getIndex() {
   const client = getRedis();
   if (client) {
@@ -572,7 +586,7 @@ export async function verifyGameFee(params: {
   }
 
   const publicClient = getPublicClient();
-  const receipt = await publicClient.getTransactionReceipt({ hash: params.txHash });
+  const receipt = await waitForIndexedReceipt(publicClient, params.txHash, "Fee");
   if (receipt.status !== "success") {
     throw new Error("Fee transaction failed");
   }

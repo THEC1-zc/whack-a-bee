@@ -737,3 +737,13 @@ Payout bands:
 - Validation completed:
   - targeted lint passed with only the known `<img>` warning in `components/GameScreen.tsx`
   - `npm run build` passed
+
+### 2026-03-14 21:01:00 +0100
+- Raised all authoritative PPP values by `15%` from the current workbook baseline:
+  - easy `0.000252225 -> 0.00029005875`
+  - medium `0.00038475 -> 0.0004424625`
+  - hard `0.00058995 -> 0.0006784425`
+- Updated both `local-balance/ltm3.xml` and `scripts/sync-ltm3.mjs`, then regenerated `lib/gameConfig.generated.ts`.
+- Validation completed:
+  - `npm run sync:ltm3` passed
+  - `npm run build` passed

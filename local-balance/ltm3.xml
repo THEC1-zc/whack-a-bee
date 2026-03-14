@@ -271,10 +271,10 @@
     </Row>
     <Row>
       <Cell><Data ss:Type="String">ppp_input_usdc_per_point</Data></Cell>
-      <Cell><Data ss:Type="Number">2.5222500000000002E-4</Data></Cell>
-      <Cell><Data ss:Type="Number">2.5222500000000002E-4</Data></Cell>
-      <Cell><Data ss:Type="Number">2.5222500000000002E-4</Data></Cell>
-      <Cell><Data ss:Type="Number">2.5222500000000002E-4</Data></Cell>
+      <Cell><Data ss:Type="Number">2.9005875E-4</Data></Cell>
+      <Cell><Data ss:Type="Number">2.9005875E-4</Data></Cell>
+      <Cell><Data ss:Type="Number">2.9005875E-4</Data></Cell>
+      <Cell><Data ss:Type="Number">2.9005875E-4</Data></Cell>
       <Cell><Data ss:Type="String">usdc/pt</Data></Cell>
       <Cell><Data ss:Type="String">authoritative point-to-USDC conversion</Data></Cell>
     </Row>
@@ -554,10 +554,10 @@
     </Row>
     <Row>
       <Cell><Data ss:Type="String">ppp_input_usdc_per_point</Data></Cell>
-      <Cell><Data ss:Type="Number">3.8475E-4</Data></Cell>
-      <Cell><Data ss:Type="Number">3.8475E-4</Data></Cell>
-      <Cell><Data ss:Type="Number">3.8475E-4</Data></Cell>
-      <Cell><Data ss:Type="Number">3.8475E-4</Data></Cell>
+      <Cell><Data ss:Type="Number">4.424625E-4</Data></Cell>
+      <Cell><Data ss:Type="Number">4.424625E-4</Data></Cell>
+      <Cell><Data ss:Type="Number">4.424625E-4</Data></Cell>
+      <Cell><Data ss:Type="Number">4.424625E-4</Data></Cell>
       <Cell><Data ss:Type="String">usdc/pt</Data></Cell>
       <Cell><Data ss:Type="String">authoritative point-to-USDC conversion</Data></Cell>
     </Row>
@@ -837,10 +837,10 @@
     </Row>
     <Row>
       <Cell><Data ss:Type="String">ppp_input_usdc_per_point</Data></Cell>
-      <Cell><Data ss:Type="Number">5.8995E-4</Data></Cell>
-      <Cell><Data ss:Type="Number">5.8995E-4</Data></Cell>
-      <Cell><Data ss:Type="Number">5.8995E-4</Data></Cell>
-      <Cell><Data ss:Type="Number">5.8995E-4</Data></Cell>
+      <Cell><Data ss:Type="Number">6.784425E-4</Data></Cell>
+      <Cell><Data ss:Type="Number">6.784425E-4</Data></Cell>
+      <Cell><Data ss:Type="Number">6.784425E-4</Data></Cell>
+      <Cell><Data ss:Type="Number">6.784425E-4</Data></Cell>
       <Cell><Data ss:Type="String">usdc/pt</Data></Cell>
       <Cell><Data ss:Type="String">authoritative point-to-USDC conversion</Data></Cell>
     </Row>

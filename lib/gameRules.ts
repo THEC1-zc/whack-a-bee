@@ -85,6 +85,10 @@ function getRunTypePrizeBonus(difficulty: Difficulty, capType: CapTypeKey) {
   return GAME_TUNING[difficulty][capType].prizeBonusUsdcGross;
 }
 
+function roundToHalf(value: number) {
+  return Math.round(value * 2) / 2;
+}
+
 function getRunTypePerfectPositiveSlots(tuning: RunTypeTuning) {
   return tuning.totalWaves * Math.max(1, tuning.maxButterfliesPerWave - tuning.bombsBasePerWave);
 }
@@ -247,11 +251,11 @@ export function getLivePointValuesForType(difficulty: Difficulty, capType: strin
         GAME_TUNING[difficulty].mega[key] * mix.mega
       ) / total;
     return {
-      normal: weighted("normalPoints"),
-      fast: weighted("triplePoints"),
-      fuchsia: weighted("quickPoints"),
-      bomb: weighted("bombPoints"),
-      super: weighted("prizePoints"),
+      normal: roundToHalf(weighted("normalPoints")),
+      fast: roundToHalf(weighted("triplePoints")),
+      fuchsia: roundToHalf(weighted("quickPoints")),
+      bomb: roundToHalf(weighted("bombPoints")),
+      super: roundToHalf(weighted("prizePoints")),
     };
   }
   const tuning = getRunTypeTuning(difficulty, normalized);
