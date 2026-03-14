@@ -83,6 +83,7 @@ export default function GameScreen({ user, difficulty, onGameEnd }: Props) {
   const [countdown, setCountdown] = useState(3);
   const [hitEffects, setHitEffects] = useState<{ id: number; slot: number; text: string }[]>([]);
   const [paymentStatus, setPaymentStatus] = useState<"idle" | "claimable" | "claiming" | "paid" | "failed">("idle");
+  const [claimTapReady, setClaimTapReady] = useState(false);
   const [paymentError, setPaymentError] = useState<string | null>(null);
   const [paymentErrorCode, setPaymentErrorCode] = useState<string | null>(null);
   const [paymentNote, setPaymentNote] = useState<string | null>(null);
@@ -109,6 +110,7 @@ export default function GameScreen({ user, difficulty, onGameEnd }: Props) {
   const gameStartedRef = useRef(false);
   const endTriggeredRef = useRef(false);
   const nextWaveQueuedRef = useRef(false);
+  const claimUnlockTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   const addHitEffect = useCallback((slot: number, text: string) => {
     const id = effectIdRef.current++;
@@ -278,6 +280,12 @@ export default function GameScreen({ user, difficulty, onGameEnd }: Props) {
     return () => clearTimeout(t);
   }, [countdown, feeStatus, gameState]);
 
+  useEffect(() => {
+    return () => {
+      if (claimUnlockTimerRef.current) clearTimeout(claimUnlockTimerRef.current);
+    };
+  }, []);
+
   const handleGameEnd = useCallback(async () => {
     const shownScore = scoreRef.current;
     if (!session) {
@@ -297,16 +305,22 @@ export default function GameScreen({ user, difficulty, onGameEnd }: Props) {
       const prize = Number(finished.prizeUsdc || 0);
       if (prize <= 0) {
         setPaymentStatus("paid");
+        setClaimTapReady(false);
         setPaymentNote("No payout required");
         setPaymentError(null);
         setPaymentErrorCode(null);
         return;
       }
+      if (claimUnlockTimerRef.current) clearTimeout(claimUnlockTimerRef.current);
+      setClaimTapReady(false);
       setPaymentStatus("claimable");
       setPaymentError(null);
       setPaymentErrorCode(null);
-      setPaymentNote("Tap Claim Prize to send the payout on-chain.");
+      setPaymentNote("Claim Prize unlocks in 1 second to let the session settle.");
+      claimUnlockTimerRef.current = setTimeout(() => setClaimTapReady(true), 1000);
     } catch (error) {
+      if (claimUnlockTimerRef.current) clearTimeout(claimUnlockTimerRef.current);
+      setClaimTapReady(false);
       setPaymentStatus("failed");
       setPaymentError(error instanceof Error ? error.message : "Game finish failed");
       setPaymentErrorCode("GAME_FINISH_FAILED");
@@ -316,17 +330,21 @@ export default function GameScreen({ user, difficulty, onGameEnd }: Props) {
 
   const handleClaimPrize = useCallback(async () => {
     if (!session || paymentStatus === "claiming") return;
+    if (claimUnlockTimerRef.current) clearTimeout(claimUnlockTimerRef.current);
     setPaymentStatus("claiming");
+    setClaimTapReady(false);
     setPaymentError(null);
     setPaymentErrorCode(null);
     try {
       const claim = await claimPrize(session.gameId, session.gameSecret);
       if (claim.success) {
         setPaymentStatus("paid");
+        setClaimTapReady(false);
         setPaymentNote("Prize: paid · Pot: added");
         return;
       }
       setPaymentStatus("failed");
+      setClaimTapReady(true);
       setPaymentError(claim.error || "Claim failed");
       setPaymentErrorCode(claim.errorCode || null);
       setPaymentNote(
@@ -334,6 +352,7 @@ export default function GameScreen({ user, difficulty, onGameEnd }: Props) {
       );
     } catch (error) {
       setPaymentStatus("failed");
+      setClaimTapReady(true);
       setPaymentError(error instanceof Error ? error.message : "Claim failed");
       setPaymentErrorCode("CLAIM_FAILED");
       setPaymentNote("Prize: not paid · Pot: not added");
@@ -553,11 +572,17 @@ export default function GameScreen({ user, difficulty, onGameEnd }: Props) {
             <button
               type="button"
               onClick={() => void handleClaimPrize()}
-              disabled={paymentStatus === "claiming"}
+              disabled={paymentStatus === "claiming" || !claimTapReady}
               className="w-full rounded-[24px] px-4 py-4 text-lg font-black text-black disabled:opacity-60 disabled:cursor-wait"
               style={{ background: "linear-gradient(135deg, #f7bd2b, #ffdc72)" }}
             >
-              {paymentStatus === "claiming" ? "Claiming Prize..." : paymentStatus === "failed" ? "Retry Claim Prize" : "Claim Prize"}
+              {paymentStatus === "claiming"
+                ? "Claiming Prize..."
+                : paymentStatus === "failed"
+                  ? "Retry Claim Prize"
+                  : claimTapReady
+                    ? "Claim Prize"
+                    : "Claim Prize in 1s..."}
             </button>
           )}
 

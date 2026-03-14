@@ -698,3 +698,10 @@ Payout bands:
 - Validation completed:
   - targeted lint passed
   - `npm run build` passed
+
+### 2026-03-14 19:30:00 +0100
+- Added a 1-second unlock delay to the end-game `Claim Prize` button in `components/GameScreen.tsx`.
+- The delay starts only after the server has marked the run as claimable, preventing ultra-fast taps from racing the session state alignment.
+- Validation completed:
+  - targeted lint passed with only the known `<img>` warning
+  - `npm run build` passed
