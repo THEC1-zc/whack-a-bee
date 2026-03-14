@@ -5,25 +5,25 @@ export const DIFFICULTY_META = {
     "label": "Easy",
     "emoji": "🟢",
     "color": "#16a34a",
-    "fee": 0.015,
+    "fee": 0.01,
     "baseWaves": 14,
-    "ppp": 0.00029005875
+    "ppp": 0.0003045616875
   },
   "medium": {
     "label": "Medium",
     "emoji": "🟡",
     "color": "#ca8a04",
-    "fee": 0.025,
+    "fee": 0.02,
     "baseWaves": 13,
-    "ppp": 0.0004424625
+    "ppp": 0.000464585625
   },
   "hard": {
     "label": "Hard",
     "emoji": "🔴",
     "color": "#dc2626",
-    "fee": 0.035,
+    "fee": 0.03,
     "baseWaves": 8,
-    "ppp": 0.0006784425
+    "ppp": 0.000712364625
   }
 } as const;
 export const RUN_TYPE_META = {
@@ -59,7 +59,7 @@ export const GAME_TUNING = {
   "easy": {
     "low": {
       "runRollPct": 24.545455,
-      "feeUsdc": 0.015,
+      "feeUsdc": 0.01,
       "baseWaves": 14,
       "extraWaves": 0,
       "totalWaves": 14,
@@ -78,7 +78,7 @@ export const GAME_TUNING = {
       "prizeMaxPerGame": 1,
       "prizeChance": 0.01,
       "prizePoints": 1,
-      "prizeBonusUsdcGross": 0.016538,
+      "prizeBonusUsdcGross": 0.014175,
       "prizeDurationMs": 1300,
       "normalPoints": 1,
       "normalDurationMs": 1200,
@@ -86,12 +86,12 @@ export const GAME_TUNING = {
       "bombsSecondChance": 0.25,
       "bombPoints": -2,
       "bombDurationMs": 1300,
-      "pppInputUsdcPerPoint": 0.00029005875,
+      "pppInputUsdcPerPoint": 0.0003045616875,
       "bfPerUsdcLiveSnapshot": 4775549.188156637
     },
     "nice": {
       "runRollPct": 32.727273,
-      "feeUsdc": 0.015,
+      "feeUsdc": 0.01,
       "baseWaves": 14,
       "extraWaves": 1,
       "totalWaves": 15,
@@ -110,7 +110,7 @@ export const GAME_TUNING = {
       "prizeMaxPerGame": 1,
       "prizeChance": 0.01,
       "prizePoints": 1,
-      "prizeBonusUsdcGross": 0.025725,
+      "prizeBonusUsdcGross": 0.02205,
       "prizeDurationMs": 1300,
       "normalPoints": 1,
       "normalDurationMs": 1200,
@@ -118,12 +118,12 @@ export const GAME_TUNING = {
       "bombsSecondChance": 0.25,
       "bombPoints": -2,
       "bombDurationMs": 1300,
-      "pppInputUsdcPerPoint": 0.00029005875,
+      "pppInputUsdcPerPoint": 0.0003045616875,
       "bfPerUsdcLiveSnapshot": 4775549.188156637
     },
     "big": {
       "runRollPct": 24.545455,
-      "feeUsdc": 0.015,
+      "feeUsdc": 0.01,
       "baseWaves": 14,
       "extraWaves": 2,
       "totalWaves": 16,
@@ -142,7 +142,7 @@ export const GAME_TUNING = {
       "prizeMaxPerGame": 1,
       "prizeChance": 0.01,
       "prizePoints": 1,
-      "prizeBonusUsdcGross": 0.03675,
+      "prizeBonusUsdcGross": 0.0315,
       "prizeDurationMs": 1300,
       "normalPoints": 1,
       "normalDurationMs": 1200,
@@ -150,12 +150,12 @@ export const GAME_TUNING = {
       "bombsSecondChance": 0.35,
       "bombPoints": -2,
       "bombDurationMs": 1300,
-      "pppInputUsdcPerPoint": 0.00029005875,
+      "pppInputUsdcPerPoint": 0.0003045616875,
       "bfPerUsdcLiveSnapshot": 4775549.188156637
     },
     "mega": {
       "runRollPct": 8.181818,
-      "feeUsdc": 0.015,
+      "feeUsdc": 0.01,
       "baseWaves": 14,
       "extraWaves": 3,
       "totalWaves": 17,
@@ -174,7 +174,7 @@ export const GAME_TUNING = {
       "prizeMaxPerGame": 1,
       "prizeChance": 0.01,
       "prizePoints": 1,
-      "prizeBonusUsdcGross": 0.055125,
+      "prizeBonusUsdcGross": 0.04725,
       "prizeDurationMs": 1300,
       "normalPoints": 1,
       "normalDurationMs": 1200,
@@ -182,14 +182,14 @@ export const GAME_TUNING = {
       "bombsSecondChance": 0.35,
       "bombPoints": -2,
       "bombDurationMs": 1300,
-      "pppInputUsdcPerPoint": 0.00029005875,
+      "pppInputUsdcPerPoint": 0.0003045616875,
       "bfPerUsdcLiveSnapshot": 4775549.188156637
     }
   },
   "medium": {
     "low": {
       "runRollPct": 24.545455,
-      "feeUsdc": 0.025,
+      "feeUsdc": 0.02,
       "baseWaves": 13,
       "extraWaves": 0,
       "totalWaves": 13,
@@ -208,7 +208,7 @@ export const GAME_TUNING = {
       "prizeMaxPerGame": 1,
       "prizeChance": 0.01,
       "prizePoints": 1,
-      "prizeBonusUsdcGross": 0.026775,
+      "prizeBonusUsdcGross": 0.02295,
       "prizeDurationMs": 1170,
       "normalPoints": 1,
       "normalDurationMs": 1080,
@@ -216,12 +216,12 @@ export const GAME_TUNING = {
       "bombsSecondChance": 0.35,
       "bombPoints": -3,
       "bombDurationMs": 1170,
-      "pppInputUsdcPerPoint": 0.0004424625,
+      "pppInputUsdcPerPoint": 0.000464585625,
       "bfPerUsdcLiveSnapshot": 4775549.188156637
     },
     "nice": {
       "runRollPct": 32.727273,
-      "feeUsdc": 0.025,
+      "feeUsdc": 0.02,
       "baseWaves": 13,
       "extraWaves": 1,
       "totalWaves": 14,
@@ -240,7 +240,7 @@ export const GAME_TUNING = {
       "prizeMaxPerGame": 1,
       "prizeChance": 0.01,
       "prizePoints": 1,
-      "prizeBonusUsdcGross": 0.04165,
+      "prizeBonusUsdcGross": 0.0357,
       "prizeDurationMs": 1170,
       "normalPoints": 1,
       "normalDurationMs": 1080,
@@ -248,12 +248,12 @@ export const GAME_TUNING = {
       "bombsSecondChance": 0.35,
       "bombPoints": -3,
       "bombDurationMs": 1170,
-      "pppInputUsdcPerPoint": 0.0004424625,
+      "pppInputUsdcPerPoint": 0.000464585625,
       "bfPerUsdcLiveSnapshot": 4775549.188156637
     },
     "big": {
       "runRollPct": 24.545455,
-      "feeUsdc": 0.025,
+      "feeUsdc": 0.02,
       "baseWaves": 13,
       "extraWaves": 2,
       "totalWaves": 15,
@@ -272,7 +272,7 @@ export const GAME_TUNING = {
       "prizeMaxPerGame": 1,
       "prizeChance": 0.01,
       "prizePoints": 1,
-      "prizeBonusUsdcGross": 0.0595,
+      "prizeBonusUsdcGross": 0.051,
       "prizeDurationMs": 1170,
       "normalPoints": 1,
       "normalDurationMs": 1080,
@@ -280,12 +280,12 @@ export const GAME_TUNING = {
       "bombsSecondChance": 0.45,
       "bombPoints": -3,
       "bombDurationMs": 1170,
-      "pppInputUsdcPerPoint": 0.0004424625,
+      "pppInputUsdcPerPoint": 0.000464585625,
       "bfPerUsdcLiveSnapshot": 4775549.188156637
     },
     "mega": {
       "runRollPct": 8.181818,
-      "feeUsdc": 0.025,
+      "feeUsdc": 0.02,
       "baseWaves": 13,
       "extraWaves": 3,
       "totalWaves": 16,
@@ -304,7 +304,7 @@ export const GAME_TUNING = {
       "prizeMaxPerGame": 1,
       "prizeChance": 0.01,
       "prizePoints": 1,
-      "prizeBonusUsdcGross": 0.08925,
+      "prizeBonusUsdcGross": 0.0765,
       "prizeDurationMs": 1170,
       "normalPoints": 1,
       "normalDurationMs": 1080,
@@ -312,14 +312,14 @@ export const GAME_TUNING = {
       "bombsSecondChance": 0.45,
       "bombPoints": -2,
       "bombDurationMs": 1170,
-      "pppInputUsdcPerPoint": 0.0004424625,
+      "pppInputUsdcPerPoint": 0.000464585625,
       "bfPerUsdcLiveSnapshot": 4775549.188156637
     }
   },
   "hard": {
     "low": {
       "runRollPct": 24.545455,
-      "feeUsdc": 0.035,
+      "feeUsdc": 0.03,
       "baseWaves": 8,
       "extraWaves": 0,
       "totalWaves": 8,
@@ -338,7 +338,7 @@ export const GAME_TUNING = {
       "prizeMaxPerGame": 1,
       "prizeChance": 0.01,
       "prizePoints": 1,
-      "prizeBonusUsdcGross": 0.039375,
+      "prizeBonusUsdcGross": 0.03375,
       "prizeDurationMs": 1014,
       "normalPoints": 1,
       "normalDurationMs": 936,
@@ -346,12 +346,12 @@ export const GAME_TUNING = {
       "bombsSecondChance": 0.45,
       "bombPoints": -4,
       "bombDurationMs": 1014,
-      "pppInputUsdcPerPoint": 0.0006784425,
+      "pppInputUsdcPerPoint": 0.000712364625,
       "bfPerUsdcLiveSnapshot": 4775549.188156637
     },
     "nice": {
       "runRollPct": 32.727273,
-      "feeUsdc": 0.035,
+      "feeUsdc": 0.03,
       "baseWaves": 8,
       "extraWaves": 1,
       "totalWaves": 9,
@@ -370,7 +370,7 @@ export const GAME_TUNING = {
       "prizeMaxPerGame": 1,
       "prizeChance": 0.01,
       "prizePoints": 1,
-      "prizeBonusUsdcGross": 0.06125,
+      "prizeBonusUsdcGross": 0.0525,
       "prizeDurationMs": 1014,
       "normalPoints": 1,
       "normalDurationMs": 936,
@@ -378,12 +378,12 @@ export const GAME_TUNING = {
       "bombsSecondChance": 0.45,
       "bombPoints": -4,
       "bombDurationMs": 1014,
-      "pppInputUsdcPerPoint": 0.0006784425,
+      "pppInputUsdcPerPoint": 0.000712364625,
       "bfPerUsdcLiveSnapshot": 4775549.188156637
     },
     "big": {
       "runRollPct": 24.545455,
-      "feeUsdc": 0.035,
+      "feeUsdc": 0.03,
       "baseWaves": 8,
       "extraWaves": 2,
       "totalWaves": 10,
@@ -402,7 +402,7 @@ export const GAME_TUNING = {
       "prizeMaxPerGame": 1,
       "prizeChance": 0.01,
       "prizePoints": 1,
-      "prizeBonusUsdcGross": 0.0875,
+      "prizeBonusUsdcGross": 0.075,
       "prizeDurationMs": 1014,
       "normalPoints": 1,
       "normalDurationMs": 936,
@@ -410,12 +410,12 @@ export const GAME_TUNING = {
       "bombsSecondChance": 0.55,
       "bombPoints": -4,
       "bombDurationMs": 1014,
-      "pppInputUsdcPerPoint": 0.0006784425,
+      "pppInputUsdcPerPoint": 0.000712364625,
       "bfPerUsdcLiveSnapshot": 4775549.188156637
     },
     "mega": {
       "runRollPct": 8.181818,
-      "feeUsdc": 0.035,
+      "feeUsdc": 0.03,
       "baseWaves": 8,
       "extraWaves": 3,
       "totalWaves": 11,
@@ -434,7 +434,7 @@ export const GAME_TUNING = {
       "prizeMaxPerGame": 1,
       "prizeChance": 0.01,
       "prizePoints": 1,
-      "prizeBonusUsdcGross": 0.13125,
+      "prizeBonusUsdcGross": 0.1125,
       "prizeDurationMs": 1014,
       "normalPoints": 1,
       "normalDurationMs": 936,
@@ -442,16 +442,16 @@ export const GAME_TUNING = {
       "bombsSecondChance": 0.55,
       "bombPoints": -3,
       "bombDurationMs": 1014,
-      "pppInputUsdcPerPoint": 0.0006784425,
+      "pppInputUsdcPerPoint": 0.000712364625,
       "bfPerUsdcLiveSnapshot": 4775549.188156637
     }
   }
 } as const;
 export const JOLLY_TUNING = {
   "runRollPct": 10,
-  "easyPrizeBonusUsdcGross": 0.033075,
-  "mediumPrizeBonusUsdcGross": 0.05355,
-  "hardPrizeBonusUsdcGross": 0.07875,
+  "easyPrizeBonusUsdcGross": 0.02835,
+  "mediumPrizeBonusUsdcGross": 0.0459,
+  "hardPrizeBonusUsdcGross": 0.0675,
   "waveTypePct": {
     "low": 27.272727,
     "nice": 36.363636,

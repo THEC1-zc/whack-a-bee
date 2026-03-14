@@ -747,3 +747,20 @@ Payout bands:
 - Validation completed:
   - `npm run sync:ltm3` passed
   - `npm run build` passed
+
+### 2026-03-14 21:18:00 +0100
+- Applied the new economy pass requested for manual-testing calibration:
+  - fees lowered to `0.01 / 0.02 / 0.03`
+  - PPP raised by `5%` from the current baseline:
+    - easy `0.00029005875 -> 0.0003045616875`
+    - medium `0.0004424625 -> 0.000464585625`
+    - hard `0.0006784425 -> 0.000712364625`
+- Synced `local-balance/ltm3.xml`, `scripts/sync-ltm3.mjs`, and regenerated `lib/gameConfig.generated.ts`.
+- Monte Carlo rerun from scratch on the new set:
+  - `30000` runs
+  - `100%` skill and `80%` skill
+  - Prizefly excluded by hard rule
+  - fresh BF reference `1 USDC ≈ 4,716,981 BF`
+- Validation completed:
+  - `npm run sync:ltm3` passed
+  - `npm run build` passed

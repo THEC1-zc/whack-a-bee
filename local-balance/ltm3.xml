@@ -28,10 +28,10 @@
     </Row>
     <Row>
       <Cell><Data ss:Type="String">fee_usdc</Data></Cell>
-      <Cell><Data ss:Type="Number">1.4999999999999999E-2</Data></Cell>
-      <Cell><Data ss:Type="Number">1.4999999999999999E-2</Data></Cell>
-      <Cell><Data ss:Type="Number">1.4999999999999999E-2</Data></Cell>
-      <Cell><Data ss:Type="Number">1.4999999999999999E-2</Data></Cell>
+      <Cell><Data ss:Type="Number">1E-2</Data></Cell>
+      <Cell><Data ss:Type="Number">1E-2</Data></Cell>
+      <Cell><Data ss:Type="Number">1E-2</Data></Cell>
+      <Cell><Data ss:Type="Number">1E-2</Data></Cell>
       <Cell><Data ss:Type="String">usdc</Data></Cell>
       <Cell><Data ss:Type="String">primary edit surface for easy</Data></Cell>
     </Row>
@@ -199,10 +199,10 @@
     </Row>
     <Row>
       <Cell><Data ss:Type="String">prize_bonus_usdc_gross</Data></Cell>
-      <Cell><Data ss:Type="Number">0.016538</Data></Cell>
-      <Cell><Data ss:Type="Number">0.025725</Data></Cell>
-      <Cell><Data ss:Type="Number">0.03675</Data></Cell>
-      <Cell><Data ss:Type="Number">0.055125</Data></Cell>
+      <Cell><Data ss:Type="Number">0.014175</Data></Cell>
+      <Cell><Data ss:Type="Number">0.02205</Data></Cell>
+      <Cell><Data ss:Type="Number">0.0315</Data></Cell>
+      <Cell><Data ss:Type="Number">0.04725</Data></Cell>
       <Cell><Data ss:Type="String">usdc</Data></Cell>
       <Cell><Data ss:Type="String">authoritative gross Prizefly bonus</Data></Cell>
     </Row>
@@ -271,10 +271,10 @@
     </Row>
     <Row>
       <Cell><Data ss:Type="String">ppp_input_usdc_per_point</Data></Cell>
-      <Cell><Data ss:Type="Number">2.9005875E-4</Data></Cell>
-      <Cell><Data ss:Type="Number">2.9005875E-4</Data></Cell>
-      <Cell><Data ss:Type="Number">2.9005875E-4</Data></Cell>
-      <Cell><Data ss:Type="Number">2.9005875E-4</Data></Cell>
+      <Cell><Data ss:Type="Number">3.045616875E-4</Data></Cell>
+      <Cell><Data ss:Type="Number">3.045616875E-4</Data></Cell>
+      <Cell><Data ss:Type="Number">3.045616875E-4</Data></Cell>
+      <Cell><Data ss:Type="Number">3.045616875E-4</Data></Cell>
       <Cell><Data ss:Type="String">usdc/pt</Data></Cell>
       <Cell><Data ss:Type="String">authoritative point-to-USDC conversion</Data></Cell>
     </Row>
@@ -311,10 +311,10 @@
     </Row>
     <Row>
       <Cell><Data ss:Type="String">fee_usdc</Data></Cell>
-      <Cell><Data ss:Type="Number">2.5000000000000001E-2</Data></Cell>
-      <Cell><Data ss:Type="Number">2.5000000000000001E-2</Data></Cell>
-      <Cell><Data ss:Type="Number">2.5000000000000001E-2</Data></Cell>
-      <Cell><Data ss:Type="Number">2.5000000000000001E-2</Data></Cell>
+      <Cell><Data ss:Type="Number">2E-2</Data></Cell>
+      <Cell><Data ss:Type="Number">2E-2</Data></Cell>
+      <Cell><Data ss:Type="Number">2E-2</Data></Cell>
+      <Cell><Data ss:Type="Number">2E-2</Data></Cell>
       <Cell><Data ss:Type="String">usdc</Data></Cell>
       <Cell><Data ss:Type="String">primary edit surface for medium</Data></Cell>
     </Row>
@@ -482,10 +482,10 @@
     </Row>
     <Row>
       <Cell><Data ss:Type="String">prize_bonus_usdc_gross</Data></Cell>
-      <Cell><Data ss:Type="Number">0.026775</Data></Cell>
-      <Cell><Data ss:Type="Number">0.04165</Data></Cell>
-      <Cell><Data ss:Type="Number">0.0595</Data></Cell>
-      <Cell><Data ss:Type="Number">0.08925</Data></Cell>
+      <Cell><Data ss:Type="Number">0.02295</Data></Cell>
+      <Cell><Data ss:Type="Number">0.0357</Data></Cell>
+      <Cell><Data ss:Type="Number">0.051</Data></Cell>
+      <Cell><Data ss:Type="Number">0.0765</Data></Cell>
       <Cell><Data ss:Type="String">usdc</Data></Cell>
       <Cell><Data ss:Type="String">authoritative gross Prizefly bonus</Data></Cell>
     </Row>
@@ -554,10 +554,10 @@
     </Row>
     <Row>
       <Cell><Data ss:Type="String">ppp_input_usdc_per_point</Data></Cell>
-      <Cell><Data ss:Type="Number">4.424625E-4</Data></Cell>
-      <Cell><Data ss:Type="Number">4.424625E-4</Data></Cell>
-      <Cell><Data ss:Type="Number">4.424625E-4</Data></Cell>
-      <Cell><Data ss:Type="Number">4.424625E-4</Data></Cell>
+      <Cell><Data ss:Type="Number">4.64585625E-4</Data></Cell>
+      <Cell><Data ss:Type="Number">4.64585625E-4</Data></Cell>
+      <Cell><Data ss:Type="Number">4.64585625E-4</Data></Cell>
+      <Cell><Data ss:Type="Number">4.64585625E-4</Data></Cell>
       <Cell><Data ss:Type="String">usdc/pt</Data></Cell>
       <Cell><Data ss:Type="String">authoritative point-to-USDC conversion</Data></Cell>
     </Row>
@@ -594,10 +594,10 @@
     </Row>
     <Row>
       <Cell><Data ss:Type="String">fee_usdc</Data></Cell>
-      <Cell><Data ss:Type="Number">3.5000000000000003E-2</Data></Cell>
-      <Cell><Data ss:Type="Number">3.5000000000000003E-2</Data></Cell>
-      <Cell><Data ss:Type="Number">3.5000000000000003E-2</Data></Cell>
-      <Cell><Data ss:Type="Number">3.5000000000000003E-2</Data></Cell>
+      <Cell><Data ss:Type="Number">3E-2</Data></Cell>
+      <Cell><Data ss:Type="Number">3E-2</Data></Cell>
+      <Cell><Data ss:Type="Number">3E-2</Data></Cell>
+      <Cell><Data ss:Type="Number">3E-2</Data></Cell>
       <Cell><Data ss:Type="String">usdc</Data></Cell>
       <Cell><Data ss:Type="String">primary edit surface for hard</Data></Cell>
     </Row>
@@ -765,10 +765,10 @@
     </Row>
     <Row>
       <Cell><Data ss:Type="String">prize_bonus_usdc_gross</Data></Cell>
-      <Cell><Data ss:Type="Number">0.039375</Data></Cell>
-      <Cell><Data ss:Type="Number">0.06125</Data></Cell>
-      <Cell><Data ss:Type="Number">0.0875</Data></Cell>
-      <Cell><Data ss:Type="Number">0.13125</Data></Cell>
+      <Cell><Data ss:Type="Number">0.03375</Data></Cell>
+      <Cell><Data ss:Type="Number">0.0525</Data></Cell>
+      <Cell><Data ss:Type="Number">0.075</Data></Cell>
+      <Cell><Data ss:Type="Number">0.1125</Data></Cell>
       <Cell><Data ss:Type="String">usdc</Data></Cell>
       <Cell><Data ss:Type="String">authoritative gross Prizefly bonus</Data></Cell>
     </Row>
@@ -837,10 +837,10 @@
     </Row>
     <Row>
       <Cell><Data ss:Type="String">ppp_input_usdc_per_point</Data></Cell>
-      <Cell><Data ss:Type="Number">6.784425E-4</Data></Cell>
-      <Cell><Data ss:Type="Number">6.784425E-4</Data></Cell>
-      <Cell><Data ss:Type="Number">6.784425E-4</Data></Cell>
-      <Cell><Data ss:Type="Number">6.784425E-4</Data></Cell>
+      <Cell><Data ss:Type="Number">7.12364625E-4</Data></Cell>
+      <Cell><Data ss:Type="Number">7.12364625E-4</Data></Cell>
+      <Cell><Data ss:Type="Number">7.12364625E-4</Data></Cell>
+      <Cell><Data ss:Type="Number">7.12364625E-4</Data></Cell>
       <Cell><Data ss:Type="String">usdc/pt</Data></Cell>
       <Cell><Data ss:Type="String">authoritative point-to-USDC conversion</Data></Cell>
     </Row>
@@ -883,19 +883,19 @@
     </Row>
     <Row>
       <Cell><Data ss:Type="String">easy_prize_bonus_usdc_gross</Data></Cell>
-      <Cell><Data ss:Type="Number">0.033075</Data></Cell>
+      <Cell><Data ss:Type="Number">0.02835</Data></Cell>
       <Cell><Data ss:Type="String">usdc</Data></Cell>
       <Cell><Data ss:Type="String">authoritative easy Jolly Prizefly bonus</Data></Cell>
     </Row>
     <Row>
       <Cell><Data ss:Type="String">medium_prize_bonus_usdc_gross</Data></Cell>
-      <Cell><Data ss:Type="Number">0.05355</Data></Cell>
+      <Cell><Data ss:Type="Number">0.0459</Data></Cell>
       <Cell><Data ss:Type="String">usdc</Data></Cell>
       <Cell><Data ss:Type="String">authoritative medium Jolly Prizefly bonus</Data></Cell>
     </Row>
     <Row>
       <Cell><Data ss:Type="String">hard_prize_bonus_usdc_gross</Data></Cell>
-      <Cell><Data ss:Type="Number">0.07875</Data></Cell>
+      <Cell><Data ss:Type="Number">0.0675</Data></Cell>
       <Cell><Data ss:Type="String">usdc</Data></Cell>
       <Cell><Data ss:Type="String">authoritative hard Jolly Prizefly bonus</Data></Cell>
     </Row>
