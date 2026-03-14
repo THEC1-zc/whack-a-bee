@@ -72,7 +72,7 @@ export async function GET(req: NextRequest) {
 }
 
 export async function POST(req: NextRequest) {
-  const meta = getWeeklyMeta();
+  const meta = await getWeeklyMeta();
   const lock = await acquireWeeklyPayoutLock(meta.weekId, 180000);
   if (!lock) {
     return NextResponse.json({ error: "Weekly payout already running" }, { status: 409 });
@@ -281,8 +281,8 @@ export async function POST(req: NextRequest) {
       failedCount: 0,
     });
 
+    await markWeeklyPayoutDone(meta.weekId);
     await resetWeeklyState();
-    await markWeeklyPayoutDone();
     await resetLeaderboard();
 
     const after = await getAdminStats();

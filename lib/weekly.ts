@@ -5,7 +5,7 @@ import { privateKeyToAccount } from "viem/accounts";
 import { BF_ADDRESS, ERC20_ABI, toBFUnits } from "@/lib/contracts";
 import { getBfPerUsdc } from "./pricing";
 import { getCurrentWeekTicketState, getUserWeeklyTickets } from "@/lib/gameSessions";
-import { getSundayWeekId, nextSundayCET } from "@/lib/weekWindow";
+import { advanceActiveWeeklyPeriod, getActiveWeeklyPeriod } from "@/lib/weeklyPeriod";
 
 const WEEKLY_KEY = "weekly:state:";
 const WEEKLY_LOG_KEY = "weekly:log:";
@@ -87,11 +87,14 @@ function getRedis() {
   return redis;
 }
 
-export function getWeeklyMeta() {
+export async function getWeeklyMeta() {
+  const period = await getActiveWeeklyPeriod();
   return {
-    weekId: getSundayWeekId(),
-    snapshotAt: nextSundayCET(0, 0),
-    payoutAt: nextSundayCET(0, 5),
+    weekId: period.activeWeekId,
+    snapshotAt: period.snapshotAt,
+    payoutAt: period.payoutAt,
+    baseWeekId: period.baseWeekId,
+    cycle: period.cycle,
   };
 }
 
@@ -125,11 +128,13 @@ export async function updateWeeklyTickets() {
 }
 
 export async function getWeeklyState() {
-  const { weekId, snapshotAt, payoutAt } = getWeeklyMeta();
+  const { weekId, snapshotAt, payoutAt, baseWeekId, cycle } = await getWeeklyMeta();
   const derived = await getCurrentWeekTicketState();
   const persisted = await loadState(weekId);
   return {
     weekId,
+    baseWeekId,
+    cycle,
     snapshotAt,
     payoutAt,
     ...persisted,
@@ -141,7 +146,7 @@ export async function getWeeklyState() {
 }
 
 export async function resetWeeklyState() {
-  const { weekId } = getWeeklyMeta();
+  const { activeWeekId: weekId } = await advanceActiveWeeklyPeriod();
   await saveState(weekId, { ...DEFAULT_WEEKLY_STATE });
 }
 
@@ -154,17 +159,17 @@ export async function getUserTickets(address: string) {
 }
 
 export async function setWeeklySnapshot(snapshot: unknown) {
-  const { weekId } = getWeeklyMeta();
+  const { weekId } = await getWeeklyMeta();
   const state = await loadState(weekId);
   state.snapshot = snapshot;
   await saveState(weekId, state);
 }
 
-export async function markWeeklyPayoutDone() {
-  const { weekId } = getWeeklyMeta();
-  const state = await loadState(weekId);
+export async function markWeeklyPayoutDone(weekId?: string) {
+  const targetWeekId = weekId || (await getWeeklyMeta()).weekId;
+  const state = await loadState(targetWeekId);
   state.lastPayoutAt = Date.now();
-  await saveState(weekId, state);
+  await saveState(targetWeekId, state);
 }
 
 export async function mergePendingTicketsIntoClaimed() {
@@ -200,7 +205,7 @@ async function appendPayoutLog(weekId: string, item: WeeklyPayoutLogEntry) {
 }
 
 export async function logWeeklyPayout(entry: Omit<WeeklyPayoutLogEntry, "at" | "weekId"> & { weekId?: string }) {
-  const meta = getWeeklyMeta();
+  const meta = await getWeeklyMeta();
   const item: WeeklyPayoutLogEntry = {
     weekId: entry.weekId || meta.weekId,
     at: Date.now(),
@@ -219,7 +224,7 @@ export async function logWeeklyPayout(entry: Omit<WeeklyPayoutLogEntry, "at" | "
 }
 
 export async function getWeeklyPayoutLog(limit = 10, weekId?: string) {
-  const key = WEEKLY_LOG_KEY + (weekId || getWeeklyMeta().weekId);
+  const key = WEEKLY_LOG_KEY + (weekId || (await getWeeklyMeta()).weekId);
   const client = getRedis();
   let logs: unknown;
   if (client) {

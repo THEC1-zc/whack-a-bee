@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { recoverMessageAddress } from "viem";
-import { getAdminStats, resetLeaderboard } from "@/lib/leaderboard";
-import { getWeeklyState, resetWeeklyState } from "@/lib/weekly";
+import { getAdminStats, getWeeklyAdminStats, resetLeaderboard } from "@/lib/leaderboard";
+import { getWeeklyMeta, getWeeklyState, resetWeeklyState } from "@/lib/weekly";
 import { getAdminWallet, requireAdminRequest } from "@/lib/adminSession";
 import { buildAdminChallengeMessage, verifyAdminChallenge } from "@/lib/adminAuth";
 
@@ -13,8 +13,10 @@ export async function GET(req: NextRequest) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
   const stats = await getAdminStats();
+  const weeklyMeta = await getWeeklyMeta();
+  const weeklyStats = await getWeeklyAdminStats(weeklyMeta.weekId);
   const weekly = await getWeeklyState();
-  return NextResponse.json({ stats, weekly });
+  return NextResponse.json({ stats, weeklyStats, weekly });
 }
 
 export async function POST(req: NextRequest) {
@@ -47,7 +49,7 @@ export async function POST(req: NextRequest) {
     }
 
     await resetLeaderboard();
-    return NextResponse.json({ ok: true });
+    return NextResponse.json({ ok: false, error: "Total leaderboard is derived from all claimed games and cannot be reset" }, { status: 409 });
   }
   if (body?.action === "weekly_reset") {
     const challenge = String(body?.challenge || "");

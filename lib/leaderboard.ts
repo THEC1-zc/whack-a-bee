@@ -1,5 +1,6 @@
 import { type Difficulty } from "@/lib/gameRules";
 import { getAdminGames, getLeaderboardEntries, listAllGames } from "@/lib/gameSessions";
+import { getWeeklyState } from "@/lib/weekly";
 
 export interface UserStats {
   fid: number;
@@ -36,6 +37,19 @@ export async function saveGameResult() {
 
 export async function getLeaderboardStats(limit = 20, difficulty?: string): Promise<UserStats[]> {
   return getLeaderboardEntries(limit, difficulty as Difficulty | undefined);
+}
+
+export async function getWeeklyLeaderboardStats(limit = 20, difficulty?: string): Promise<(UserStats & { tickets: number })[]> {
+  const weekly = await getWeeklyState();
+  const stats = await getWeeklyAdminStats(weekly.weekId);
+  return stats.players
+    .filter((player) => !difficulty || difficulty === "all" || player.gamesByDifficulty[difficulty] > 0)
+    .map((player) => ({
+      ...player,
+      tickets: weekly.tickets[player.address?.toLowerCase() || ""] || 0,
+    }))
+    .sort((a, b) => b.net - a.net || b.tickets - a.tickets || b.games - a.games)
+    .slice(0, limit);
 }
 
 export async function getAdminStats(): Promise<AdminStats> {

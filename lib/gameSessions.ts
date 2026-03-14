@@ -44,7 +44,7 @@ import {
   pickJollyWaveTypes,
 } from "@/lib/gameRules";
 import { logTxRecord } from "@/lib/txLedger";
-import { getSundayWeekId } from "@/lib/weekWindow";
+import { getActiveWeeklyPeriod } from "@/lib/weeklyPeriod";
 
 const CONTRACT_ADDRESS = (
   process.env.NEXT_PUBLIC_BFPAYOUT_CONTRACT || "0xCdfdbB8B93d8a02319434abA5CC69b31a746ef1D"
@@ -539,7 +539,7 @@ export async function createGameSession(difficulty: Difficulty, callerAddress?: 
     waveTypes,
     waveMultipliers,
     createdAt: Date.now(),
-    weekId: getSundayWeekId(),
+    weekId: (await getActiveWeeklyPeriod()).activeWeekId,
     status: "created",
     ticketAssigned: false,
     ticketCount: 0,
@@ -623,7 +623,7 @@ export async function verifyGameFee(params: {
   game.feeVerifiedAt = Date.now();
   game.startedAt = game.feeVerifiedAt;
   game.status = "fee_verified";
-  game.weekId = getSundayWeekId(new Date(game.feeVerifiedAt));
+  game.weekId = (await getActiveWeeklyPeriod(new Date(game.feeVerifiedAt))).activeWeekId;
 
   await saveGame(game);
   await setFeeTxOwner(params.txHash, game.gameId);
@@ -1096,7 +1096,7 @@ function shortAddress(addr: string) {
 }
 
 export async function getCurrentWeekTicketState() {
-  const weekId = getSundayWeekId();
+  const weekId = (await getActiveWeeklyPeriod()).activeWeekId;
   const allGames = await listAllGames();
   const games = allGames.filter((game) => game.weekId === weekId && game.ticketAssigned && game.status === "claimed");
   const tickets: Record<string, number> = {};

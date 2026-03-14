@@ -16,6 +16,7 @@ interface Entry {
   totalPrize: number;
   totalFees: number;
   lastPlayed: number;
+  tickets?: number;
 }
 
 export default function LeaderboardScreen({
@@ -32,11 +33,15 @@ export default function LeaderboardScreen({
   const [entries, setEntries] = useState<Entry[]>([]);
   const [loading, setLoading] = useState(true);
   const [filter, setFilter] = useState<Difficulty | "all">("all");
+  const [scope, setScope] = useState<"total" | "weekly">("weekly");
 
   useEffect(() => {
     let alive = true;
     const load = () => {
-      const qs = filter === "all" ? "" : `?difficulty=${filter}`;
+      const params = new URLSearchParams();
+      if (filter !== "all") params.set("difficulty", filter);
+      params.set("scope", scope);
+      const qs = `?${params.toString()}`;
       fetch(`/api/leaderboard${qs}`)
         .then(r => r.json())
         .then(data => { if (alive) { setEntries(data); setLoading(false); } })
@@ -45,7 +50,7 @@ export default function LeaderboardScreen({
     load();
     const t = setInterval(load, 10000);
     return () => { alive = false; clearInterval(t); };
-  }, [filter]);
+  }, [filter, scope]);
   const medals = ["🥇", "🥈", "🥉"];
   const shortAddr = (addr?: string) =>
     addr ? `${addr.slice(0, 6)}…${addr.slice(-4)}` : "";
@@ -65,6 +70,21 @@ export default function LeaderboardScreen({
       </div>
 
       {/* Filter */}
+      <div className="page-wrap mx-auto flex gap-2 px-4 mb-3">
+        {(["weekly", "total"] as const).map((nextScope) => (
+          <button
+            key={nextScope}
+            onClick={() => setScope(nextScope)}
+            className="page-chip flex-1 py-2 rounded-full text-xs font-bold transition-all"
+            style={{
+              background: scope === nextScope ? "rgba(220, 252, 231, 0.94)" : "rgba(236, 253, 245, 0.08)",
+              color: scope === nextScope ? "#052e16" : "#f0fdf4",
+            }}
+          >
+            {nextScope === "weekly" ? "Weekly" : "Total"}
+          </button>
+        ))}
+      </div>
       <div className="page-wrap mx-auto flex gap-2 px-4 mb-3">
         {(["all", "easy", "medium", "hard"] as const).map(f => (
           <button
@@ -90,7 +110,7 @@ export default function LeaderboardScreen({
         ) : entries.length === 0 ? (
           <div className="page-panel rounded-[28px] text-center text-emerald-50 py-10">
             <div className="text-3xl">😔</div>
-            <div className="text-sm mt-2">No scores yet.</div>
+            <div className="text-sm mt-2">No {scope} scores yet.</div>
           </div>
         ) : (
           entries.map((entry, i) => {
@@ -122,11 +142,14 @@ export default function LeaderboardScreen({
                   </div>
                   <div className="mt-1 text-[11px] text-emerald-50/55">
                     Games {entry.games} · Wins {entry.wins} ({winRate}%)
+                    {scope === "weekly" ? ` · Tickets ${entry.tickets || 0}` : ""}
                   </div>
                 </div>
                 <div className="text-right">
                   <div className={`font-black ${net >= 0 ? "text-green-300" : "text-red-300"}`}>{netText}</div>
-                  <div className="text-xs text-emerald-50/55">{entry.totalPrize.toFixed(3)} in / {entry.totalFees.toFixed(3)} out</div>
+                  <div className="text-xs text-emerald-50/55">
+                    {entry.totalPrize.toFixed(3)} in / {entry.totalFees.toFixed(3)} out
+                  </div>
                 </div>
               </div>
             );

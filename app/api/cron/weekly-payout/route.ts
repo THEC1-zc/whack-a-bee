@@ -45,7 +45,7 @@ export async function GET(req: NextRequest) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
 
-  const meta = getWeeklyMeta();
+  const meta = await getWeeklyMeta();
   const cfg = await getWeeklyConfig();
 
   if (!cfg.autoPayoutEnabled) {
@@ -118,8 +118,8 @@ export async function GET(req: NextRequest) {
     });
 
     if (failed.length === 0) {
+      await markWeeklyPayoutDone(meta.weekId);
       await resetWeeklyState();
-      await markWeeklyPayoutDone();
       await resetLeaderboard();
     }
 

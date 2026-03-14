@@ -47,13 +47,12 @@ export default function AdminWeekly() {
   const authorized = address === ADMIN_WALLET;
 
   const [weekly, setWeekly] = useState<WeeklyState | null>(null);
-  const [stats, setStats] = useState<AdminStats | null>(null);
+  const [weeklyStats, setWeeklyStats] = useState<AdminStats | null>(null);
   const [cfg, setCfg] = useState<WeeklyConfig | null>(null);
   const [logs, setLogs] = useState<PayoutLog[]>([]);
   const [running, setRunning] = useState<string | null>(null);
   const [msg, setMsg] = useState<Msg>(null);
   const [savingCfg, setSavingCfg] = useState(false);
-  const [resetting, setResetting] = useState(false);
 
   useEffect(() => {
     if (!authorized) return;
@@ -68,7 +67,7 @@ export default function AdminWeekly() {
       setWeekly(w);
       setCfg(cfgRes.config);
       setLogs(Array.isArray(cfgRes.logs) ? cfgRes.logs : []);
-      setStats(lbRes.stats);
+      setWeeklyStats(lbRes.weeklyStats);
     })().catch((error) => {
       if (!cancelled) setMsg({ type: "err", text: error instanceof Error ? error.message : String(error) });
     });
@@ -100,7 +99,7 @@ export default function AdminWeekly() {
       setWeekly(w);
       setCfg(cfgRes.config);
       setLogs(Array.isArray(cfgRes.logs) ? cfgRes.logs : []);
-      setStats(lbRes.stats);
+      setWeeklyStats(lbRes.weeklyStats);
     } catch (e) {
       setMsg({ type: "err", text: String(e) });
     }
@@ -140,37 +139,6 @@ export default function AdminWeekly() {
         }),
       })
     );
-  }
-
-  async function resetLeaderboard() {
-    setResetting(true);
-    setMsg({ type: "ok", text: "Firma richiesta…" });
-    try {
-      const signed = await signAdminAction(address, "reset_leaderboard");
-      const res = await adminFetch(address, "/api/admin/leaderboard", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ action: "reset", challenge: signed.challenge, message: signed.message, signature: signed.signature }),
-      });
-      if (res.ok) {
-        setMsg({ type: "ok", text: "Leaderboard resettata ✓" });
-        const [w, cfgRes, lbRes] = await Promise.all([
-          fetch("/api/weekly").then((r) => r.json()),
-          adminFetch(address, "/api/admin/weekly-config").then((r) => r.json()),
-          adminFetch(address, "/api/admin/leaderboard").then((r) => r.json()),
-        ]);
-        setWeekly(w);
-        setCfg(cfgRes.config);
-        setLogs(Array.isArray(cfgRes.logs) ? cfgRes.logs : []);
-        setStats(lbRes.stats);
-      } else {
-        const d = await res.json().catch(() => ({}));
-        setMsg({ type: "err", text: d?.error || "Reset failed" });
-      }
-    } catch {
-      setMsg({ type: "err", text: "Firma annullata o errore" });
-    }
-    setResetting(false);
   }
 
   async function updateCfg(partial: Partial<WeeklyConfig>) {
@@ -293,9 +261,9 @@ export default function AdminWeekly() {
         </Card>
 
         {/* Top 3 preview */}
-        {stats && stats.players.length > 0 && (
-          <Card title="Top 3 attuali (candidati payout)">
-            {stats.players
+        {weeklyStats && weeklyStats.players.length > 0 && (
+          <Card title="Top 3 weekly (candidati payout)">
+            {weeklyStats.players
               .filter((p) => p.address)
               .slice(0, 3)
               .map((p, i) => (
@@ -350,17 +318,9 @@ export default function AdminWeekly() {
             >
               {running === "Reset Weekly" ? "⏳…" : "🔄  Reset Weekly State"}
             </button>
-            <button
-              disabled={resetting}
-              onClick={resetLeaderboard}
-              className={BTN}
-              style={{ background: "linear-gradient(135deg,#dc2626,#b91c1c)" }}
-            >
-              {resetting ? "⏳ Firma…" : "🗑️  Reset Leaderboard (firma richiesta)"}
-            </button>
           </div>
           <p className="text-amber-800 text-xs mt-2">
-            Reset Weekly azzera ticket e pot counter. Reset Leaderboard svuota tutte le partite.
+            Reset Weekly chiude la week attiva e ne apre una nuova da zero. La total leaderboard non viene resettata.
           </p>
         </Card>
 
