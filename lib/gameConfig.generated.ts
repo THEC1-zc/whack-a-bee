@@ -7,7 +7,7 @@ export const DIFFICULTY_META = {
     "color": "#16a34a",
     "fee": 0.01,
     "baseWaves": 14,
-    "ppp": 0.0003045616875
+    "ppp": 0.0004
   },
   "medium": {
     "label": "Medium",
@@ -15,7 +15,7 @@ export const DIFFICULTY_META = {
     "color": "#ca8a04",
     "fee": 0.02,
     "baseWaves": 13,
-    "ppp": 0.000464585625
+    "ppp": 0.00055
   },
   "hard": {
     "label": "Hard",
@@ -23,7 +23,7 @@ export const DIFFICULTY_META = {
     "color": "#dc2626",
     "fee": 0.03,
     "baseWaves": 8,
-    "ppp": 0.000712364625
+    "ppp": 0.0008
   }
 } as const;
 export const RUN_TYPE_META = {
@@ -86,7 +86,7 @@ export const GAME_TUNING = {
       "bombsSecondChance": 0.25,
       "bombPoints": -2,
       "bombDurationMs": 1300,
-      "pppInputUsdcPerPoint": 0.0003045616875,
+      "pppInputUsdcPerPoint": 0.0004,
       "bfPerUsdcLiveSnapshot": 4775549.188156637
     },
     "nice": {
@@ -118,7 +118,7 @@ export const GAME_TUNING = {
       "bombsSecondChance": 0.25,
       "bombPoints": -2,
       "bombDurationMs": 1300,
-      "pppInputUsdcPerPoint": 0.0003045616875,
+      "pppInputUsdcPerPoint": 0.0004,
       "bfPerUsdcLiveSnapshot": 4775549.188156637
     },
     "big": {
@@ -150,7 +150,7 @@ export const GAME_TUNING = {
       "bombsSecondChance": 0.35,
       "bombPoints": -2,
       "bombDurationMs": 1300,
-      "pppInputUsdcPerPoint": 0.0003045616875,
+      "pppInputUsdcPerPoint": 0.0004,
       "bfPerUsdcLiveSnapshot": 4775549.188156637
     },
     "mega": {
@@ -182,7 +182,7 @@ export const GAME_TUNING = {
       "bombsSecondChance": 0.35,
       "bombPoints": -2,
       "bombDurationMs": 1300,
-      "pppInputUsdcPerPoint": 0.0003045616875,
+      "pppInputUsdcPerPoint": 0.0004,
       "bfPerUsdcLiveSnapshot": 4775549.188156637
     }
   },
@@ -216,7 +216,7 @@ export const GAME_TUNING = {
       "bombsSecondChance": 0.35,
       "bombPoints": -3,
       "bombDurationMs": 1170,
-      "pppInputUsdcPerPoint": 0.000464585625,
+      "pppInputUsdcPerPoint": 0.00055,
       "bfPerUsdcLiveSnapshot": 4775549.188156637
     },
     "nice": {
@@ -248,7 +248,7 @@ export const GAME_TUNING = {
       "bombsSecondChance": 0.35,
       "bombPoints": -3,
       "bombDurationMs": 1170,
-      "pppInputUsdcPerPoint": 0.000464585625,
+      "pppInputUsdcPerPoint": 0.00055,
       "bfPerUsdcLiveSnapshot": 4775549.188156637
     },
     "big": {
@@ -280,7 +280,7 @@ export const GAME_TUNING = {
       "bombsSecondChance": 0.45,
       "bombPoints": -3,
       "bombDurationMs": 1170,
-      "pppInputUsdcPerPoint": 0.000464585625,
+      "pppInputUsdcPerPoint": 0.00055,
       "bfPerUsdcLiveSnapshot": 4775549.188156637
     },
     "mega": {
@@ -312,7 +312,7 @@ export const GAME_TUNING = {
       "bombsSecondChance": 0.45,
       "bombPoints": -2,
       "bombDurationMs": 1170,
-      "pppInputUsdcPerPoint": 0.000464585625,
+      "pppInputUsdcPerPoint": 0.00055,
       "bfPerUsdcLiveSnapshot": 4775549.188156637
     }
   },
@@ -346,7 +346,7 @@ export const GAME_TUNING = {
       "bombsSecondChance": 0.45,
       "bombPoints": -4,
       "bombDurationMs": 1014,
-      "pppInputUsdcPerPoint": 0.000712364625,
+      "pppInputUsdcPerPoint": 0.0008,
       "bfPerUsdcLiveSnapshot": 4775549.188156637
     },
     "nice": {
@@ -378,7 +378,7 @@ export const GAME_TUNING = {
       "bombsSecondChance": 0.45,
       "bombPoints": -4,
       "bombDurationMs": 1014,
-      "pppInputUsdcPerPoint": 0.000712364625,
+      "pppInputUsdcPerPoint": 0.0008,
       "bfPerUsdcLiveSnapshot": 4775549.188156637
     },
     "big": {
@@ -410,7 +410,7 @@ export const GAME_TUNING = {
       "bombsSecondChance": 0.55,
       "bombPoints": -4,
       "bombDurationMs": 1014,
-      "pppInputUsdcPerPoint": 0.000712364625,
+      "pppInputUsdcPerPoint": 0.0008,
       "bfPerUsdcLiveSnapshot": 4775549.188156637
     },
     "mega": {
@@ -442,7 +442,7 @@ export const GAME_TUNING = {
       "bombsSecondChance": 0.55,
       "bombPoints": -3,
       "bombDurationMs": 1014,
-      "pppInputUsdcPerPoint": 0.000712364625,
+      "pppInputUsdcPerPoint": 0.0008,
       "bfPerUsdcLiveSnapshot": 4775549.188156637
     }
   }
