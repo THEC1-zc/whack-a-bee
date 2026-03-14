@@ -705,3 +705,13 @@ Payout bands:
 - Validation completed:
   - targeted lint passed with only the known `<img>` warning
   - `npm run build` passed
+
+### 2026-03-14 19:40:00 +0100
+- Lowered all authoritative PPP values by 5% from the current live baseline:
+  - easy `0.000295 -> 0.00028025`
+  - medium `0.00045 -> 0.0004275`
+  - hard `0.00069 -> 0.0006555`
+- Updated both `local-balance/ltm3.xml` and `scripts/sync-ltm3.mjs`, then regenerated `lib/gameConfig.generated.ts`.
+- Validation completed:
+  - `npm run sync:ltm3` passed
+  - `npm run build` passed
