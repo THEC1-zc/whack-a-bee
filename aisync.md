@@ -90,6 +90,10 @@ Payout bands:
 - Weekly now distinguishes `total leaderboard` from `weekly leaderboard`; weekly payout winners are based on the active weekly cycle, which can also be advanced manually without waiting for the calendar week boundary.
 - PPP updated live: easy `0.0004`, medium `0.00055`, hard `0.0008`.
 - Home now waits for the live BF/USDC fetch before showing sensitive BF estimates, and BF/USDC fallback bootstraps from the latest tuning snapshot instead of a rigid hardcoded rate.
+- Rules, admin rescue payout labels, wallet burn wording, and payout share copy now align more clearly around player net BF versus gross split terminology.
+- Removed the dead total leaderboard reset flow and the public disabled leaderboard POST path. Total leaderboard remains explicitly derived from claimed game records only.
+- Cleaned low-risk legacy residue: removed unused leaderboard no-op exports, removed dead gameRules helper exports, dropped an unused admin diagnostics guard, and stopped generating an unnecessary eslint-disable in `gameConfig.generated.ts`.
+- Kept the `average -> nice` alias intentionally as historical record compatibility only; it is no longer part of the live ladder and is now documented as such in `lib/gameRules.ts`.
 
 ## Ultimi cambiamenti (sessione corrente)
 - Ribilanciamento economia: fee medium 0.03→0.025, fee hard 0.045→0.035, maxPts easy 48→40, maxPts medium 64→60, PRIZE_PER_POINT 0.001→0.0008

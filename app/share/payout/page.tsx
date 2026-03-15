@@ -29,11 +29,11 @@ export async function generateMetadata({
   const imageUrl = `${APP_URL}/api/share-payout-image?${shareQuery.toString()}`;
 
   return {
-    title: `${prizeBf} BF won on Whack-a-Butterfly`,
-    description: `${type} ${difficulty} run cleared on Farcaster in ${waves} waves with ${score} points and ${prizeBf} BF won.`,
+    title: `${prizeBf} BF net won on Whack-a-Butterfly`,
+    description: `${type} ${difficulty} run cleared on Farcaster in ${waves} waves with ${score} points and ${prizeBf} BF net won.`,
     openGraph: {
       title: "Whack-a-Butterfly Payout",
-      description: `${type} ${difficulty} run cleared in ${waves} waves with ${score} points and ${prizeBf} BF won.`,
+      description: `${type} ${difficulty} run cleared in ${waves} waves with ${score} points and ${prizeBf} BF net won.`,
       images: [imageUrl],
       url: shareUrl,
     },

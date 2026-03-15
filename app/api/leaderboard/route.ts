@@ -11,11 +11,3 @@ export async function GET(req: NextRequest) {
       : await getLeaderboardStats(20, difficulty || undefined)
   );
 }
-
-export async function POST(req: NextRequest) {
-  void req;
-  return NextResponse.json({
-    error: "Leaderboard submission temporarily disabled pending authenticated server-side game session redesign",
-    errorCode: "LEADERBOARD_SUBMIT_DISABLED",
-  }, { status: 503 });
-}

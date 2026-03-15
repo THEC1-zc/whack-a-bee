@@ -11,7 +11,7 @@ import {
   sendWeeklyBfTransfers,
   setWeeklySnapshot,
 } from "@/lib/weekly";
-import { getWeeklyAdminStats, resetLeaderboard } from "@/lib/leaderboard";
+import { getWeeklyAdminStats } from "@/lib/leaderboard";
 import { logTxRecord } from "@/lib/txLedger";
 
 // Vercel Cron — domenica 23:00 UTC = domenica 00:00 CET
@@ -120,7 +120,6 @@ export async function GET(req: NextRequest) {
     if (failed.length === 0) {
       await markWeeklyPayoutDone(meta.weekId);
       await resetWeeklyState();
-      await resetLeaderboard();
     }
 
     return NextResponse.json({ ok: true, weekId: meta.weekId, potBf, top3, lotteryWinners, results, failedCount: failed.length });

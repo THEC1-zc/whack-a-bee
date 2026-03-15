@@ -103,7 +103,6 @@ export default function AdminTransactions() {
   const [rescueGames, setRescueGames] = useState<RescueGame[]>([]);
   const [loading, setLoading] = useState(false);
   const [msg, setMsg] = useState<Msg>(null);
-  const [resetting, setResetting] = useState(false);
   const [rescuingGameId, setRescuingGameId] = useState<string | null>(null);
   const [filter, setFilter] = useState<"all" | "easy" | "medium" | "hard">("all");
   const totals = useMemo(() => {
@@ -204,36 +203,10 @@ export default function AdminTransactions() {
     }
   }
 
-  async function resetLeaderboard() {
-    setResetting(true);
-    setMsg({ type: "ok", text: "Firma richiesta…" });
-    try {
-      const signed = await signAdminAction(address, "reset_leaderboard");
-      const res = await adminFetch(address, "/api/admin/leaderboard", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ action: "reset", challenge: signed.challenge, message: signed.message, signature: signed.signature }),
-      });
-      if (res.ok) {
-        setMsg({ type: "ok", text: "Leaderboard resettata ✓" });
-        setStats(null);
-      } else {
-        const d = await res.json().catch(() => ({}));
-        setMsg({ type: "err", text: d?.error || "Reset failed" });
-      }
-    } catch {
-      setMsg({ type: "err", text: "Firma annullata" });
-    }
-    setResetting(false);
-  }
-
   if (!authorized)
     return (
       <Unauth />
     );
-
-  const BTN =
-    "w-full py-4 rounded-2xl text-base font-black text-black disabled:opacity-40 transition-all active:scale-95 shadow-lg";
 
   return (
     <div className="user-page-bg user-page-overlay min-h-dvh p-5">
@@ -372,7 +345,10 @@ export default function AdminTransactions() {
                 <div className="flex items-start justify-between gap-3">
                   <div className="min-w-0">
                     <div className="text-white text-sm font-black">
-                      {game.difficulty.toUpperCase()} · {Math.round(game.prizeBfGross || 0).toLocaleString()} BF gross
+                      {game.difficulty.toUpperCase()} · {Math.round((game.prizeBfGross || 0) * 0.945).toLocaleString()} BF net
+                    </div>
+                    <div className="text-amber-100/55 text-[11px] mt-0.5">
+                      {Math.round(game.prizeBfGross || 0).toLocaleString()} BF gross before weekly/burn split
                     </div>
                     <div className="text-amber-100/55 text-[11px] mt-0.5 break-all">
                       {game.gameId}
@@ -508,16 +484,8 @@ export default function AdminTransactions() {
           style={{ background: "#140a00" }}
         >
           <div className="text-amber-400 text-xs uppercase tracking-widest mb-3">Azioni</div>
-          <button
-            disabled={resetting}
-            onClick={resetLeaderboard}
-            className={BTN}
-            style={{ background: "linear-gradient(135deg,#dc2626,#b91c1c)" }}
-          >
-            {resetting ? "⏳ Attendi firma…" : "🗑️  Reset Leaderboard (firma richiesta)"}
-          </button>
           <p className="text-amber-800 text-xs mt-2">
-            Svuota l&apos;intera leaderboard. Richiede firma wallet per sicurezza.
+            Total leaderboard is derived from claimed game records and is no longer manually resettable. Use the weekly admin page to open a new weekly cycle instead.
           </p>
         </div>
       </div>

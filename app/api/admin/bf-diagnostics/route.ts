@@ -7,7 +7,6 @@ import { usdcToBf } from "@/lib/pricing";
 import { getAdminWallet, requireAdminRequest } from "@/lib/adminSession";
 
 const ADMIN_WALLET = getAdminWallet();
-const ADMIN_API_KEY = process.env.ADMIN_API_KEY;
 const PRIZE_PRIVATE_KEY = process.env.PRIZE_WALLET_PRIVATE_KEY;
 const PRIZE_WALLET_ADDRESS = process.env.PRIZE_WALLET_ADDRESS as `0x${string}` | undefined;
 const POT_WALLET = (process.env.POT_WALLET_ADDRESS || "0x468d066995A4C09209c9c165F30Bd76A4FDB88e0") as `0x${string}`;
@@ -26,11 +25,6 @@ type ProbeResult = {
   value?: string | boolean | number;
   error?: string;
 };
-
-function isAuthorized(req: NextRequest) {
-  const token = req.headers.get("x-admin-token");
-  return Boolean(ADMIN_API_KEY && token === ADMIN_API_KEY);
-}
 
 function normalizePrivateKey(value: string | undefined) {
   const raw = (value || "").trim().replace(/^['"]|['"]$/g, "");

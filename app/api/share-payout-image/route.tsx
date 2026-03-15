@@ -92,6 +92,18 @@ export async function GET(req: Request) {
           <div
             style={{
               display: "flex",
+              marginTop: "-8px",
+              fontSize: "24px",
+              fontWeight: 800,
+              color: "rgba(244,255,245,0.82)",
+            }}
+          >
+            Net player payout
+          </div>
+
+          <div
+            style={{
+              display: "flex",
               fontSize: "88px",
               fontWeight: 900,
               lineHeight: 0.92,
@@ -148,7 +160,7 @@ export async function GET(req: Request) {
               textShadow: "0 3px 14px rgba(3,19,11,0.24)",
             }}
           >
-            Cleared a {type.toLowerCase()} {difficulty.toLowerCase()} run on Farcaster and claimed a live BF payout on-chain.
+            Cleared a {type.toLowerCase()} {difficulty.toLowerCase()} run on Farcaster and claimed a live BF net payout on-chain.
           </div>
 
           <div

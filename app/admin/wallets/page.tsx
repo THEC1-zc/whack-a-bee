@@ -28,7 +28,7 @@ const WALLET_META: Record<string, { label: string; emoji: string; desc: string; 
   burn: {
     label: "Burn / Dump",
     emoji: "🔥",
-    desc: "Riceve l'1% burn — sarà rimosso in futuro",
+    desc: "Riceve l'1% burn dei payout BF",
     grad: "linear-gradient(135deg,#374151,#6b7280)",
   },
 };

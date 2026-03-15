@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { recoverMessageAddress } from "viem";
-import { getAdminStats, getWeeklyAdminStats, resetLeaderboard } from "@/lib/leaderboard";
+import { getAdminStats, getWeeklyAdminStats } from "@/lib/leaderboard";
 import { getWeeklyMeta, getWeeklyState, resetWeeklyState } from "@/lib/weekly";
 import { getAdminWallet, requireAdminRequest } from "@/lib/adminSession";
 import { buildAdminChallengeMessage, verifyAdminChallenge } from "@/lib/adminAuth";
@@ -48,7 +48,6 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: "Invalid wallet signature" }, { status: 401 });
     }
 
-    await resetLeaderboard();
     return NextResponse.json({ ok: false, error: "Total leaderboard is derived from all claimed games and cannot be reset" }, { status: 409 });
   }
   if (body?.action === "weekly_reset") {

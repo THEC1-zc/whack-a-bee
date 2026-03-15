@@ -15,7 +15,7 @@ import {
   sendWeeklyBfTransfers,
   setWeeklySnapshot,
 } from "@/lib/weekly";
-import { getAdminStats, getWeeklyAdminStats, resetLeaderboard } from "@/lib/leaderboard";
+import { getAdminStats, getWeeklyAdminStats } from "@/lib/leaderboard";
 import { logTxRecord } from "@/lib/txLedger";
 
 const POT_PRIVATE_KEY = process.env.POT_WALLET_PRIVATE_KEY;
@@ -283,7 +283,6 @@ export async function POST(req: NextRequest) {
 
     await markWeeklyPayoutDone(meta.weekId);
     await resetWeeklyState();
-    await resetLeaderboard();
 
     const after = await getAdminStats();
 
@@ -297,7 +296,7 @@ export async function POST(req: NextRequest) {
       force,
       mode,
       autoClaimPendingTickets: shouldAutoClaimPending,
-      leaderboardAfterReset: {
+      totalLeaderboardAfterPayout: {
         totalGames: after.totalGames,
         uniquePlayers: after.uniquePlayers,
       },

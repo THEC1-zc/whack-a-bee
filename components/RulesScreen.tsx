@@ -1,6 +1,7 @@
 "use client";
 import { PRIZE_WALLET } from "@/lib/contracts";
 import type { FarcasterUser } from "@/hooks/useFarcaster";
+import { useEffect, useState } from "react";
 import {
   BEE_LABELS,
   CAP_TYPES,
@@ -27,6 +28,24 @@ export default function RulesScreen({
   onBack: () => void;
   onLeaderboard: () => void;
 }) {
+  const [bfPerUsdc, setBfPerUsdc] = useState<number | null>(null);
+
+  useEffect(() => {
+    let alive = true;
+    fetch("/api/price")
+      .then((r) => r.json())
+      .then((d) => {
+        if (alive && typeof d.bfPerUsdc === "number" && d.bfPerUsdc > 0) setBfPerUsdc(d.bfPerUsdc);
+      })
+      .catch(() => {});
+    return () => {
+      alive = false;
+    };
+  }, []);
+
+  const referenceRate = bfPerUsdc ?? BF_PER_USDC_FALLBACK;
+  const prizeflyHardBigNetBf = Math.round(getPrizeflyBonusUsdc("hard", "big") * referenceRate * 0.945);
+
   const pointRange = (key: "triplePoints" | "quickPoints" | "bombPoints") => {
     const values = (["easy", "medium", "hard"] as const).map((difficulty) => {
       const low = getRunTypeConfig(difficulty, "low")[key];
@@ -73,7 +92,7 @@ export default function RulesScreen({
               emoji="💜"
               label={BEE_LABELS.super}
               desc="Max one per run. Flat 1% chance per run on every difficulty and type. Bonus depends on difficulty and run type, with Hard Big anchored at 2.5x fee."
-              points={`+${getPrizeflyBonusUsdc("hard", "big").toFixed(4)} USDC gross`}
+              points={`+${prizeflyHardBigNetBf.toLocaleString()} BF net*`}
               color="#a855f7"
             />
           </div>
@@ -129,11 +148,13 @@ export default function RulesScreen({
                 {(["easy", "medium", "hard"] as const).map((difficulty) => (
                   <div key={difficulty} className="rounded-[16px] border border-white/8 bg-white/5 px-2 py-2 text-center">
                     <div className="text-[10px] uppercase tracking-widest text-green-200/80">{DIFFICULTY_CONFIG[difficulty].label}</div>
-                    <div className="text-green-300 text-lg font-black">{Math.round(PRIZE_PER_POINT[difficulty] * BF_PER_USDC_FALLBACK).toLocaleString()} BF</div>
+                    <div className="text-green-300 text-lg font-black">{Math.round(PRIZE_PER_POINT[difficulty] * referenceRate * 0.945).toLocaleString()} BF</div>
                   </div>
                 ))}
               </div>
-              <div className="text-green-700 text-xs mt-2">approximate base value for each point at the current BF/USDC reference</div>
+              <div className="text-green-700 text-xs mt-2">
+                approximate player net value per point at the {bfPerUsdc ? "live" : "latest cached"} BF/USDC reference
+              </div>
             </div>
 
             <p className="page-copy text-xs leading-relaxed">
@@ -158,12 +179,15 @@ export default function RulesScreen({
                           ex.diff.toLowerCase() as keyof typeof PRIZE_PER_POINT,
                           0,
                           "low"
-                        ) * BF_PER_USDC_FALLBACK
+                        ) * referenceRate * 0.945
                       ).toLocaleString()} BF
                     </span>
                   </div>
                 ))}
               </div>
+            </div>
+            <div className="page-muted text-[11px] leading-5">
+              * Prizefly and point examples are shown as estimated player net BF. Final payout still uses the live on-chain BF/USDC rate at claim time.
             </div>
             <div className="page-panel-soft rounded-[22px] p-3">
               <div className="page-kicker mb-2">Weekly tickets</div>

@@ -17,11 +17,11 @@ type DifficultyConfig = {
 type RunTypeTuning = (typeof GAME_TUNING)[Difficulty][RunType];
 type WavePlan = { spawnCount: number; bombCount: number };
 
+// Backward compatibility for historical records created before the
+// low/nice/big/mega ladder replaced the old average tier.
 const LEGACY_TYPE_ALIASES: Record<string, CapTypeKey> = {
   average: "nice",
 };
-
-const CAP_TYPE_ORDER: CapTypeKey[] = ["low", "nice", "big", "mega", "jolly"];
 
 export const BEE_LABELS: Record<HitType, string> = {
   normal: "Butterfly",
@@ -115,28 +115,6 @@ function getRunTypePerfectScore(difficulty: Difficulty, capType: CapTypeKey) {
   );
 }
 
-function buildDifficultyPointValues(difficulty: Difficulty) {
-  const low = GAME_TUNING[difficulty].low;
-  return {
-    normal: low.normalPoints,
-    fast: low.triplePoints,
-    fuchsia: low.quickPoints,
-    bomb: low.bombPoints,
-    super: low.prizePoints,
-  };
-}
-
-function buildDifficultyDurations(difficulty: Difficulty) {
-  const low = GAME_TUNING[difficulty].low;
-  return {
-    normal: low.normalDurationMs,
-    fast: low.tripleDurationMs,
-    fuchsia: low.quickDurationMs,
-    bomb: low.bombDurationMs,
-    super: low.prizeDurationMs,
-  };
-}
-
 export const DIFFICULTY_CONFIG: Record<Difficulty, DifficultyConfig> = Object.fromEntries(
   DIFFICULTIES.map((difficulty) => [
     difficulty,
@@ -155,14 +133,6 @@ export const PRIZE_PER_POINT: Record<Difficulty, number> = Object.fromEntries(
   DIFFICULTIES.map((difficulty) => [difficulty, GAME_TUNING[difficulty].low.pppInputUsdcPerPoint])
 ) as Record<Difficulty, number>;
 
-export const LIVE_POINT_VALUES: Record<Difficulty, Record<HitType, number>> = Object.fromEntries(
-  DIFFICULTIES.map((difficulty) => [difficulty, buildDifficultyPointValues(difficulty)])
-) as Record<Difficulty, Record<HitType, number>>;
-
-export const BEE_DURATIONS: Record<Difficulty, Record<HitType, number>> = Object.fromEntries(
-  DIFFICULTIES.map((difficulty) => [difficulty, buildDifficultyDurations(difficulty)])
-) as Record<Difficulty, Record<HitType, number>>;
-
 export function pickCapProfile() {
   const roll = Math.random() * 100;
   let acc = 0;
@@ -171,10 +141,6 @@ export function pickCapProfile() {
     if (roll <= acc) return item;
   }
   return CAP_TYPES[0];
-}
-
-export function pickCapMultiplier() {
-  return pickCapProfile().mult;
 }
 
 export function pickJollyWaveCapProfile() {
@@ -199,10 +165,6 @@ export function pickJollyWaveCapProfile() {
     mult: RUN_TYPE_META.low.mult,
     pct: JOLLY_TUNING.waveTypePct.low,
   };
-}
-
-export function pickJollyWaveMultipliers(totalWaves: number) {
-  return Array.from({ length: totalWaves }, () => pickJollyWaveCapProfile().mult);
 }
 
 export function pickJollyWaveTypes(totalWaves: number): RunType[] {
@@ -277,10 +239,6 @@ export function getWavePlan(difficulty: Difficulty, capType: string, rolls?: num
     tuning.bombsBasePerWave + (extraBombRoll < tuning.bombsSecondChance ? 1 : 0)
   );
   return { spawnCount, bombCount };
-}
-
-export function getWavePlanForMultiplier(difficulty: Difficulty, capMultiplier: number, rolls?: number[]) {
-  return getWavePlan(difficulty, getCapTypeKeyForMultiplier(capMultiplier), rolls);
 }
 
 export function getWaveMaxSpawnCount(difficulty: Difficulty, capType: string) {
@@ -440,8 +398,4 @@ export function getFullValueThreshold(difficulty: Difficulty, capType: string = 
 export function getMaxPrizeUsdc(difficulty: Difficulty, capType: string = "low") {
   const cappedScore = getRunCapScore(difficulty, capType);
   return calculatePrizeUsdc(cappedScore, difficulty, 0, capType);
-}
-
-export function getDifficultyTypes() {
-  return CAP_TYPE_ORDER;
 }
