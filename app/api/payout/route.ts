@@ -1,10 +1,8 @@
-import { NextRequest, NextResponse } from "next/server";
+import { NextResponse } from "next/server";
 import { createPublicClient, fallback, http } from "viem";
 import { base } from "viem/chains";
 import { BF_ADDRESS, ERC20_ABI, PRIZE_WALLET, SUPERTOKEN_ABI, fromBFUnits } from "@/lib/contracts";
 import { getBfPerUsdc } from "@/lib/pricing";
-import { issueClaimForGame } from "@/lib/gameSessions";
-import { logTxRecord } from "@/lib/txLedger";
 
 const PRIZE_WALLET_ADDRESS = (
   process.env.NEXT_PUBLIC_PRIZE_WALLET_ADDRESS || PRIZE_WALLET
@@ -57,30 +55,6 @@ async function readPrizeWalletBalanceBf() {
     args: [PRIZE_WALLET_ADDRESS],
   });
   return fromBFUnits(raw as bigint);
-}
-
-export async function POST(req: NextRequest) {
-  try {
-    const body = await req.json().catch(() => ({}));
-    const gameId = String(body?.gameId || "");
-    const gameSecret = String(body?.gameSecret || "");
-    if (!gameId || !gameSecret) {
-      return json({ ok: false, error: "gameId and gameSecret required", errorCode: "INVALID_GAME_CLAIM", prizeStatus: "notpaid", potStatus: "notadded" }, 400);
-    }
-
-    const claim = await issueClaimForGame({ gameId, gameSecret });
-    return json({ ...claim, contractAddress: CONTRACT_ADDRESS });
-  } catch (error) {
-    const message = error instanceof Error ? error.message : "Payout signing failed";
-    await logTxRecord({
-      kind: "payout_error",
-      status: "failed",
-      stage: "sign_claim",
-      reason: message,
-      meta: { endpoint: "/api/payout" },
-    });
-    return json({ ok: false, error: message, errorCode: "PAYOUT_SIGN_FAILED", prizeStatus: "notpaid", potStatus: "notadded" }, 400);
-  }
 }
 
 export async function GET() {

@@ -94,6 +94,8 @@ Payout bands:
 - Removed the dead total leaderboard reset flow and the public disabled leaderboard POST path. Total leaderboard remains explicitly derived from claimed game records only.
 - Cleaned low-risk legacy residue: removed unused leaderboard no-op exports, removed dead gameRules helper exports, dropped an unused admin diagnostics guard, and stopped generating an unnecessary eslint-disable in `gameConfig.generated.ts`.
 - Kept the `average -> nice` alias intentionally as historical record compatibility only; it is no longer part of the live ladder and is now documented as such in `lib/gameRules.ts`.
+- Fixed a finish/claim edge case where the client could send a final score before the last hit stats had settled, causing `Reported score does not match validated score`. The payout CTA now retries run finalization when that specific error occurs.
+- Removed the dead `POST /api/payout` claim wrapper and deleted the obsolete `/api/weekly/claim` endpoint.
 
 ## Ultimi cambiamenti (sessione corrente)
 - Ribilanciamento economia: fee medium 0.03→0.025, fee hard 0.045→0.035, maxPts easy 48→40, maxPts medium 64→60, PRIZE_PER_POINT 0.001→0.0008

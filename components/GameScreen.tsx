@@ -101,6 +101,7 @@ export default function GameScreen({ user, difficulty, onGameEnd }: Props) {
   const beeIdRef = useRef(0);
   const scoreRef = useRef(0);
   const effectIdRef = useRef(0);
+  const hitStatsRef = useRef<HitStats>({ normal: 0, fast: 0, fuchsia: 0, bomb: 0, super: 0 });
   const feeTxHashRef = useRef<string | null>(null);
   const bonusRef = useRef(0);
   const superSpawnedRef = useRef(false);
@@ -199,7 +200,12 @@ export default function GameScreen({ user, difficulty, onGameEnd }: Props) {
     if (bee.hit || !bee.visible) return;
     setBees((prev) => prev.map((entry) => entry.id === bee.id ? { ...entry, hit: true } : entry));
     setTimeout(() => setBees((prev) => prev.filter((entry) => entry.id !== bee.id)), 150);
-    setHitStats((prev) => ({ ...prev, [bee.type]: prev[bee.type] + 1 }));
+    const nextHitStats = {
+      ...hitStatsRef.current,
+      [bee.type]: hitStatsRef.current[bee.type] + 1,
+    };
+    hitStatsRef.current = nextHitStats;
+    setHitStats(nextHitStats);
 
     const pointsTable = getLivePointValuesForType(difficulty, session?.capType || "low");
     let points = 0;
@@ -272,6 +278,8 @@ export default function GameScreen({ user, difficulty, onGameEnd }: Props) {
         setCurrentWave(0);
         setBees([]);
         setSuperBonus(0);
+        hitStatsRef.current = { normal: 0, fast: 0, fuchsia: 0, bomb: 0, super: 0 };
+        setHitStats(hitStatsRef.current);
         setGameState("playing");
       }, 450);
       return () => clearTimeout(start);
@@ -294,13 +302,16 @@ export default function GameScreen({ user, difficulty, onGameEnd }: Props) {
       return;
     }
 
+    const finalHitStats = hitStatsRef.current;
     try {
       const finished = await finishGameSession({
         gameId: session.gameId,
         gameSecret: session.gameSecret,
         score: shownScore,
-        hitStats,
+        hitStats: finalHitStats,
       });
+      scoreRef.current = Number(finished.scoreRealized || 0);
+      setScore(scoreRef.current);
       setTicketCount(Number(finished.ticketCount || 0));
       const prize = Number(finished.prizeUsdc || 0);
       if (prize <= 0) {
@@ -324,9 +335,9 @@ export default function GameScreen({ user, difficulty, onGameEnd }: Props) {
       setPaymentStatus("failed");
       setPaymentError(error instanceof Error ? error.message : "Game finish failed");
       setPaymentErrorCode("GAME_FINISH_FAILED");
-      setPaymentNote("Prize: not paid · Pot: not added");
+      setPaymentNote("Run finalization failed. Retry to prepare the payout claim.");
     }
-  }, [hitStats, session]);
+  }, [session]);
 
   const handleClaimPrize = useCallback(async () => {
     if (!session || paymentStatus === "claiming") return;
@@ -358,6 +369,14 @@ export default function GameScreen({ user, difficulty, onGameEnd }: Props) {
       setPaymentNote("Prize: not paid · Pot: not added");
     }
   }, [paymentStatus, session]);
+
+  const handlePrimaryPayoutAction = useCallback(async () => {
+    if (paymentStatus === "failed" && paymentErrorCode === "GAME_FINISH_FAILED") {
+      await handleGameEnd();
+      return;
+    }
+    await handleClaimPrize();
+  }, [handleClaimPrize, handleGameEnd, paymentErrorCode, paymentStatus]);
 
   useEffect(() => {
     if (gameState !== "playing" || !session) return;
@@ -571,7 +590,7 @@ export default function GameScreen({ user, difficulty, onGameEnd }: Props) {
           {prizeBfNet > 0 && ["claimable", "claiming", "failed"].includes(paymentStatus) && (
             <button
               type="button"
-              onClick={() => void handleClaimPrize()}
+              onClick={() => void handlePrimaryPayoutAction()}
               disabled={paymentStatus === "claiming" || !claimTapReady}
               className="w-full rounded-[24px] px-4 py-4 text-lg font-black text-black disabled:opacity-60 disabled:cursor-wait"
               style={{ background: "linear-gradient(135deg, #f7bd2b, #ffdc72)" }}
@@ -579,7 +598,9 @@ export default function GameScreen({ user, difficulty, onGameEnd }: Props) {
               {paymentStatus === "claiming"
                 ? "Claiming Prize..."
                 : paymentStatus === "failed"
-                  ? "Retry Claim Prize"
+                  ? paymentErrorCode === "GAME_FINISH_FAILED"
+                    ? "Retry Finalize Run"
+                    : "Retry Claim Prize"
                   : claimTapReady
                     ? "Claim Prize"
                     : "Claim Prize in 1s..."}
