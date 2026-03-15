@@ -1,4 +1,16 @@
-export const BF_PER_USDC_FALLBACK = Number(process.env.NEXT_PUBLIC_BF_PER_USDC || "5100000");
+import { GAME_TUNING, JOLLY_TUNING } from "@/lib/gameConfig.generated";
+
+const SNAPSHOT_RATES = [
+  GAME_TUNING.easy.low.bfPerUsdcLiveSnapshot,
+  GAME_TUNING.medium.low.bfPerUsdcLiveSnapshot,
+  GAME_TUNING.hard.low.bfPerUsdcLiveSnapshot,
+  JOLLY_TUNING.bfPerUsdcLiveSnapshot,
+].filter((value) => typeof value === "number" && value > 0);
+
+export const BF_PER_USDC_FALLBACK =
+  SNAPSHOT_RATES[0] ||
+  Number(process.env.NEXT_PUBLIC_BF_PER_USDC || "0") ||
+  5100000;
 const BF_TOKEN = "0x03935c240E52e5624dD95401d9ec67700ca2D138";
 
 type DexPair = {

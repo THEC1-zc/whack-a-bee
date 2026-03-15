@@ -596,7 +596,7 @@ export default function GameScreen({ user, difficulty, onGameEnd }: Props) {
               Weekly pot share and burn share are derived from the gross payout before the player net amount is sent.
             </div>
             {superBonus > 0 && (
-              <div className="mt-2 text-xs leading-5 text-purple-200">Prizefly bonus +{Math.round(superBonus * bfPerUsdc)} BF</div>
+              <div className="mt-2 text-xs leading-5 text-purple-200">Prizefly bonus +{Math.round(superBonus * bfPerUsdc * 0.945)} BF net</div>
             )}
             {prizeBfNet > 0 && (
               <div className={`mt-3 text-sm font-bold rounded-xl px-3 py-2.5 leading-5 ${

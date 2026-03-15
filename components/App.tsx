@@ -43,6 +43,7 @@ export default function App() {
   const [poolLoading, setPoolLoading] = useState(true);
   const [poolConfigured, setPoolConfigured] = useState(true);
   const [bfPerUsdc, setBfPerUsdc] = useState<number | null>(null);
+  const [rateLoading, setRateLoading] = useState(true);
   const [weeklyPot, setWeeklyPot] = useState<number | null>(null);
   const [nextReset, setNextReset] = useState<number | null>(null);
   const [myTickets, setMyTickets] = useState<{ pending: number; claimed: number } | null>(null);
@@ -75,8 +76,9 @@ export default function App() {
       .then((d) => {
         if (typeof d.bfPerUsdc === "number" && d.bfPerUsdc > 0) setBfPerUsdc(d.bfPerUsdc);
       })
-      .catch(() => {});
-  }, []);
+      .catch(() => {})
+      .finally(() => setRateLoading(false));
+  }, [lastResult]);
 
   useEffect(() => {
     fetch("/api/weekly")
@@ -123,6 +125,8 @@ export default function App() {
         user={user}
         difficulty={difficulty}
         onGameEnd={(score, prize) => {
+          setBfPerUsdc(null);
+          setRateLoading(true);
           setLastResult({ score, prize });
           setScreen("home");
         }}
@@ -155,8 +159,9 @@ export default function App() {
   const poolUnavailable = !poolLoading && !poolConfigured;
   const poolDisabled = poolEmpty || poolUnavailable;
   const liveBfPerUsdc = bfPerUsdc ?? BF_PER_USDC_FALLBACK;
-  const bfPerPoint = PRIZE_PER_POINT[difficulty] * liveBfPerUsdc;
-  const maxPrizeBf = Math.round(getMaxPrizeUsdc(difficulty, "mega") * liveBfPerUsdc * 0.945);
+  const rateReady = bfPerUsdc != null || !rateLoading;
+  const bfPerPointNet = PRIZE_PER_POINT[difficulty] * liveBfPerUsdc * 0.945;
+  const maxPrizeBfNet = Math.round(getMaxPrizeUsdc(difficulty, "mega") * liveBfPerUsdc * 0.945);
   const visibleTickets = user?.address ? myTickets : null;
   const ticketTotal = (visibleTickets?.claimed || 0) + (visibleTickets?.pending || 0);
 
@@ -207,13 +212,17 @@ export default function App() {
         </div>
         {poolEmpty && <div className="mt-2 text-xs text-red-300">Game temporarily suspended</div>}
         {poolUnavailable && <div className="mt-2 text-xs text-red-300">Pool not configured</div>}
-        <div className="page-muted mt-2 text-xs text-center">Base reward: {bfPerPoint.toFixed(0)} BF per point</div>
+        <div className="page-muted mt-2 text-xs text-center">
+          Base reward: {rateReady ? `${bfPerPointNet.toFixed(0)} BF net per point` : "loading live BF rate..."}
+        </div>
       </div>
 
       <div className="page-stat-grid sm:grid-cols-3">
         <div className="page-panel-soft px-4 py-4 text-center text-xs">
           <div className="page-kicker mb-2">Rate</div>
-          <div className="text-sm font-bold text-emerald-50">1 USDC ≈ {Math.round(liveBfPerUsdc).toLocaleString()} BF</div>
+          <div className="text-sm font-bold text-emerald-50">
+            {rateReady ? `1 USDC ≈ ${Math.round(liveBfPerUsdc).toLocaleString()} BF` : "Loading live rate..."}
+          </div>
         </div>
 
         <div className="page-panel-soft px-4 py-4 text-center text-xs">
@@ -232,7 +241,7 @@ export default function App() {
 
       {lastResult && (
         <div className="page-panel-soft px-4 py-4 text-center text-sm font-black text-green-100">
-          🎉 You won {Math.round(lastResult.prize * liveBfPerUsdc).toLocaleString()} BF with {lastResult.score} points!
+          🎉 You won {rateReady ? Math.round(lastResult.prize * liveBfPerUsdc * 0.945).toLocaleString() : "..."} BF net with {lastResult.score} points!
         </div>
       )}
 
@@ -279,7 +288,7 @@ export default function App() {
         PLAY — {cfg.fee} USDC 🦋
       </button>
       <div className="page-muted text-center text-[11px]">
-        {cfg.label}: {getRunWaveCount(difficulty, "low")}–{getRunWaveCount(difficulty, "mega")} waves, base {bfPerPoint.toFixed(0)} BF per point, up to about {maxPrizeBf.toLocaleString()} BF net before Prizefly bonus.
+        {cfg.label}: {getRunWaveCount(difficulty, "low")}–{getRunWaveCount(difficulty, "mega")} waves, base {rateReady ? bfPerPointNet.toFixed(0) : "…"} BF net per point, up to about {rateReady ? maxPrizeBfNet.toLocaleString() : "…"} BF net before Prizefly bonus.
       </div>
       </div>
     </div>

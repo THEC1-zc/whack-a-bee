@@ -89,6 +89,7 @@ Payout bands:
 - Banner "fixing txs issues" rimosso dalla home ✅
 - Weekly now distinguishes `total leaderboard` from `weekly leaderboard`; weekly payout winners are based on the active weekly cycle, which can also be advanced manually without waiting for the calendar week boundary.
 - PPP updated live: easy `0.0004`, medium `0.00055`, hard `0.0008`.
+- Home now waits for the live BF/USDC fetch before showing sensitive BF estimates, and BF/USDC fallback bootstraps from the latest tuning snapshot instead of a rigid hardcoded rate.
 
 ## Ultimi cambiamenti (sessione corrente)
 - Ribilanciamento economia: fee medium 0.03→0.025, fee hard 0.045→0.035, maxPts easy 48→40, maxPts medium 64→60, PRIZE_PER_POINT 0.001→0.0008
