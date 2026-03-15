@@ -773,3 +773,4 @@ Payout bands:
 - Validation completed:
   - `npm run sync:ltm3` passed
   - `npm run build` passed
+- 2026-03-15: Fixed finish-score mismatch path in `components/GameScreen.tsx` by tracking a raw internal score separately from the clamped displayed score. This keeps Bombfly penalties order-consistent with server validation and prevents `GAME_FINISH_FAILED` on valid runs where bombs were hit before positive butterflies.

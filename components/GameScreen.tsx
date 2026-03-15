@@ -100,6 +100,7 @@ export default function GameScreen({ user, difficulty, onGameEnd }: Props) {
 
   const beeIdRef = useRef(0);
   const scoreRef = useRef(0);
+  const rawScoreRef = useRef(0);
   const effectIdRef = useRef(0);
   const hitStatsRef = useRef<HitStats>({ normal: 0, fast: 0, fuchsia: 0, bomb: 0, super: 0 });
   const feeTxHashRef = useRef<string | null>(null);
@@ -223,8 +224,8 @@ export default function GameScreen({ user, difficulty, onGameEnd }: Props) {
     }
 
     addHitEffect(bee.slot, text);
-    const nextScore = scoreRef.current + points;
-    scoreRef.current = Math.max(0, Math.min(nextScore, capScoreRef.current));
+    rawScoreRef.current += points;
+    scoreRef.current = Math.max(0, Math.min(rawScoreRef.current, capScoreRef.current));
     setScore(scoreRef.current);
   }, [addHitEffect, difficulty, session]);
 
@@ -278,6 +279,9 @@ export default function GameScreen({ user, difficulty, onGameEnd }: Props) {
         setCurrentWave(0);
         setBees([]);
         setSuperBonus(0);
+        rawScoreRef.current = 0;
+        scoreRef.current = 0;
+        setScore(0);
         hitStatsRef.current = { normal: 0, fast: 0, fuchsia: 0, bomb: 0, super: 0 };
         setHitStats(hitStatsRef.current);
         setGameState("playing");
@@ -295,7 +299,7 @@ export default function GameScreen({ user, difficulty, onGameEnd }: Props) {
   }, []);
 
   const handleGameEnd = useCallback(async () => {
-    const shownScore = scoreRef.current;
+    const shownScore = Math.max(0, Math.min(rawScoreRef.current, capScoreRef.current));
     if (!session) {
       setPaymentStatus("failed");
       setPaymentError("Missing game session");
@@ -310,6 +314,7 @@ export default function GameScreen({ user, difficulty, onGameEnd }: Props) {
         score: shownScore,
         hitStats: finalHitStats,
       });
+      rawScoreRef.current = Number(finished.scoreRealized || 0);
       scoreRef.current = Number(finished.scoreRealized || 0);
       setScore(scoreRef.current);
       setTicketCount(Number(finished.ticketCount || 0));
