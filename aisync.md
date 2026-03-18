@@ -774,3 +774,4 @@ Payout bands:
   - `npm run sync:ltm3` passed
   - `npm run build` passed
 - 2026-03-15: Fixed finish-score mismatch path in `components/GameScreen.tsx` by tracking a raw internal score separately from the clamped displayed score. This keeps Bombfly penalties order-consistent with server validation and prevents `GAME_FINISH_FAILED` on valid runs where bombs were hit before positive butterflies.
+- 2026-03-18: Aligned game/rules/weekly surfaces around real run caps. `GameScreen` now shows the live session `capScore` everywhere instead of mixing it with a recomputed difficulty cap, home/rules label the difficulty-wide maximum explicitly as `Mega cap`, and weekly leaderboard filtering now recomputes tickets per selected difficulty instead of showing whole-week aggregated tickets under filtered views.

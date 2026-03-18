@@ -130,7 +130,7 @@ export default function RulesScreen({
                 </div>
                 <div className="grid grid-cols-3 gap-2 text-center">
                   <Stat label="Waves" value={`${getRunWaveCount(key, "low")}–${getRunWaveCount(key, "mega")}`} />
-                  <Stat label="Point cap" value={`${getFullValueThreshold(key, "mega")} pts`} />
+                  <Stat label="Mega cap" value={`${getFullValueThreshold(key, "mega")} pts`} />
                   <Stat label="Max prize" value={`${getMaxPrizeUsdc(key, "mega").toFixed(3)} USDC`} />
                 </div>
                 <div className="page-muted text-xs mt-2 text-center">Linear payout, with run types increasing wave count from Low to Mega.</div>

@@ -2,6 +2,7 @@
 import { useEffect, useState } from "react";
 import { useFarcaster } from "@/hooks/useFarcaster";
 import UserPageHeader from "@/components/UserPageHeader";
+import { DIFFICULTY_CONFIG, type Difficulty } from "@/lib/gameRules";
 
 const ADMIN_WALLET = (
   process.env.NEXT_PUBLIC_ADMIN_WALLET || "0xd29c790466675153A50DF7860B9EFDb689A21cDe"
@@ -33,17 +34,23 @@ export default function WeeklyPage() {
   const [state, setState] = useState<WeeklyState | null>(null);
   const [entries, setEntries] = useState<WeeklyEntry[]>([]);
   const [now, setNow] = useState<number | null>(null);
+  const [filter, setFilter] = useState<Difficulty | "all">("all");
 
   useEffect(() => {
     fetch("/api/weekly")
       .then(r => r.json())
       .then(d => setState(d))
       .catch(() => {});
-    fetch("/api/leaderboard?scope=weekly")
+  }, []);
+
+  useEffect(() => {
+    const params = new URLSearchParams({ scope: "weekly" });
+    if (filter !== "all") params.set("difficulty", filter);
+    fetch(`/api/leaderboard?${params.toString()}`)
       .then(r => r.json())
       .then(d => setEntries(Array.isArray(d) ? d : []))
       .catch(() => {});
-  }, []);
+  }, [filter]);
 
   useEffect(() => {
     const t = setInterval(() => setNow(Date.now()), 1000);
@@ -98,6 +105,22 @@ export default function WeeklyPage() {
 
         <div className="page-panel px-5 py-5">
           <div className="page-kicker mb-3">Weekly leaderboard</div>
+          <div className="mb-4 flex gap-2">
+            {(["all", "easy", "medium", "hard"] as const).map((item) => (
+              <button
+                key={item}
+                type="button"
+                onClick={() => setFilter(item)}
+                className="page-chip flex-1 rounded-full py-2 text-xs font-bold transition-all"
+                style={{
+                  background: filter === item ? "rgba(220, 252, 231, 0.94)" : "rgba(236, 253, 245, 0.08)",
+                  color: filter === item ? "#052e16" : "#f0fdf4",
+                }}
+              >
+                {item === "all" ? "All" : `${DIFFICULTY_CONFIG[item].emoji} ${DIFFICULTY_CONFIG[item].label}`}
+              </button>
+            ))}
+          </div>
           <div className="space-y-3">
             {entries.length === 0 ? (
               <div className="page-copy text-sm">No weekly runs yet.</div>

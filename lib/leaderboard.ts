@@ -38,11 +38,26 @@ export async function getLeaderboardStats(limit = 20, difficulty?: string): Prom
 export async function getWeeklyLeaderboardStats(limit = 20, difficulty?: string): Promise<(UserStats & { tickets: number })[]> {
   const weekly = await getWeeklyState();
   const stats = await getWeeklyAdminStats(weekly.weekId);
+  const filteredDifficulty = !difficulty || difficulty === "all" ? null : difficulty;
+  const ticketMap = new Map<string, number>();
+
+  if (filteredDifficulty) {
+    const games = await listAllGames();
+    for (const game of games) {
+      if (game.status !== "claimed" || game.weekId !== weekly.weekId || game.difficulty !== filteredDifficulty) continue;
+      const addr = game.playerAddress?.toLowerCase();
+      if (!addr) continue;
+      ticketMap.set(addr, (ticketMap.get(addr) || 0) + Number(game.ticketCount || 0));
+    }
+  }
+
   return stats.players
-    .filter((player) => !difficulty || difficulty === "all" || player.gamesByDifficulty[difficulty] > 0)
+    .filter((player) => !filteredDifficulty || player.gamesByDifficulty[filteredDifficulty] > 0)
     .map((player) => ({
       ...player,
-      tickets: weekly.tickets[player.address?.toLowerCase() || ""] || 0,
+      tickets: filteredDifficulty
+        ? (ticketMap.get(player.address?.toLowerCase() || "") || 0)
+        : (weekly.tickets[player.address?.toLowerCase() || ""] || 0),
     }))
     .sort((a, b) => b.net - a.net || b.tickets - a.tickets || b.games - a.games)
     .slice(0, limit);

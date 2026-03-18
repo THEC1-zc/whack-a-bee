@@ -13,7 +13,6 @@ import {
   getFastChance,
   getFastLimit,
   getFuchsiaChance,
-  getFullValueThreshold,
   getLivePointValuesForType,
   getPrizeflyBonusUsdc,
   getQuickLimit,
@@ -781,7 +780,7 @@ export default function GameScreen({ user, difficulty, onGameEnd }: Props) {
                   {cfg.emoji} {cfg.label} Mode
                 </div>
                 <div className="mt-2 text-[11px] text-emerald-50/90">
-                  {capInfo.icon} {capInfo.label} run · {totalWaves} waves · up to {getFullValueThreshold(difficulty, session?.capType || "low")} pts
+                  {capInfo.icon} {capInfo.label} run · {totalWaves} waves · up to {capScore} pts
                 </div>
                 <div className="mt-4 text-[5.5rem] leading-none font-black text-lime-200 drop-shadow-[0_8px_24px_rgba(0,0,0,0.45)]">
                   {countdown || "GO!"}

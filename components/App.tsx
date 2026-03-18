@@ -270,7 +270,7 @@ export default function App() {
                   {getRunWaveCount(key, "low")}–{getRunWaveCount(key, "mega")} waves
                 </div>
                 <div className="page-muted text-[11px] mt-1">
-                  up to {getFullValueThreshold(key, "mega")} pt in Mega
+                  Mega cap {getFullValueThreshold(key, "mega")} pt
                 </div>
               </button>
             );
