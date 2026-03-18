@@ -101,7 +101,7 @@ export default function App() {
   async function handleShareApp() {
     const appUrl = process.env.NEXT_PUBLIC_APP_URL || "https://whack-a-bee.vercel.app";
     const shareUrl = `${appUrl}/share/app`;
-    const shareText = "Whack-a-Butterfly by @Thec1 is live on Farcaster. Enter, play, win BF, and climb the weekly pot leaderboard.";
+    const shareText = "Whack-a-Butterfly is live on Farcaster. Enter, play, win $BF, and climb the weekly pot leaderboard.";
     setShareError(null);
     try {
       await sdk.actions.composeCast({ text: shareText, embeds: [shareUrl] });
@@ -251,6 +251,7 @@ export default function App() {
           {(Object.keys(DIFFICULTY_CONFIG) as Difficulty[]).map((key) => {
             const item = DIFFICULTY_CONFIG[key];
             const active = difficulty === key;
+            const itemBfPerPointNet = Math.round(PRIZE_PER_POINT[key] * liveBfPerUsdc * 0.945);
             return (
               <button
                 key={key}
@@ -271,6 +272,9 @@ export default function App() {
                 </div>
                 <div className="page-muted text-[11px] mt-1">
                   Mega cap {getFullValueThreshold(key, "mega")} pt
+                </div>
+                <div className="page-muted text-[11px] mt-1">
+                  {rateReady ? `${itemBfPerPointNet.toLocaleString()} BF net / pt` : "… BF net / pt"}
                 </div>
               </button>
             );

@@ -11,9 +11,9 @@ const DIFFICULTIES = ["easy", "medium", "hard"];
 const RUN_TYPES = ["low", "nice", "big", "mega"];
 
 const DIFFICULTY_META = {
-  easy: { label: "Easy", emoji: "🟢", color: "#16a34a", fee: 0.01, baseWaves: 14, ppp: 0.000342 },
-  medium: { label: "Medium", emoji: "🟡", color: "#ca8a04", fee: 0.02, baseWaves: 13, ppp: 0.000468 },
-  hard: { label: "Hard", emoji: "🔴", color: "#dc2626", fee: 0.03, baseWaves: 8, ppp: 0.000684 },
+  easy: { label: "Easy", emoji: "🟢", color: "#16a34a", fee: 0.01, baseWaves: 14, ppp: 0.000359 },
+  medium: { label: "Medium", emoji: "🟡", color: "#ca8a04", fee: 0.02, baseWaves: 13, ppp: 0.000491 },
+  hard: { label: "Hard", emoji: "🔴", color: "#dc2626", fee: 0.03, baseWaves: 8, ppp: 0.000718 },
 };
 
 const RUN_TYPE_META = {

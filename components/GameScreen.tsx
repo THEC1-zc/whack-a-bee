@@ -452,7 +452,7 @@ export default function GameScreen({ user, difficulty, onGameEnd }: Props) {
     v: "5",
   }).toString();
   const shareUrl = `${appUrl}/share/payout?${shareQuery}`;
-  const shareText = `I just cleared ${totalWaves} waves in a ${capInfo.label} ${cfg.label} run on Whack-a-Butterfly by @Thec1 and won ${prizeBfNet} BF plus ${ticketEstimate} weekly tickets. Can you beat it?`;
+  const shareText = `I just cleared ${totalWaves} waves in a ${capInfo.label} ${cfg.label} run on Whack-a-Butterfly and won ${prizeBfNet} $BF plus ${ticketEstimate} weekly tickets. Can you beat it?`;
 
   if (["waiting", "preparing", "paying"].includes(feeStatus)) {
     return (
