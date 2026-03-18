@@ -2,6 +2,7 @@
 
 import Image from "next/image";
 import Link from "next/link";
+import { usePathname, useRouter } from "next/navigation";
 import type { FarcasterUser } from "@/hooks/useFarcaster";
 
 function shortWallet(address?: string) {
@@ -77,6 +78,27 @@ export default function UserPageHeader({
   adminHref?: string;
   active?: "home" | "rules" | "leaderboard" | "weekly" | "payout";
 }) {
+  const router = useRouter();
+  const pathname = usePathname();
+
+  const resolveHref = (href?: string) => {
+    if (!href) return href;
+    if (pathname === "/" || href.startsWith("/admin") || href.startsWith("/weekly")) return href;
+    if (href.startsWith("/?")) {
+      return `${pathname}${href.slice(1)}`;
+    }
+    return href;
+  };
+
+  const goTo = (href?: string, onClick?: () => void) => {
+    if (onClick) {
+      onClick();
+      return;
+    }
+    const nextHref = resolveHref(href);
+    if (nextHref) router.push(nextHref);
+  };
+
   return (
     <div className="user-page-chrome page-fade-top w-full rounded-[30px] px-4 py-3.5">
       <div className="grid grid-cols-[minmax(0,1fr)_auto] gap-3 sm:grid-cols-[minmax(0,1fr)_auto_minmax(0,1fr)] sm:items-center">
@@ -135,22 +157,22 @@ export default function UserPageHeader({
               title="Rulebook"
               icon="📖"
               active={active === "rules"}
-              href={rulesHref}
-              onClick={onRules}
+              href={resolveHref(rulesHref)}
+              onClick={onRules ? () => goTo(undefined, onRules) : (rulesHref ? () => goTo(rulesHref) : undefined)}
             />
             <HeaderAction
               label="Leaderboard"
               title="Leaderboard"
               icon="🏆"
               active={active === "leaderboard"}
-              href={leaderboardHref}
-              onClick={onLeaderboard}
+              href={resolveHref(leaderboardHref)}
+              onClick={onLeaderboard ? () => goTo(undefined, onLeaderboard) : (leaderboardHref ? () => goTo(leaderboardHref) : undefined)}
             />
             {showBack && (
               backHref ? (
-                <HeaderAction label="Back" title="Back" icon="↩" href={backHref} />
+                <HeaderAction label="Back" title="Back" icon="↩" onClick={() => goTo(backHref)} />
               ) : (
-                <HeaderAction label="Back" title="Back" icon="↩" onClick={onBack} />
+                <HeaderAction label="Back" title="Back" icon="↩" onClick={onBack ? () => goTo(undefined, onBack) : undefined} />
               )
             )}
           </div>

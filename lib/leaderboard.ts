@@ -37,29 +37,51 @@ export async function getLeaderboardStats(limit = 20, difficulty?: string): Prom
 
 export async function getWeeklyLeaderboardStats(limit = 20, difficulty?: string): Promise<(UserStats & { tickets: number })[]> {
   const weekly = await getWeeklyState();
-  const stats = await getWeeklyAdminStats(weekly.weekId);
   const filteredDifficulty = !difficulty || difficulty === "all" ? null : difficulty;
-  const ticketMap = new Map<string, number>();
+  const games = await listAllGames();
+  const claimed = games.filter((game) => {
+    if (game.status !== "claimed" || game.weekId !== weekly.weekId) return false;
+    if (filteredDifficulty && game.difficulty !== filteredDifficulty) return false;
+    return Boolean(game.playerAddress && typeof game.prizeUsdc === "number");
+  });
 
-  if (filteredDifficulty) {
-    const games = await listAllGames();
-    for (const game of games) {
-      if (game.status !== "claimed" || game.weekId !== weekly.weekId || game.difficulty !== filteredDifficulty) continue;
-      const addr = game.playerAddress?.toLowerCase();
-      if (!addr) continue;
-      ticketMap.set(addr, (ticketMap.get(addr) || 0) + Number(game.ticketCount || 0));
+  const playerMap = new Map<string, UserStats & { tickets: number }>();
+  for (const game of claimed) {
+    const key = game.playerAddress!.toLowerCase();
+    const existing = playerMap.get(key);
+    const win = (game.prizeUsdc || 0) > game.feeExpectedUsdc;
+    const fallbackFid = game.fid || Number.parseInt(key.slice(2, 10), 16) || 0;
+    if (!existing) {
+      playerMap.set(key, {
+        fid: fallbackFid,
+        username: game.username || key.slice(0, 6),
+        displayName: game.displayName || game.username || key.slice(0, 6),
+        pfpUrl: game.pfpUrl || "",
+        address: game.playerAddress,
+        games: 1,
+        wins: win ? 1 : 0,
+        net: (game.prizeUsdc || 0) - game.feeExpectedUsdc,
+        totalPrize: game.prizeUsdc || 0,
+        totalFees: game.feeExpectedUsdc,
+        lastPlayed: game.claimConfirmedAt || game.finishedAt || game.createdAt,
+        tickets: Number(game.ticketCount || 0),
+      });
+    } else {
+      existing.games += 1;
+      existing.wins += win ? 1 : 0;
+      existing.net += (game.prizeUsdc || 0) - game.feeExpectedUsdc;
+      existing.totalPrize += game.prizeUsdc || 0;
+      existing.totalFees += game.feeExpectedUsdc;
+      existing.tickets += Number(game.ticketCount || 0);
+      existing.lastPlayed = Math.max(existing.lastPlayed, game.claimConfirmedAt || game.finishedAt || game.createdAt);
+      if (!existing.pfpUrl && game.pfpUrl) existing.pfpUrl = game.pfpUrl;
+      if (!existing.displayName && game.displayName) existing.displayName = game.displayName;
+      if (!existing.username && game.username) existing.username = game.username;
     }
   }
 
-  return stats.players
-    .filter((player) => !filteredDifficulty || player.gamesByDifficulty[filteredDifficulty] > 0)
-    .map((player) => ({
-      ...player,
-      tickets: filteredDifficulty
-        ? (ticketMap.get(player.address?.toLowerCase() || "") || 0)
-        : (weekly.tickets[player.address?.toLowerCase() || ""] || 0),
-    }))
-    .sort((a, b) => b.net - a.net || b.tickets - a.tickets || b.games - a.games)
+  return Array.from(playerMap.values())
+    .sort((a, b) => b.net - a.net || b.tickets - a.tickets || b.games - a.games || b.lastPlayed - a.lastPlayed)
     .slice(0, limit);
 }
 
