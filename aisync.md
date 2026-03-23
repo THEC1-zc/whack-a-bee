@@ -781,3 +781,11 @@ Payout bands:
 - 2026-03-18: Updated player-facing share texts to use `$BF` instead of plain `BF` and removed the unreliable `@Thec1` mention from cast text. This keeps token tagging cleaner in Farcaster shares.
 - 2026-03-23: Hardened weekly payout transfers for both manual and cron flows. `sendWeeklyBfTransfers` now uses fallback Base RPCs plus retry/nonce refresh on underpriced/nonce errors, which was the main shared fragility behind weekly payout failures. Also added explicit failed snapshot/log entries when weekly payout crashes before producing transfer results, so admin can see a real failure state instead of a silent stop.
 - 2026-03-23: Reduced `medium` PPP by 20% after live play evidence showed it was still too profitable. New authoritative medium PPP is `0.000393`, synced across `ltm3`, sync generator, and generated runtime config.
+- 2026-03-23: Reset the authoritative PPP baselines to match new BF-net-per-point targets derived from the current live BF/USDC snapshot (`1 USDC ≈ 4,775,549 BF`). New rounded PPP values are:
+  - easy `0.000277` for about `1250 BF net / point`
+  - medium `0.000332` for about `1500 BF net / point`
+  - hard `0.000499` for about `2250 BF net / point`
+  Synced `local-balance/ltm3.xml`, `scripts/sync-ltm3.mjs`, and regenerated `lib/gameConfig.generated.ts`.
+  Validation completed:
+  - `node scripts/sync-ltm3.mjs` passed
+  - `npm run build` passed
