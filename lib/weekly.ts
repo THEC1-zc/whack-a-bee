@@ -1,5 +1,5 @@
 import Redis from "ioredis";
-import { createPublicClient, createWalletClient, http } from "viem";
+import { createPublicClient, createWalletClient, fallback, http } from "viem";
 import { base } from "viem/chains";
 import { privateKeyToAccount } from "viem/accounts";
 import { BF_ADDRESS, ERC20_ABI, toBFUnits } from "@/lib/contracts";
@@ -13,6 +13,15 @@ const WEEKLY_CFG_KEY = "weekly:config";
 const WEEKLY_HISTORY_KEY = "weekly:payout:history";
 const WEEKLY_LOCK_KEY = "weekly:payout:lock:";
 const ADMIN_WALLET = (process.env.ADMIN_WALLET || "0xd29c790466675153A50DF7860B9EFDb689A21cDe").toLowerCase();
+const RPC_URLS = (process.env.BASE_RPC_URLS || "")
+  .split(",")
+  .map((value) => value.trim())
+  .filter(Boolean);
+const DEFAULT_RPC_URLS = [
+  "https://mainnet.base.org",
+  "https://base.llamarpc.com",
+  "https://base-rpc.publicnode.com",
+];
 
 let redis: Redis | null = null;
 const memoryStore = new Map<string, unknown>();
@@ -342,23 +351,56 @@ export async function sendWeeklyBfTransfers(
     throw new Error("POT_WALLET_PRIVATE_KEY invalid: expected 64 hex chars (with or without 0x)");
   }
   const account = privateKeyToAccount(key as `0x${string}`);
-  const pub = createPublicClient({ chain: base, transport: http("https://mainnet.base.org") });
-  const wallet = createWalletClient({ account, chain: base, transport: http("https://mainnet.base.org") });
+  const transportUrls = RPC_URLS.length > 0 ? RPC_URLS : DEFAULT_RPC_URLS;
+  const transport = fallback(transportUrls.map((url) => http(url)));
+  const pub = createPublicClient({ chain: base, transport });
+  const wallet = createWalletClient({ account, chain: base, transport });
   const results: WeeklyTransferResult[] = [];
+  let nextNonce = await pub.getTransactionCount({ address: account.address, blockTag: "pending" });
 
   for (const t of transfers) {
     if (t.amountBf <= 0) continue;
-    try {
-      const txHash = await wallet.writeContract({
-        address: BF_ADDRESS,
-        abi: ERC20_ABI,
-        functionName: "transfer",
-        args: [t.to as `0x${string}`, toBFUnits(t.amountBf)],
-      });
-      await pub.waitForTransactionReceipt({ hash: txHash });
-      results.push({ ...t, txHash, ok: true });
-    } catch (e: unknown) {
-      results.push({ ...t, ok: false, error: e instanceof Error ? e.message : "transfer failed" });
+    const amountUnits = toBFUnits(t.amountBf);
+    let lastError = "transfer failed";
+
+    for (let attempt = 0; attempt < 3; attempt += 1) {
+      try {
+        const txHash = await wallet.writeContract({
+          address: BF_ADDRESS,
+          abi: ERC20_ABI,
+          functionName: "transfer",
+          args: [t.to as `0x${string}`, amountUnits],
+          account,
+          nonce: nextNonce,
+        });
+        nextNonce += 1;
+        const receipt = await pub.waitForTransactionReceipt({ hash: txHash });
+        if (receipt.status !== "success") {
+          throw new Error("weekly payout transfer reverted");
+        }
+        results.push({ ...t, txHash, ok: true });
+        lastError = "";
+        break;
+      } catch (e: unknown) {
+        const message = e instanceof Error ? e.message : "transfer failed";
+        lastError = message;
+        const lower = message.toLowerCase();
+        const retryable =
+          lower.includes("nonce too low") ||
+          lower.includes("replacement transaction underpriced") ||
+          lower.includes("already known") ||
+          lower.includes("underpriced");
+
+        if (!retryable || attempt === 2) {
+          break;
+        }
+
+        nextNonce = await pub.getTransactionCount({ address: account.address, blockTag: "pending" });
+      }
+    }
+
+    if (lastError) {
+      results.push({ ...t, ok: false, error: lastError });
     }
   }
   return results;

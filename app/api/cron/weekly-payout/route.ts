@@ -123,6 +123,29 @@ export async function GET(req: NextRequest) {
     }
 
     return NextResponse.json({ ok: true, weekId: meta.weekId, potBf, top3, lotteryWinners, results, failedCount: failed.length });
+  } catch (e: unknown) {
+    const message = e instanceof Error ? e.message : "Weekly payout failed";
+    await setWeeklySnapshot({
+      status: "failed",
+      weekId: meta.weekId,
+      completedAt: Date.now(),
+      mode: "cron",
+      error: message,
+    });
+    await logWeeklyPayout({
+      weekId: meta.weekId,
+      status: "failed",
+      mode: "auto",
+      force: false,
+      autoClaimPendingTickets: true,
+      potBf: 0,
+      top3: [],
+      lotteryWinners: [],
+      results: [],
+      failedCount: 1,
+      notes: message,
+    });
+    return NextResponse.json({ error: message }, { status: 500 });
   } finally {
     await releaseWeeklyPayoutLock(lock);
   }

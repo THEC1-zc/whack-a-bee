@@ -304,6 +304,26 @@ export async function POST(req: NextRequest) {
   } catch (e: unknown) {
     console.error("Weekly payout error:", e);
     const message = e instanceof Error ? e.message : "Weekly payout failed";
+    await setWeeklySnapshot({
+      status: "failed",
+      weekId: meta.weekId,
+      completedAt: Date.now(),
+      mode: "manual",
+      error: message,
+    });
+    await logWeeklyPayout({
+      weekId: meta.weekId,
+      status: "failed",
+      mode: "manual",
+      force: false,
+      autoClaimPendingTickets: false,
+      potBf: 0,
+      top3: [],
+      lotteryWinners: [],
+      results: [],
+      failedCount: 1,
+      notes: message,
+    });
     return NextResponse.json({ error: message }, { status: 500 });
   } finally {
     await releaseWeeklyPayoutLock(lock);
