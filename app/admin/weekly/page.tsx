@@ -367,7 +367,17 @@ export default function AdminWeekly() {
 
         {/* Log recenti */}
         {logs.length > 0 && (
-          <Card title="Ultimi payout eseguiti">
+          <Card
+            title="Ultimi payout eseguiti"
+            action={
+              <Link
+                href="/admin/payouts"
+                className="shrink-0 text-[11px] font-bold text-amber-400 underline underline-offset-4"
+              >
+                Storico completo
+              </Link>
+            }
+          >
             <div className="space-y-3">
               {logs.slice(0, 5).map((l, i) => (
                 <div
@@ -402,12 +412,6 @@ export default function AdminWeekly() {
                 </div>
               ))}
             </div>
-            <Link
-              href="/admin/payouts"
-              className="block mt-3 text-center text-xs text-amber-500 underline"
-            >
-              Vedi storico completo →
-            </Link>
           </Card>
         )}
       </div>
@@ -417,13 +421,24 @@ export default function AdminWeekly() {
 
 // ─── Shared components ────────────────────────────────────────────────────────
 
-function Card({ title, children }: { title: string; children: React.ReactNode }) {
+function Card({
+  title,
+  action,
+  children,
+}: {
+  title: string;
+  action?: React.ReactNode;
+  children: React.ReactNode;
+}) {
   return (
     <div
       className="rounded-2xl border border-amber-900 p-4 space-y-2"
       style={{ background: "#140a00" }}
     >
-      <div className="text-amber-400 text-xs uppercase tracking-widest mb-3">{title}</div>
+      <div className="mb-3 flex items-center justify-between gap-3">
+        <div className="text-amber-400 text-xs uppercase tracking-widest">{title}</div>
+        {action}
+      </div>
       {children}
     </div>
   );

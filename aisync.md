@@ -789,3 +789,4 @@ Payout bands:
   Validation completed:
   - `node scripts/sync-ltm3.mjs` passed
   - `npm run build` passed
+- 2026-03-23: Moved the weekly admin payout-history link from the bottom of the card to the card header in `app/admin/weekly/page.tsx`, so it stays tappable on iPhone without needing to reach the lower edge of the screen.
