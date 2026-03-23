@@ -12,6 +12,8 @@ const ADMIN_WALLET = (
 type WeeklyState = {
   weekId?: string;
   potBf?: number;
+  walletPotBf?: number;
+  effectivePayoutBf?: number;
   tickets?: Record<string, number>;
   pendingTickets?: Record<string, number>;
   lastPayoutAt?: number;
@@ -34,6 +36,11 @@ type AdminStats = {
 };
 
 type Msg = { type: "ok" | "err"; text: string } | null;
+type WalletsResponse = {
+  wallets?: {
+    pot?: { bf?: number };
+  };
+};
 
 export default function AdminWeekly() {
   const { user } = useFarcaster();
@@ -50,13 +57,18 @@ export default function AdminWeekly() {
     if (!authorized) return;
     let cancelled = false;
     void (async () => {
-      const [w, payoutsRes, lbRes] = await Promise.all([
+      const [w, payoutsRes, lbRes, walletsRes] = await Promise.all([
         fetch("/api/weekly").then((r) => r.json()),
         adminFetch(address, "/api/admin/weekly-payouts?limit=10").then((r) => r.json()),
         adminFetch(address, "/api/admin/leaderboard").then((r) => r.json()),
+        adminFetch(address, "/api/admin/wallets").then((r) => r.json()),
       ]);
       if (cancelled) return;
-      setWeekly(w);
+      setWeekly({
+        ...w,
+        walletPotBf: Number((walletsRes as WalletsResponse)?.wallets?.pot?.bf || 0),
+        effectivePayoutBf: Math.max(0, Math.min(Number(w?.potBf || 0), Number((walletsRes as WalletsResponse)?.wallets?.pot?.bf || 0))),
+      });
       setLogs(Array.isArray(payoutsRes.logs) ? payoutsRes.logs : []);
       setWeeklyStats(lbRes.weeklyStats);
     })().catch((error) => {
@@ -82,12 +94,17 @@ export default function AdminWeekly() {
       const data = await res.json().catch(() => ({}));
       if (!res.ok) setMsg({ type: "err", text: data?.error || "Failed" });
       else setMsg({ type: "ok", text: `${label} completato ✓` });
-      const [w, payoutsRes, lbRes] = await Promise.all([
+      const [w, payoutsRes, lbRes, walletsRes] = await Promise.all([
         fetch("/api/weekly").then((r) => r.json()),
         adminFetch(address, "/api/admin/weekly-payouts?limit=10").then((r) => r.json()),
         adminFetch(address, "/api/admin/leaderboard").then((r) => r.json()),
+        adminFetch(address, "/api/admin/wallets").then((r) => r.json()),
       ]);
-      setWeekly(w);
+      setWeekly({
+        ...w,
+        walletPotBf: Number((walletsRes as WalletsResponse)?.wallets?.pot?.bf || 0),
+        effectivePayoutBf: Math.max(0, Math.min(Number(w?.potBf || 0), Number((walletsRes as WalletsResponse)?.wallets?.pot?.bf || 0))),
+      });
       setLogs(Array.isArray(payoutsRes.logs) ? payoutsRes.logs : []);
       setWeeklyStats(lbRes.weeklyStats);
     } catch (e) {
@@ -115,6 +132,8 @@ export default function AdminWeekly() {
   const totalPending = Object.values(weekly?.pendingTickets || {}).reduce((s, v) => s + v, 0);
   const uniqueHolders = Object.keys(weekly?.tickets || {}).length;
   const potBf = Number(weekly?.potBf || 0);
+  const walletPotBf = Number(weekly?.walletPotBf || 0);
+  const effectivePayoutBf = Number(weekly?.effectivePayoutBf || 0);
 
   const BTN =
     "w-full py-4 rounded-2xl text-base font-black text-black disabled:opacity-40 transition-all active:scale-95 shadow-lg";
@@ -154,6 +173,14 @@ export default function AdminWeekly() {
             big
           />
           <Row
+            label="Pot disponibile wallet"
+            value={`${Math.round(walletPotBf).toLocaleString()} BF`}
+          />
+          <Row
+            label="Payout effettivo"
+            value={`${Math.round(effectivePayoutBf).toLocaleString()} BF`}
+          />
+          <Row
             label="Ticket holders"
             value={`${uniqueHolders} wallet · ${totalTickets.toLocaleString()} ticket`}
           />
@@ -186,24 +213,24 @@ export default function AdminWeekly() {
             <div className="flex justify-between text-amber-200">
               <span>🥇 1° posto (30%)</span>
               <span className="font-bold">
-                {Math.round(potBf * 0.6 * 0.5).toLocaleString()} BF
+                {Math.round(effectivePayoutBf * 0.6 * 0.5).toLocaleString()} BF
               </span>
             </div>
             <div className="flex justify-between text-amber-200">
               <span>🥈 2° posto (18%)</span>
               <span className="font-bold">
-                {Math.round(potBf * 0.6 * 0.3).toLocaleString()} BF
+                {Math.round(effectivePayoutBf * 0.6 * 0.3).toLocaleString()} BF
               </span>
             </div>
             <div className="flex justify-between text-amber-200">
               <span>🥉 3° posto (12%)</span>
               <span className="font-bold">
-                {Math.round(potBf * 0.6 * 0.2).toLocaleString()} BF
+                {Math.round(effectivePayoutBf * 0.6 * 0.2).toLocaleString()} BF
               </span>
             </div>
             <div className="border-t border-amber-900 pt-2 flex justify-between text-amber-400 text-xs">
               <span>🎰 7 vincitori lottery (40%)</span>
-              <span>≈ {Math.round((potBf * 0.4) / 7).toLocaleString()} BF cad.</span>
+              <span>≈ {Math.round((effectivePayoutBf * 0.4) / 7).toLocaleString()} BF cad.</span>
             </div>
           </div>
         </Card>

@@ -4,6 +4,7 @@ import { requireAdminRequest, getAdminWallet } from "@/lib/adminSession";
 import { createAdminChallenge, buildAdminChallengeMessage, verifyAdminChallenge } from "@/lib/adminAuth";
 import {
   acquireWeeklyPayoutLock,
+  getPotWalletBalanceBfUnits,
   getWeeklyMeta,
   getWeeklyState,
   logWeeklyPayout,
@@ -16,6 +17,7 @@ import {
 } from "@/lib/weekly";
 import { getAdminStats, getWeeklyAdminStats } from "@/lib/leaderboard";
 import { logTxRecord } from "@/lib/txLedger";
+import { fromBFUnits } from "@/lib/contracts";
 
 const POT_PRIVATE_KEY = process.env.POT_WALLET_PRIVATE_KEY;
 const ADMIN_WALLET = getAdminWallet();
@@ -123,9 +125,18 @@ export async function POST(req: NextRequest) {
     await mergePendingTicketsIntoClaimed();
 
     const weekly = await getWeeklyState();
-    const potBf = Number(weekly.potBf || 0);
-    if (potBf <= 0) {
+    const derivedPotBf = Number(weekly.potBf || 0);
+    if (derivedPotBf <= 0) {
       return NextResponse.json({ error: "Weekly pot is empty" }, { status: 400 });
+    }
+    const walletPotBf = fromBFUnits(await getPotWalletBalanceBfUnits());
+    const effectivePotBf = Math.max(0, Math.min(derivedPotBf, walletPotBf));
+    if (effectivePotBf <= 0) {
+      return NextResponse.json({
+        error: "Weekly pot wallet is empty",
+        derivedPotBf,
+        walletPotBf,
+      }, { status: 400 });
     }
 
     const stats = await getWeeklyAdminStats(meta.weekId);
@@ -140,9 +151,9 @@ export async function POST(req: NextRequest) {
     }
     const top3 = stats.players.filter((p) => p.address).slice(0, 3).map((p) => p.address!.toLowerCase());
 
-    const topShare = potBf * 0.6;
+    const topShare = effectivePotBf * 0.6;
     const topPayouts = [0.5, 0.3, 0.2].map((p) => topShare * p);
-    const lotteryShare = potBf * 0.4;
+    const lotteryShare = effectivePotBf * 0.4;
     const perLottery = lotteryShare / 7;
 
     const exclude = new Set(top3);
@@ -167,13 +178,14 @@ export async function POST(req: NextRequest) {
       status: "running",
       weekId: meta.weekId,
       startedAt,
-      potBf,
+      potBf: effectivePotBf,
       force,
       mode,
       autoClaimPendingTickets: shouldAutoClaimPending,
       top3,
       lotteryWinners,
       transfers,
+      notes: effectivePotBf < derivedPotBf ? `Derived pot ${Math.round(derivedPotBf)} BF capped to wallet ${Math.round(walletPotBf)} BF` : undefined,
     });
 
     const results = await sendWeeklyBfTransfers(transfers, POT_PRIVATE_KEY);
@@ -200,7 +212,7 @@ export async function POST(req: NextRequest) {
         weekId: meta.weekId,
         startedAt,
         completedAt: Date.now(),
-        potBf,
+        potBf: effectivePotBf,
         force,
         mode,
         autoClaimPendingTickets: shouldAutoClaimPending,
@@ -216,17 +228,22 @@ export async function POST(req: NextRequest) {
         mode,
         force,
         autoClaimPendingTickets: shouldAutoClaimPending,
-        potBf,
+        potBf: effectivePotBf,
         top3,
         lotteryWinners,
         results,
         failedCount: failed.length,
-        notes: "Some transfers failed; weekly state NOT reset",
+        notes: effectivePotBf < derivedPotBf
+          ? `Some transfers failed; weekly state NOT reset. Derived pot ${Math.round(derivedPotBf)} BF capped to wallet ${Math.round(walletPotBf)} BF`
+          : "Some transfers failed; weekly state NOT reset",
       });
 
       return NextResponse.json({
         error: "Weekly payout partial failure",
         weekId: meta.weekId,
+        derivedPotBf,
+        effectivePotBf,
+        walletPotBf,
         failedCount: failed.length,
         results,
       }, { status: 500 });
@@ -237,7 +254,7 @@ export async function POST(req: NextRequest) {
       weekId: meta.weekId,
       startedAt,
       completedAt: Date.now(),
-      potBf,
+      potBf: effectivePotBf,
       force,
       mode,
       autoClaimPendingTickets: shouldAutoClaimPending,
@@ -252,11 +269,12 @@ export async function POST(req: NextRequest) {
       mode,
       force,
       autoClaimPendingTickets: shouldAutoClaimPending,
-      potBf,
+      potBf: effectivePotBf,
       top3,
       lotteryWinners,
       results,
       failedCount: 0,
+      notes: effectivePotBf < derivedPotBf ? `Derived pot ${Math.round(derivedPotBf)} BF capped to wallet ${Math.round(walletPotBf)} BF` : undefined,
     });
 
     await markWeeklyPayoutDone(meta.weekId);
@@ -267,7 +285,9 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({
       ok: true,
       weekId: meta.weekId,
-      potBf,
+      derivedPotBf,
+      effectivePotBf,
+      walletPotBf,
       top3,
       lotteryWinners,
       results,

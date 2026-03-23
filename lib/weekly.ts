@@ -12,6 +12,7 @@ const WEEKLY_LOG_KEY = "weekly:log:";
 const WEEKLY_HISTORY_KEY = "weekly:payout:history";
 const WEEKLY_LOCK_KEY = "weekly:payout:lock:";
 const ADMIN_WALLET = (process.env.ADMIN_WALLET || "0xd29c790466675153A50DF7860B9EFDb689A21cDe").toLowerCase();
+const POT_WALLET = (process.env.POT_WALLET_ADDRESS || "0x468d066995A4C09209c9c165F30Bd76A4FDB88e0") as `0x${string}`;
 const RPC_URLS = (process.env.BASE_RPC_URLS || "")
   .split(",")
   .map((value) => value.trim())
@@ -285,9 +286,26 @@ export function getAdminWallet() {
   return ADMIN_WALLET;
 }
 
+export function getPotWalletAddress() {
+  return POT_WALLET;
+}
+
 export async function getBfValueFromUsdc(usdcAmount: number) {
   const rate = await getBfPerUsdc();
   return usdcAmount * rate;
+}
+
+export async function getPotWalletBalanceBfUnits() {
+  const transportUrls = RPC_URLS.length > 0 ? RPC_URLS : DEFAULT_RPC_URLS;
+  const transport = fallback(transportUrls.map((url) => http(url)));
+  const pub = createPublicClient({ chain: base, transport });
+  const raw = await pub.readContract({
+    address: BF_ADDRESS,
+    abi: ERC20_ABI,
+    functionName: "balanceOf",
+    args: [POT_WALLET],
+  });
+  return raw as bigint;
 }
 
 async function readPotWalletBfUnits(
