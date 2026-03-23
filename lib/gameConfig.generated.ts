@@ -14,7 +14,7 @@ export const DIFFICULTY_META = {
     "color": "#ca8a04",
     "fee": 0.02,
     "baseWaves": 13,
-    "ppp": 0.000491
+    "ppp": 0.000393
   },
   "hard": {
     "label": "Hard",
@@ -215,7 +215,7 @@ export const GAME_TUNING = {
       "bombsSecondChance": 0.35,
       "bombPoints": -3,
       "bombDurationMs": 1170,
-      "pppInputUsdcPerPoint": 0.000491,
+      "pppInputUsdcPerPoint": 0.000393,
       "bfPerUsdcLiveSnapshot": 4775549.188156637
     },
     "nice": {
@@ -247,7 +247,7 @@ export const GAME_TUNING = {
       "bombsSecondChance": 0.35,
       "bombPoints": -3,
       "bombDurationMs": 1170,
-      "pppInputUsdcPerPoint": 0.000491,
+      "pppInputUsdcPerPoint": 0.000393,
       "bfPerUsdcLiveSnapshot": 4775549.188156637
     },
     "big": {
@@ -279,7 +279,7 @@ export const GAME_TUNING = {
       "bombsSecondChance": 0.45,
       "bombPoints": -3,
       "bombDurationMs": 1170,
-      "pppInputUsdcPerPoint": 0.000491,
+      "pppInputUsdcPerPoint": 0.000393,
       "bfPerUsdcLiveSnapshot": 4775549.188156637
     },
     "mega": {
@@ -311,7 +311,7 @@ export const GAME_TUNING = {
       "bombsSecondChance": 0.45,
       "bombPoints": -2,
       "bombDurationMs": 1170,
-      "pppInputUsdcPerPoint": 0.000491,
+      "pppInputUsdcPerPoint": 0.000393,
       "bfPerUsdcLiveSnapshot": 4775549.188156637
     }
   },
