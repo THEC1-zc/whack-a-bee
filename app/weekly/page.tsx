@@ -14,7 +14,6 @@ type WeeklyState = {
   cycle?: number;
   potBf: number;
   snapshotAt?: number;
-  payoutAt?: number;
   tickets: Record<string, number>;
   pendingTickets?: Record<string, number>;
 };
@@ -33,7 +32,6 @@ export default function WeeklyPage() {
   const { user } = useFarcaster();
   const [state, setState] = useState<WeeklyState | null>(null);
   const [entries, setEntries] = useState<WeeklyEntry[]>([]);
-  const [now, setNow] = useState<number | null>(null);
   const [filter, setFilter] = useState<Difficulty | "all">("all");
 
   useEffect(() => {
@@ -51,11 +49,6 @@ export default function WeeklyPage() {
       .then(d => setEntries(Array.isArray(d) ? d : []))
       .catch(() => {});
   }, [filter]);
-
-  useEffect(() => {
-    const t = setInterval(() => setNow(Date.now()), 1000);
-    return () => clearInterval(t);
-  }, []);
 
   return (
     <div className="user-page-bg user-page-overlay min-h-dvh p-6">
@@ -80,16 +73,6 @@ export default function WeeklyPage() {
           <div className="mt-2 text-3xl font-black text-emerald-50">
             {state ? `${Math.round(state.potBf).toLocaleString()} BF` : "—"}
           </div>
-          {state?.payoutAt && (
-            <div className="page-copy text-xs mt-2">
-              Payout {new Date(state.payoutAt).toLocaleString("en-GB", { timeZone: "Europe/Rome" })} CET
-            </div>
-          )}
-          {state?.payoutAt && now != null && (
-            <div className="page-muted text-xs mt-1">
-              Countdown {formatCountdown(state.payoutAt - now)}
-            </div>
-          )}
         </div>
 
         <div className="page-panel px-5 py-5">
@@ -141,17 +124,7 @@ export default function WeeklyPage() {
             )}
           </div>
         </div>
-
       </div>
     </div>
   );
-}
-
-function formatCountdown(ms: number) {
-  if (ms <= 0) return "00:00:00";
-  const total = Math.floor(ms / 1000);
-  const h = Math.floor(total / 3600);
-  const m = Math.floor((total % 3600) / 60);
-  const s = total % 60;
-  return `${String(h).padStart(2, "0")}:${String(m).padStart(2, "0")}:${String(s).padStart(2, "0")}`;
 }

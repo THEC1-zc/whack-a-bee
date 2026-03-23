@@ -45,7 +45,6 @@ export default function App() {
   const [bfPerUsdc, setBfPerUsdc] = useState<number | null>(null);
   const [rateLoading, setRateLoading] = useState(true);
   const [weeklyPot, setWeeklyPot] = useState<number | null>(null);
-  const [nextReset, setNextReset] = useState<number | null>(null);
   const [myTickets, setMyTickets] = useState<{ pending: number; claimed: number } | null>(null);
   const [shareError, setShareError] = useState<string | null>(null);
 
@@ -85,7 +84,6 @@ export default function App() {
       .then((r) => r.json())
       .then((d) => {
         if (typeof d.potBf === "number") setWeeklyPot(d.potBf);
-        if (typeof d.payoutAt === "number") setNextReset(d.payoutAt);
       })
       .catch(() => {});
   }, [lastResult]);
@@ -228,7 +226,6 @@ export default function App() {
         <div className="page-panel-soft px-4 py-4 text-center text-xs">
           <div className="page-kicker mb-2">Weekly Pot</div>
           <div className="text-sm font-bold text-emerald-50">{weeklyPot == null ? "—" : `${Math.round(weeklyPot).toLocaleString()} BF`}</div>
-          {nextReset && <div className="page-muted mt-2">Resets {new Date(nextReset).toLocaleString("en-GB", { timeZone: "Europe/Rome" })} CET</div>}
           <Link href="/weekly" className="page-link mt-2 inline-block">Weekly details</Link>
         </div>
 

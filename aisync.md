@@ -790,3 +790,4 @@ Payout bands:
   - `node scripts/sync-ltm3.mjs` passed
   - `npm run build` passed
 - 2026-03-23: Moved the weekly admin payout-history link from the bottom of the card to the card header in `app/admin/weekly/page.tsx`, so it stays tappable on iPhone without needing to reach the lower edge of the screen.
+- 2026-03-23: Simplified weekly payout to a single manual admin action. Removed cron/schedule-driven payout by deleting `app/api/cron/weekly-payout/route.ts`, deleting `app/api/admin/weekly-config/route.ts`, removing the `vercel.json` cron entry, and simplifying `app/admin/weekly/page.tsx` to one `Run Payout` button. The manual payout now always draws tickets, sends the weekly payments, and resets the weekly cycle on success so weekly leaderboard, tickets, and weekly pot restart from zero.

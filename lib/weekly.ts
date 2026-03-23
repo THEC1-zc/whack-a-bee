@@ -9,7 +9,6 @@ import { advanceActiveWeeklyPeriod, getActiveWeeklyPeriod } from "@/lib/weeklyPe
 
 const WEEKLY_KEY = "weekly:state:";
 const WEEKLY_LOG_KEY = "weekly:log:";
-const WEEKLY_CFG_KEY = "weekly:config";
 const WEEKLY_HISTORY_KEY = "weekly:payout:history";
 const WEEKLY_LOCK_KEY = "weekly:payout:lock:";
 const ADMIN_WALLET = (process.env.ADMIN_WALLET || "0xd29c790466675153A50DF7860B9EFDb689A21cDe").toLowerCase();
@@ -34,12 +33,6 @@ export type WeeklyState = {
   pendingTickets: Record<string, number>;
   snapshot: unknown;
   lastPayoutAt?: number;
-};
-
-export type WeeklyConfig = {
-  autoPayoutEnabled: boolean;
-  forceBypassSchedule: boolean;
-  autoClaimPendingTickets: boolean;
 };
 
 export type WeeklyTransferResult = {
@@ -80,12 +73,6 @@ const DEFAULT_WEEKLY_STATE: WeeklyState = {
   wins: {},
   pendingTickets: {},
   snapshot: null,
-};
-
-const DEFAULT_WEEKLY_CONFIG: WeeklyConfig = {
-  autoPayoutEnabled: false,
-  forceBypassSchedule: false,
-  autoClaimPendingTickets: false,
 };
 
 function getRedis() {
@@ -260,28 +247,6 @@ export async function getWeeklyPayoutHistory(limit = 200, weekId?: string) {
   return filtered.slice(-limit).reverse();
 }
 
-export async function getWeeklyConfig() {
-  const client = getRedis();
-  if (client) {
-    const raw = await client.get(WEEKLY_CFG_KEY);
-    if (!raw) return { ...DEFAULT_WEEKLY_CONFIG };
-    return { ...DEFAULT_WEEKLY_CONFIG, ...JSON.parse(raw) } as WeeklyConfig;
-  }
-  const raw = memoryStore.get(WEEKLY_CFG_KEY) as WeeklyConfig | undefined;
-  return raw ? { ...DEFAULT_WEEKLY_CONFIG, ...raw } : { ...DEFAULT_WEEKLY_CONFIG };
-}
-
-export async function setWeeklyConfig(partial: Partial<WeeklyConfig>) {
-  const next = { ...(await getWeeklyConfig()), ...partial };
-  const client = getRedis();
-  if (client) {
-    await client.set(WEEKLY_CFG_KEY, JSON.stringify(next));
-  } else {
-    memoryStore.set(WEEKLY_CFG_KEY, next);
-  }
-  return next;
-}
-
 export async function acquireWeeklyPayoutLock(weekId: string, ttlMs = 120000): Promise<WeeklyPayoutLock | null> {
   const key = WEEKLY_LOCK_KEY + weekId;
   const token = `${Date.now()}-${Math.random().toString(16).slice(2)}`;
@@ -326,7 +291,6 @@ export async function getBfValueFromUsdc(usdcAmount: number) {
 }
 
 // ── Shared BF transfer helper ─────────────────────────────────────────────────
-// Used by both admin/weekly-payout and cron/weekly-payout to avoid duplication.
 
 function normalizePotKey(value: string | undefined) {
   const raw = (value || "").trim().replace(/^['"]|['"]$/g, "").replace(/\s+/g, "");

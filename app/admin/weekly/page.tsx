@@ -15,13 +15,7 @@ type WeeklyState = {
   tickets?: Record<string, number>;
   pendingTickets?: Record<string, number>;
   lastPayoutAt?: number;
-  payoutAt?: number;
   snapshotAt?: number;
-};
-type WeeklyConfig = {
-  autoPayoutEnabled: boolean;
-  forceBypassSchedule: boolean;
-  autoClaimPendingTickets: boolean;
 };
 type PayoutLog = {
   at?: number;
@@ -48,25 +42,22 @@ export default function AdminWeekly() {
 
   const [weekly, setWeekly] = useState<WeeklyState | null>(null);
   const [weeklyStats, setWeeklyStats] = useState<AdminStats | null>(null);
-  const [cfg, setCfg] = useState<WeeklyConfig | null>(null);
   const [logs, setLogs] = useState<PayoutLog[]>([]);
   const [running, setRunning] = useState<string | null>(null);
   const [msg, setMsg] = useState<Msg>(null);
-  const [savingCfg, setSavingCfg] = useState(false);
 
   useEffect(() => {
     if (!authorized) return;
     let cancelled = false;
     void (async () => {
-      const [w, cfgRes, lbRes] = await Promise.all([
+      const [w, payoutsRes, lbRes] = await Promise.all([
         fetch("/api/weekly").then((r) => r.json()),
-        adminFetch(address, "/api/admin/weekly-config").then((r) => r.json()),
+        adminFetch(address, "/api/admin/weekly-payouts?limit=10").then((r) => r.json()),
         adminFetch(address, "/api/admin/leaderboard").then((r) => r.json()),
       ]);
       if (cancelled) return;
       setWeekly(w);
-      setCfg(cfgRes.config);
-      setLogs(Array.isArray(cfgRes.logs) ? cfgRes.logs : []);
+      setLogs(Array.isArray(payoutsRes.logs) ? payoutsRes.logs : []);
       setWeeklyStats(lbRes.weeklyStats);
     })().catch((error) => {
       if (!cancelled) setMsg({ type: "err", text: error instanceof Error ? error.message : String(error) });
@@ -91,14 +82,13 @@ export default function AdminWeekly() {
       const data = await res.json().catch(() => ({}));
       if (!res.ok) setMsg({ type: "err", text: data?.error || "Failed" });
       else setMsg({ type: "ok", text: `${label} completato ✓` });
-      const [w, cfgRes, lbRes] = await Promise.all([
+      const [w, payoutsRes, lbRes] = await Promise.all([
         fetch("/api/weekly").then((r) => r.json()),
-        adminFetch(address, "/api/admin/weekly-config").then((r) => r.json()),
+        adminFetch(address, "/api/admin/weekly-payouts?limit=10").then((r) => r.json()),
         adminFetch(address, "/api/admin/leaderboard").then((r) => r.json()),
       ]);
       setWeekly(w);
-      setCfg(cfgRes.config);
-      setLogs(Array.isArray(cfgRes.logs) ? cfgRes.logs : []);
+      setLogs(Array.isArray(payoutsRes.logs) ? payoutsRes.logs : []);
       setWeeklyStats(lbRes.weeklyStats);
     } catch (e) {
       setMsg({ type: "err", text: String(e) });
@@ -106,51 +96,19 @@ export default function AdminWeekly() {
     setRunning(null);
   }
 
-  async function payout(force: boolean) {
+  async function payout() {
     const signed = await signAdminAction(address, "weekly_payout");
-    await act(force ? "Force Payout" : "Run Payout", () =>
+    await act("Run Payout", () =>
       adminFetch(address, "/api/admin/weekly-payout", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          force,
-          mode: "manual",
-          autoClaimPendingTickets: cfg?.autoClaimPendingTickets ?? true,
           payoutChallenge: signed.challenge,
           payoutMessage: signed.message,
           payoutSignature: signed.signature,
         }),
       })
     );
-  }
-
-  async function resetWeeklyState() {
-    if (!confirm("Reset weekly state? Azzera pot counter, ticket e storico wins.")) return;
-    const signed = await signAdminAction(address, "weekly_reset");
-    await act("Reset Weekly", () =>
-      adminFetch(address, "/api/admin/leaderboard", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          action: "weekly_reset",
-          challenge: signed.challenge,
-          message: signed.message,
-          signature: signed.signature,
-        }),
-      })
-    );
-  }
-
-  async function updateCfg(partial: Partial<WeeklyConfig>) {
-    setSavingCfg(true);
-    const res = await adminFetch(address, "/api/admin/weekly-config", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(partial),
-    });
-    const data = await res.json().catch(() => ({}));
-    if (data.config) setCfg(data.config);
-    setSavingCfg(false);
   }
 
   const totalTickets = Object.values(weekly?.tickets || {}).reduce((s, v) => s + v, 0);
@@ -205,16 +163,6 @@ export default function AdminWeekly() {
             value={
               weekly?.snapshotAt
                 ? new Date(weekly.snapshotAt).toLocaleString("it-IT", {
-                    timeZone: "Europe/Rome",
-                  })
-                : "—"
-            }
-          />
-          <Row
-            label="Payout programmato"
-            value={
-              weekly?.payoutAt
-                ? new Date(weekly.payoutAt).toLocaleString("it-IT", {
                     timeZone: "Europe/Rome",
                   })
                 : "—"
@@ -286,84 +234,21 @@ export default function AdminWeekly() {
         )}
 
         {/* Azioni payout */}
-        <Card title="Azioni payout">
+        <Card title="Run weekly payout">
           <div className="space-y-3">
             <button
               disabled={!!running}
-              onClick={() => payout(false)}
+              onClick={() => payout()}
               className={BTN}
               style={{ background: "linear-gradient(135deg,#7c3aed,#a855f7)" }}
             >
-              {running === "Run Payout" ? "⏳ In corso…" : "▶️  Run Payout (schedule)"}
-            </button>
-            <button
-              disabled={!!running}
-              onClick={() => payout(true)}
-              className={BTN}
-              style={{ background: "linear-gradient(135deg,#ef4444,#f97316)" }}
-            >
-              {running === "Force Payout" ? "⏳ In corso…" : "⚡ Force Payout (ignora schedule)"}
-            </button>
-          </div>
-        </Card>
-
-        {/* Azioni reset */}
-        <Card title="Reset">
-          <div className="space-y-3">
-            <button
-              disabled={!!running}
-              onClick={resetWeeklyState}
-              className={BTN}
-              style={{ background: "linear-gradient(135deg,#fbbf24,#f59e0b)" }}
-            >
-              {running === "Reset Weekly" ? "⏳…" : "🔄  Reset Weekly State"}
+              {running === "Run Payout" ? "⏳ In corso…" : "▶️ Run Payout"}
             </button>
           </div>
           <p className="text-amber-800 text-xs mt-2">
-            Reset Weekly chiude la week attiva e ne apre una nuova da zero. La total leaderboard non viene resettata.
+            Esegue il draw dei ticket, paga i vincitori e poi apre una nuova week azzerando weekly leaderboard, ticket e weekly pot.
           </p>
         </Card>
-
-        {/* Config */}
-        {cfg && (
-          <Card title="Configurazione auto-payout">
-            {[
-              {
-                key: "autoPayoutEnabled" as const,
-                label: "Auto payout domenicale abilitato",
-                desc: "Il cron ogni domenica 00:00 CET eseguirà il payout automaticamente",
-              },
-              {
-                key: "forceBypassSchedule" as const,
-                label: "Forza bypass schedule",
-                desc: "In modalità auto, ignora il controllo dell'orario",
-              },
-              {
-                key: "autoClaimPendingTickets" as const,
-                label: "Auto-claim ticket pending",
-                desc: "Sposta i pending tickets nei claimed prima dell'estrazione",
-              },
-            ].map(({ key, label, desc }) => (
-              <label key={key} className="flex items-start justify-between gap-3 py-2 cursor-pointer">
-                <div>
-                  <div className="text-amber-200 text-sm font-bold">{label}</div>
-                  <div className="text-amber-700 text-xs">{desc}</div>
-                </div>
-                <div className="relative shrink-0 mt-0.5">
-                  <input
-                    type="checkbox"
-                    className="sr-only peer"
-                    checked={cfg[key]}
-                    disabled={savingCfg}
-                    onChange={(e) => updateCfg({ [key]: e.target.checked })}
-                  />
-                  <div className="w-11 h-6 bg-amber-900 rounded-full peer-checked:bg-purple-600 transition-colors" />
-                  <div className="absolute top-0.5 left-0.5 w-5 h-5 bg-white rounded-full shadow transition-transform peer-checked:translate-x-5" />
-                </div>
-              </label>
-            ))}
-          </Card>
-        )}
 
         {/* Log recenti */}
         {logs.length > 0 && (
@@ -405,7 +290,6 @@ export default function AdminWeekly() {
                   <div className="text-amber-600 text-xs mt-1">
                     {Math.round(Number(l.potBf || 0)).toLocaleString()} BF ·{" "}
                     {Array.isArray(l.results) ? l.results.length : 0} tx
-                    {l.force ? " · forced" : " · scheduled"}
                     {l.mode ? ` · ${l.mode}` : ""}
                     {l.failedCount ? ` · ⚠️ ${l.failedCount} failed` : ""}
                   </div>

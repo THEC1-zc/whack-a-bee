@@ -4,7 +4,6 @@ import { requireAdminRequest, getAdminWallet } from "@/lib/adminSession";
 import { createAdminChallenge, buildAdminChallengeMessage, verifyAdminChallenge } from "@/lib/adminAuth";
 import {
   acquireWeeklyPayoutLock,
-  getWeeklyConfig,
   getWeeklyMeta,
   getWeeklyState,
   logWeeklyPayout,
@@ -22,9 +21,6 @@ const POT_PRIVATE_KEY = process.env.POT_WALLET_PRIVATE_KEY;
 const ADMIN_WALLET = getAdminWallet();
 
 type WeeklyPayoutRequest = {
-  force?: boolean;
-  autoClaimPendingTickets?: boolean;
-  mode?: "manual" | "auto";
   // Wallet signature fields — required for manual payout (2FA)
   payoutChallenge?: string;
   payoutMessage?: string;
@@ -87,62 +83,44 @@ export async function POST(req: NextRequest) {
     }
 
     const body = (await req.json().catch(() => ({}))) as WeeklyPayoutRequest;
-    const cfg = await getWeeklyConfig();
-    const mode = body.mode || "manual";
-    const isAutoMode = mode === "auto";
 
-    if (isAutoMode && !cfg.autoPayoutEnabled) {
-      return NextResponse.json({ error: "Auto payout is disabled" }, { status: 403 });
+    const challenge = String(body?.payoutChallenge || "");
+    const message = String(body?.payoutMessage || "");
+    const signature = String(body?.payoutSignature || "");
+
+    if (!challenge || !message || !signature) {
+      return NextResponse.json({ error: "Payout requires wallet signature — call GET first to obtain a challenge" }, { status: 400 });
     }
 
-    // C-1 fix: manual payout requires a wallet signature as second factor
-    // Auto mode (internal) is exempted since it runs server-side via cron
-    if (!isAutoMode) {
-      const challenge = String(body?.payoutChallenge || "");
-      const message = String(body?.payoutMessage || "");
-      const signature = String(body?.payoutSignature || "");
-
-      if (!challenge || !message || !signature) {
-        return NextResponse.json({ error: "Payout requires wallet signature — call GET first to obtain a challenge" }, { status: 400 });
-      }
-
-      const verification = verifyAdminChallenge(challenge, "weekly_payout", ADMIN_WALLET);
-      if (!verification.ok) {
-        return NextResponse.json({ error: verification.reason }, { status: 401 });
-      }
-      if (message !== buildAdminChallengeMessage(verification.payload)) {
-        return NextResponse.json({ error: "Challenge message mismatch" }, { status: 401 });
-      }
-
-      const signer = await recoverMessageAddress({
-        message,
-        signature: signature as `0x${string}`,
-      }).catch(() => null);
-      if (!signer || signer.toLowerCase() !== ADMIN_WALLET) {
-        return NextResponse.json({ error: "Invalid wallet signature for payout authorization" }, { status: 401 });
-      }
+    const verification = verifyAdminChallenge(challenge, "weekly_payout", ADMIN_WALLET);
+    if (!verification.ok) {
+      return NextResponse.json({ error: verification.reason }, { status: 401 });
+    }
+    if (message !== buildAdminChallengeMessage(verification.payload)) {
+      return NextResponse.json({ error: "Challenge message mismatch" }, { status: 401 });
     }
 
-    const force = Boolean(body.force) || (isAutoMode && cfg.forceBypassSchedule);
-    const shouldAutoClaimPending = body.autoClaimPendingTickets ?? cfg.autoClaimPendingTickets;
+    const signer = await recoverMessageAddress({
+      message,
+      signature: signature as `0x${string}`,
+    }).catch(() => null);
+    if (!signer || signer.toLowerCase() !== ADMIN_WALLET) {
+      return NextResponse.json({ error: "Invalid wallet signature for payout authorization" }, { status: 401 });
+    }
 
     const weeklyPre = await getWeeklyState();
-    const now = Date.now();
-    if (!force && weeklyPre.payoutAt && now < weeklyPre.payoutAt) {
-      return NextResponse.json({ error: "Too early for payout", payoutAt: weeklyPre.payoutAt }, { status: 403 });
-    }
-
-    const allowManualReplay = force && mode === "manual";
-    if (weeklyPre.lastPayoutAt && !allowManualReplay) {
+    if (weeklyPre.lastPayoutAt) {
       return NextResponse.json({
         error: "Payout already executed for this week",
         lastPayoutAt: weeklyPre.lastPayoutAt,
       }, { status: 409 });
     }
 
-    if (shouldAutoClaimPending) {
-      await mergePendingTicketsIntoClaimed();
-    }
+    const mode = "manual" as const;
+    const force = false;
+    const shouldAutoClaimPending = true;
+
+    await mergePendingTicketsIntoClaimed();
 
     const weekly = await getWeeklyState();
     const potBf = Number(weekly.potBf || 0);
@@ -316,7 +294,7 @@ export async function POST(req: NextRequest) {
       status: "failed",
       mode: "manual",
       force: false,
-      autoClaimPendingTickets: false,
+      autoClaimPendingTickets: true,
       potBf: 0,
       top3: [],
       lotteryWinners: [],
