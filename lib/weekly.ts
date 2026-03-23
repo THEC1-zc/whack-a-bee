@@ -2,7 +2,7 @@ import Redis from "ioredis";
 import { createPublicClient, createWalletClient, fallback, http } from "viem";
 import { base } from "viem/chains";
 import { privateKeyToAccount } from "viem/accounts";
-import { BF_ADDRESS, ERC20_ABI, SUPERTOKEN_ABI, toBFUnits } from "@/lib/contracts";
+import { BF_ADDRESS, ERC20_ABI, toBFUnits } from "@/lib/contracts";
 import { getBfPerUsdc } from "./pricing";
 import { getCurrentWeekTicketState, getUserWeeklyTickets } from "@/lib/gameSessions";
 import { advanceActiveWeeklyPeriod, getActiveWeeklyPeriod } from "@/lib/weeklyPeriod";
@@ -290,24 +290,10 @@ export async function getBfValueFromUsdc(usdcAmount: number) {
   return usdcAmount * rate;
 }
 
-async function readSpendableBfUnits(
+async function readPotWalletBfUnits(
   publicClient: any,
   address: `0x${string}`
 ) {
-  const timestamp = BigInt(Math.floor(Date.now() / 1000));
-  try {
-    const realtime = await publicClient.readContract({
-      address: BF_ADDRESS,
-      abi: SUPERTOKEN_ABI,
-      functionName: "realtimeBalanceOf",
-      args: [address, timestamp],
-    });
-    const [availableBalance] = realtime as readonly [bigint, bigint, bigint];
-    if (availableBalance > BigInt(0)) return availableBalance;
-  } catch {
-    // fall through to plain balanceOf
-  }
-
   const raw = await publicClient.readContract({
     address: BF_ADDRESS,
     abi: ERC20_ABI,
@@ -352,12 +338,12 @@ export async function sendWeeklyBfTransfers(
   for (const t of transfers) {
     if (t.amountBf <= 0) continue;
     const amountUnits = toBFUnits(t.amountBf);
-    const spendableUnits = await readSpendableBfUnits(pub, account.address);
-    if (amountUnits > spendableUnits) {
+    const potBalanceUnits = await readPotWalletBfUnits(pub, account.address);
+    if (amountUnits > potBalanceUnits) {
       results.push({
         ...t,
         ok: false,
-        error: `insufficient spendable BF balance in pot wallet (${spendableUnits.toString()} units available)`,
+        error: `insufficient BF balance in pot wallet (${potBalanceUnits.toString()} units available)`,
       });
       continue;
     }
@@ -365,6 +351,13 @@ export async function sendWeeklyBfTransfers(
 
     for (let attempt = 0; attempt < 3; attempt += 1) {
       try {
+        await pub.simulateContract({
+          account,
+          address: BF_ADDRESS,
+          abi: ERC20_ABI,
+          functionName: "transfer",
+          args: [t.to as `0x${string}`, amountUnits],
+        });
         const txHash = await wallet.writeContract({
           address: BF_ADDRESS,
           abi: ERC20_ABI,
