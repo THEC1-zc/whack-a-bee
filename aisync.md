@@ -794,3 +794,11 @@ Payout bands:
 - 2026-03-23: Hardened weekly payout transfers against BF SuperToken spendability issues. `lib/weekly.ts` now checks the pot wallet's realtime spendable BF balance via `realtimeBalanceOf` before attempting each transfer, and returns an explicit insufficiency error instead of sending a transaction that reverts on-chain.
 - 2026-03-23: Refined the weekly payout fix after validating that the pot wallet holds plain BF token balance for weekly prizes. `lib/weekly.ts` now checks the pot wallet with standard `balanceOf` and simulates each `transfer` before sending the transaction, so weekly payout failures surface token-rule errors earlier and no longer assume SuperToken streaming behavior on the pot wallet.
 - 2026-03-23: Weekly payout now caps the distributable weekly pot to the real BF balance available in the pot wallet before building winner transfers. Admin weekly also shows three separate values: derived pot from claimed games, BF currently available in the pot wallet, and the effective payout amount that would be used if `Run Payout` is pressed.
+- 2026-03-26: Raised all authoritative PPP values by 10% and rounded them to:
+  - easy `0.000305`
+  - medium `0.000365`
+  - hard `0.000549`
+  Synced `local-balance/ltm3.xml`, `scripts/sync-ltm3.mjs`, and regenerated `lib/gameConfig.generated.ts`.
+  Validation completed:
+  - `node scripts/sync-ltm3.mjs` passed
+  - `npm run build` passed
